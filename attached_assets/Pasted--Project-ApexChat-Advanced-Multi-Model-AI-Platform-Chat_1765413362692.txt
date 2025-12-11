@@ -1,0 +1,57 @@
+# Project: ApexChat - Advanced Multi-Model AI Platform (ChatGPT-Like UI)
+
+## Role
+Act as a Lead Frontend Engineer and Product Designer. Your goal is to build a pixel-perfect, highly functional replica of the ChatGPT interface, but enhanced with advanced power-user controls.
+
+## Tech Stack
+- **Framework:** Next.js 14+ (App Router)
+- **Styling:** Tailwind CSS + Shadcn/UI (Crucial for the clean, premium look).
+- **Icons:** Lucide React.
+- **State Management:** Zustand (for managing complex settings like selected model and thinking modes).
+
+## UI/UX Requirements (The "ChatGPT" Feel)
+1.  **Layout:**
+    -   **Sidebar (Left):** Dark, collapsible history list, distinct "New Chat" button, User Profile at bottom.
+    -   **Main Header (Top-Left):** A sophisticated **Model Selector Dropdown** (mimicking the GPT-4o selector).
+    -   **Chat Area:** Centered container, maximum readability width, minimal distractions.
+
+## Key Features Implementation
+
+### 1. The "Model Selector" (Top Header)
+Create a prominent dropdown menu in the top-left area that allows the user to switch between models.
+-   **Visuals:** sleek, with icons for each model.
+-   **Options:** "Gemini Pro 1.5", "GPT-4o", "Claude 3.5 Sonnet".
+-   **State:** Persist the user's choice in the global state.
+
+### 2. Service Mode Switcher (Context Selector)
+Add a "Mode" toggle or segmented control (visually distinct) to switch the AI Persona.
+-   **Options:**
+    1.  **Standard Chat:** General purpose.
+    2.  **Dev/Coder:** Optimized for code generation (wide view, monospace fonts).
+    3.  **Education/Tutor:** Socratic teaching style interface.
+-   *UX Note:* Changing this mode should subtly change the UI accent color or the system prompt indicator.
+
+### 3. "Thinking" & "Over-Thinking" Controls (Input Area)
+In the bottom input area (near the "Send" button or inside a "Settings" popover near the text box), add specific toggles for reasoning depth:
+-   **Thinking (Standard):** Toggle switch. If ON, UI shows a "Reasoning..." step before answering.
+-   **Over-Thinking (Deep Research):** A separate, more intense toggle (maybe red or distinct color). Implies "Chain of Thought" x10.
+-   *Visual Feedback:* When "Over-Thinking" is active, display a "Brain" icon pulsing next to the input field.
+
+### 4. The Input Experience
+-   Replicate the polished look of the ChatGPT input box.
+-   Auto-expanding textarea.
+-   Attachment button (paperclip).
+-   **Send Button:** Circle with an arrow, changes color when text is typed.
+
+## Backend Structure (Mock)
+-   `services/ai-orchestrator.ts`: A service that accepts `{ model, mode, reasoningLevel, prompt }`.
+-   **Mock Response:** Based on the "Reasoning Level" selected, the mock response should simulate a delay.
+    -   If "Over-Thinking" is ON: Show a "Analyzing complex logic..." loader for 3 seconds before streaming the text.
+
+## Deliverables
+1.  Set up the Next.js project.
+2.  Build the **Layout** with the Sidebar and the specific **Model Header**.
+3.  Build the **Input Area** with the specific "Thinking" toggles.
+4.  Ensure the "Service Mode" changes the UI context.
+
+Start by coding the **Main Layout**, the **Model Selector Component**, and the **Input Area with Thinking Toggles**.
