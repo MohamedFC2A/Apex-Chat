@@ -1,9 +1,7 @@
-import { type User, type InsertUser } from "@shared/schema";
+import type { User, InsertUser } from "@shared/schema";
 import { randomUUID } from "crypto";
 
-// modify the interface with any CRUD methods
-// you might need
-
+// Storage interface for CRUD operations
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
