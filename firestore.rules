@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ═══════════════════════════════════════════════════════════
+    // 1. منطقة المستخدمين (Users)
+    // ═══════════════════════════════════════════════════════════
+    match /users/{userId} {
+      // السماح بالقراءة والكتابة للمستخدم صاحب الحساب فقط
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // حماية الشاتات (Sub-collections)
+      match /chats/{chatId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // احتياطي لو النظام بيستخدم conversations بدل chats
+      match /conversations/{conversationId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // 2. منطقة الكروت (Vouchers) - الحل المبسط
+    // ═══════════════════════════════════════════════════════════
+    match /vouchers/{voucherId} {
+      // ✅ القراءة متاحة لأي حد مسجل دخول
+      allow read: if request.auth != null;
+      
+      // ✅ الإنشاء متاح لأي حد (عشان زرار Seed)
+      allow create: if request.auth != null;
+      
+      // ✅ CRITICAL: التعديل متاح بس لو:
+      // 1. المستخدم مسجل دخول
+      // 2. الكود لسه active (قبل التعديل)
+      // 3. المستخدم مش موجود في usedBy (قبل التعديل)
+      allow update: if request.auth != null 
+                    && resource.data.status == 'active'
+                    && !(request.auth.uid in resource.data.get('usedBy', []));
+      
+      // ❌ منع الحذف نهائياً
+      allow delete: if false;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // 3. منطقة الاشتراكات (Plans) - لو موجودة
+    // ═══════════════════════════════════════════════════════════
+    match /plans/{planId} {
+      allow read: if request.auth != null;  // القراءة متاحة للجميع
+      allow write: if false;                // Admin only
+    }
+  }
+}

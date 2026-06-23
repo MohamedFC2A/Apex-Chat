@@ -1,3 +1,17 @@
+// Load environment variables from .env.local
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+
+// Debug logging for environment variables
+console.log("🚀 Server starting...");
+console.log("📂 Environment file: .env.local");
+console.log("🔑 CEREBRAS_API_KEY Status:", process.env.CEREBRAS_API_KEY ? "✅ Loaded" : "❌ Missing");
+if (process.env.CEREBRAS_API_KEY) {
+  console.log("   Length:", process.env.CEREBRAS_API_KEY.length);
+  console.log("   Starts with:", process.env.CEREBRAS_API_KEY.substring(0, 15) + "...");
+}
+console.log("--------------------");
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
@@ -89,7 +103,6 @@ app.use((req, res, next) => {
     {
       port,
       host: "0.0.0.0",
-      reusePort: true,
     },
     () => {
       log(`serving on port ${port}`);
