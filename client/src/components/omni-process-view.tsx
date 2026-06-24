@@ -215,7 +215,7 @@ export function OmniProcessView({ state }: OmniProcessViewProps) {
             {state.step === "dispatch" && "Initializing Neural Network..."}
             {state.step === "drafting" && "Multi-Agent Analysis in Progress..."}
             {state.step === "synthesizing" && "Synthesizing Collective Intelligence..."}
-            {state.step === "complete" && "Singularity Achieved"}
+            {state.step === "complete" && "Apex Omni Achieved"}
           </span>
         </motion.div>
       </div>

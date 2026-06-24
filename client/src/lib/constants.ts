@@ -36,7 +36,7 @@ export const MODEL_INFO: Record<AIModel, { name: string; subtitle: string; icon:
     icon: Search 
   },
   "apex-omni": { 
-    name: "APEX Singularity", 
+    name: "Apex Omni", 
     subtitle: "[DECA-CORE] Cognitive Engine", 
     icon: Crown 
   },

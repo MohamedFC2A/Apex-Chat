@@ -3,18 +3,21 @@ import type { Server } from "http";
 import { chatRequestSchema } from "@shared/schema";
 import { processMessage, validateModelAccess } from "./ai-orchestrator";
 import { randomUUID } from "crypto";
+import { runUnboundPipeline } from "./apex-unbound/pipeline.js";
+import OpenAI from "openai";
+import DOMPurify from "isomorphic-dompurify";
 
 const previewStore = new Map<string, { html: string; createdAt: number }>();
 
-// Clean up previews older than 24 hours to prevent memory leaks
+// Clean up previews older than 1 hour to prevent memory leaks
 setInterval(() => {
   const now = Date.now();
-  previewStore.forEach((data, id) => {
-    if (now - data.createdAt > 24 * 60 * 60 * 1000) {
+  for (const [id, data] of previewStore.entries()) {
+    if (now - data.createdAt > 60 * 60 * 1000) {
       previewStore.delete(id);
     }
-  });
-}, 60 * 60 * 1000); // Check every hour
+  }
+}, 15 * 60 * 1000); // Check every 15 mins
 
 export async function registerRoutes(
   httpServer: Server,
@@ -234,6 +237,65 @@ Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) i
     }
   });
 
+  // ── APEX UNBOUND: Dedicated multi-agent web generation endpoint ──────────────────
+  // Streams phase-by-phase SSE events as each agent completes its work
+  app.post("/api/unbound", async (req, res) => {
+    const { message, conversationHistory } = req.body;
+
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({ error: "message is required" });
+    }
+
+    const deepseekKey = process.env.DEEPSEEK_API_KEY;
+    if (!deepseekKey) {
+      return res.status(500).json({ error: "DEEPSEEK_API_KEY is not configured" });
+    }
+
+    // Set up SSE for real-time streaming
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+    res.flushHeaders();
+
+    const sendEvent = (data: object) => {
+      if (!res.writableEnded) {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+      }
+    };
+
+    try {
+      const client = new OpenAI({
+        apiKey: deepseekKey,
+        baseURL: "https://api.deepseek.com/v1",
+      });
+
+      const result = await runUnboundPipeline(
+        client,
+        {
+          message,
+          conversationHistory: conversationHistory || [],
+        },
+        (chunk) => {
+          if (chunk.content) {
+            sendEvent({ type: "content", content: chunk.content });
+          }
+          if (chunk.phase) {
+            sendEvent({ type: "phase", phase: chunk.phase });
+          }
+        }
+      );
+
+      sendEvent({ type: "final", content: result.formattedOutput });
+      sendEvent({ type: "done" });
+    } catch (err: any) {
+      console.error("[APEX Unbound] Pipeline error:", err);
+      sendEvent({ type: "error", error: err.message || "Pipeline failed" });
+    } finally {
+      res.end();
+    }
+  });
+
   // ❌ DEPRECATED: Voucher redemption endpoint removed
   // Voucher logic is now handled 100% client-side via Firestore SDK
   // See: client/src/lib/subscription-store.ts -> redeemVoucher()
@@ -261,17 +323,19 @@ Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) i
       return res.status(400).json({ error: "Invalid html content" });
     }
 
-    // Prevent memory leaks / abuse
-    if (previewStore.size > 2000) {
-      const sorted = Array.from(previewStore.entries()).sort(
-        (a, b) => a[1].createdAt - b[1].createdAt
-      );
-      // Prune oldest 500 items
-      for (let i = 0; i < 500; i++) {
-        previewStore.delete(sorted[i][0]);
-      }
+    // Strict Size Limit: 2MB to prevent DoS attacks
+    if (html.length > 2 * 1024 * 1024) {
+      return res.status(413).json({ error: "Payload too large. Maximum size is 2MB." });
     }
 
+    // Prevent memory leaks / abuse (Strict LRU implementation)
+    if (previewStore.size >= 500) {
+      const firstKey = previewStore.keys().next().value;
+      if (firstKey) previewStore.delete(firstKey);
+    }
+
+    // Optionally sanitize HTML here if needed, but since it's meant to execute JS for code generation, 
+    // we rely on CSP and sandbox headers in the GET route.
     const id = randomUUID();
     previewStore.set(id, { html, createdAt: Date.now() });
     return res.json({ id });
@@ -307,6 +371,10 @@ Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) i
     }
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
+    // Enforce strict Content Security Policy to prevent data exfiltration and cross-site actions
+    res.setHeader("Content-Security-Policy", "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://fonts.googleapis.com https://fonts.gstatic.com; frame-ancestors 'self';");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
     return res.send(data.html);
   });
 

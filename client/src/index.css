@@ -213,6 +213,13 @@
     0 1px 0 hsl(var(--border) / 0.3) inset;
 }
 
+@media (max-width: 768px) {
+  .glass, .glass-light, .glass-strong, .glass-card {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════════
    GLOW SYSTEM (Toned Down/Minimal)
 ════════════════════════════════════════════════════════════════════ */
@@ -654,6 +661,6 @@ body.god-mode .border {
   --avatar-end: #7c2d12;   /* orange-900 */
 }
 .avatar-unbound {
-  --avatar-start: #dc2626; /* red-600 */
-  --avatar-end: #4c0519;   /* rose-950 */
+  --avatar-start: #8b5cf6; /* violet-500 */
+  --avatar-end: #4c1d95;   /* violet-900 */
 }

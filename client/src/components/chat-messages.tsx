@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { 
   User, Sparkles, Brain, Zap, Cpu, Crown, ChevronDown, ChevronRight, Copy, Check, Skull, ChevronUp, Clock,
   Terminal, Shield, BookOpen, Palette, Target, RotateCw, BarChart3, Lock, Globe, Key, FolderOpen, Folder, Hammer, Wrench, Settings, TrendingUp, TrendingDown, MessageSquare, Lightbulb, CheckCircle2, XCircle,
-  Rocket, Bot, AlertTriangle, Search, Trophy, Info, Activity, ExternalLink, X, Monitor, Smartphone, Code2, Play, Maximize2
+  Rocket, Bot, AlertTriangle, Search, Trophy, Info, Activity, ExternalLink, X, Monitor, Smartphone, Code2, Play, Maximize2, Download
 } from "lucide-react";
 import type { Message, AIModel } from "@shared/schema";
 import { OmniStatusCard } from "@/components/omni-status-card";
+import { UnboundStatusCard } from "@/components/unbound-status-card";
 import type { OmniState } from "@/lib/omni-service";
+import type { UnboundState } from "@/lib/unbound-service";
 import { ThinkingBubble } from "@/components/chat-message";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -299,33 +301,94 @@ function EntityHeaderImage({ title }: { title: string }) {
 // ─── Smart HTML Extractor ─────────────────────────────────────────────────────
 // Detects any complete HTML page in a markdown message (with or without lang tag)
 function extractHtmlFromContent(content: string): string | null {
-  // Find all fenced html blocks and get the last one
-  const regex = /```(?:html|htm)\s*\n([\s\S]*?)```/gi;
-  let lastBlock: string | null = null;
+  // 1. Find the HTML block (fenced with ```html)
+  const htmlRegex = /```(?:html|htm)\s*\n([\s\S]*?)```/gi;
+  let htmlCode: string | null = null;
   let match;
-  while ((match = regex.exec(content)) !== null) {
-    lastBlock = match[1].trim();
+  while ((match = htmlRegex.exec(content)) !== null) {
+    htmlCode = match[1].trim();
   }
-  if (lastBlock) return lastBlock;
 
-  // Try generic code blocks checking from the end
-  const genericRegex = /```(?:\w*)\s*\n([\s\S]*?)```/gi;
-  const blocks: string[] = [];
-  while ((match = genericRegex.exec(content)) !== null) {
-    blocks.push(match[1].trim());
-  }
-  for (let i = blocks.length - 1; i >= 0; i--) {
-    const inner = blocks[i];
-    if (/<!DOCTYPE\s+html/i.test(inner) || /^<html/i.test(inner) || /<\/html>/i.test(inner)) {
-      return inner;
+  if (!htmlCode) {
+    // Try bare HTML
+    const bareHtml = content.match(/(<!DOCTYPE\s+html[\s\S]*?<\/html>)/i);
+    if (bareHtml) {
+      htmlCode = bareHtml[1].trim();
+    } else {
+      // Look for a generic code block that looks like HTML
+      const genericRegex = /```(?:\w*)\s*\n([\s\S]*?)```/gi;
+      const blocks: string[] = [];
+      while ((match = genericRegex.exec(content)) !== null) {
+        blocks.push(match[1].trim());
+      }
+      for (let i = blocks.length - 1; i >= 0; i--) {
+        const inner = blocks[i];
+        if (/<!DOCTYPE\s+html/i.test(inner) || /^<html/i.test(inner) || /<\/html>/i.test(inner)) {
+          htmlCode = inner;
+          break;
+        }
+      }
     }
   }
 
-  // Try bare HTML
-  const bareHtml = content.match(/(<!DOCTYPE\s+html[\s\S]*?<\/html>)/i);
-  if (bareHtml) return bareHtml[1].trim();
+  if (!htmlCode) return null;
 
-  return null;
+  // 2. Extract CSS block (fenced with ```css)
+  const cssRegex = /```css\s*\n([\s\S]*?)```/gi;
+  let cssCode: string | null = null;
+  while ((match = cssRegex.exec(content)) !== null) {
+    cssCode = match[1].trim();
+  }
+
+  // 3. Extract JS block (fenced with ```javascript or ```js)
+  const jsRegex = /```(?:javascript|js)\s*\n([\s\S]*?)```/gi;
+  let jsCode: string | null = null;
+  while ((match = jsRegex.exec(content)) !== null) {
+    jsCode = match[1].trim();
+  }
+
+  // Assemble HTML + CSS + JS if available
+  let bundled = htmlCode;
+
+  // Inject viewport meta if head/html tags exist but viewport is missing
+  if (!/<meta[^>]*name=["']viewport["']/i.test(bundled)) {
+    if (/<head[^>]*>/i.test(bundled)) {
+      bundled = bundled.replace(/(<\/head>)/i, `  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n$1`);
+    } else if (/<html[^>]*>/i.test(bundled)) {
+      bundled = bundled.replace(/(<html[^>]*>)/i, `$1\n<head>\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n</head>`);
+    }
+  }
+
+  // Inject UTF-8 charset if charset meta is missing
+  if (!/charset/i.test(bundled)) {
+    if (/<head[^>]*>/i.test(bundled)) {
+      bundled = bundled.replace(/(<\/head>)/i, `  <meta charset="UTF-8">\n$1`);
+    }
+  }
+
+  // Inject CSS
+  if (cssCode) {
+    const styleTag = `\n  <style>\n${cssCode}\n  </style>\n`;
+    if (/<\/head>/i.test(bundled)) {
+      bundled = bundled.replace(/(<\/head>)/i, `${styleTag}$1`);
+    } else if (/<body/i.test(bundled)) {
+      bundled = bundled.replace(/(<body[^>]*>)/i, `$1${styleTag}`);
+    } else {
+      bundled = styleTag + bundled;
+    }
+  }
+
+  // Inject JS
+  if (jsCode) {
+    const scriptTag = `\n  <script>\n${jsCode}\n  </script>\n`;
+    if (/<\/body>/i.test(bundled)) {
+      bundled = bundled.replace(/(<\/body>)/i, `${scriptTag}$1`);
+    } else {
+      bundled = bundled + scriptTag;
+    }
+  }
+
+  return bundled;
 }
 
 // ─── Status Cleaners & Tracking ───────────────────────────────────────────────
@@ -1126,13 +1189,26 @@ const hasArabicText = (node: React.ReactNode): boolean => {
   return false;
 };
 
-function CodeBlockWrapper({ language, code }: { language: string; code: string }) {
+function CodeBlockWrapper({ language, code, parentContent }: { language: string; code: string; parentContent?: string }) {
   const [copied, setCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+
+  const lineCount = code.split("\n").length;
+  const isLargeCode = lineCount > 15 || ["html", "htm", "css", "js", "javascript", "ts", "typescript", "json"].includes(language?.toLowerCase());
+  const [isCollapsed, setIsCollapsed] = useState(isLargeCode);
 
   // Detect HTML: explicit lang tag OR body looks like an HTML document
   const isHtml = language === "html" || language === "htm" ||
     (!language && (/<!DOCTYPE\s+html/i.test(code) || /^\s*<html/i.test(code)));
+
+  const getBundledHtml = () => {
+    if (!isHtml) return code;
+    if (parentContent) {
+      const bundled = extractHtmlFromContent(parentContent);
+      if (bundled) return bundled;
+    }
+    return code;
+  };
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(code);
@@ -1140,15 +1216,25 @@ function CodeBlockWrapper({ language, code }: { language: string; code: string }
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleDownload = () => {
+    const fileExt = language === "javascript" || language === "js" ? "js" 
+                  : language === "css" ? "css" 
+                  : language === "json" ? "json" 
+                  : language === "typescript" || language === "ts" ? "ts" 
+                  : "html";
+    const blob = new Blob([code], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `index.${fileExt}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const openInNewTab = async () => {
-    let processedHtml = code;
-    if (!/<meta[^>]*name=["']viewport["']/i.test(code)) {
-      if (/<head[^>]*>/i.test(code)) {
-        processedHtml = code.replace(/(<head[^>]*>)/i, `$1\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">`);
-      } else if (/<html[^>]*>/i.test(code)) {
-        processedHtml = code.replace(/(<html[^>]*>)/i, `$1\n<head>\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n</head>`);
-      }
-    }
+    const processedHtml = getBundledHtml();
 
     try {
       const res = await fetch("/api/preview", {
@@ -1169,110 +1255,185 @@ function CodeBlockWrapper({ language, code }: { language: string; code: string }
 
   return (
     <>
-      <div className="my-6 rounded-xl border border-border overflow-hidden bg-zinc-950 dark:bg-zinc-950/80 shadow-lg">
-        <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/60">
-          <div className="flex items-center gap-2">
-            <Terminal className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
-            <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">{language || "code"}</span>
-            {isHtml && (
-              <span className="text-[9px] font-semibold tracking-wider bg-violet-950/50 text-violet-400 border border-violet-900/50 px-1.5 py-0.5 rounded">
-                UNBOUND
-              </span>
-            )}
+      {isCollapsed ? (
+        <div className="my-4 rounded-xl border border-zinc-800 bg-zinc-950/70 backdrop-blur-md overflow-hidden shadow-md flex items-center justify-between p-3.5 transition-all hover:border-zinc-700/40">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+              <Terminal className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs font-mono font-bold text-zinc-300 uppercase tracking-wider">
+                {language || "code"} Source File
+              </div>
+              <div className="text-[10px] text-zinc-500 mt-0.5">
+                {lineCount} lines · {(new TextEncoder().encode(code).length / 1024).toFixed(1)} KB
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             {isHtml && (
-              <>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowPreview(true)}
-                    className="h-7 px-3 text-xs gap-1.5 bg-gradient-to-r from-violet-950/60 to-indigo-950/60 hover:from-violet-900/60 hover:to-indigo-900/60 text-violet-400 hover:text-violet-300 border border-violet-900/40 hover:border-violet-700/60 rounded-lg transition-all shadow-sm font-semibold tracking-wide"
-                  >
-                    <Play className="w-3.5 h-3.5" />
-                    <span>معاينة</span>
-                  </Button>
-                </motion.div>
-                
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={openInNewTab}
-                    className="h-7 px-3 text-xs gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 hover:border-zinc-700 rounded-lg transition-all shadow-sm font-semibold tracking-wide"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>شاشة كاملة</span>
-                  </Button>
-                </motion.div>
-              </>
+              <Button
+                onClick={() => setShowPreview(true)}
+                size="sm"
+                className="h-8 px-3 text-xs gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-lg border-0 shadow-sm font-arabic"
+                dir="rtl"
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span>معاينة الموقع</span>
+              </Button>
             )}
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleCopy}
-              className="h-7 px-2 hover:bg-muted text-muted-foreground hover:text-foreground gap-1.5 text-xs transition-all"
+              onClick={() => setIsCollapsed(false)}
+              className="h-8 px-3 text-xs bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 hover:border-zinc-700 rounded-lg transition-all font-arabic"
+              dir="rtl"
             >
-              {copied ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5" />
-                  <span>Copy</span>
-                </>
-              )}
+              <span>عرض الكود</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDownload}
+              className="h-8 px-3 text-xs gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 hover:border-zinc-700 rounded-lg transition-all font-arabic"
+              dir="rtl"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>تنزيل</span>
             </Button>
           </div>
         </div>
-        <pre className="p-4 overflow-x-auto text-sm font-mono text-emerald-400 leading-relaxed scrollbar-thin scrollbar-thumb-zinc-800">
-          <code>{code}</code>
-        </pre>
-
-        {/* Open Website Button — Bottom Bar for HTML blocks */}
-        {isHtml && (
-          <motion.div
-            className="px-4 py-3 border-t border-border/60 bg-gradient-to-r from-emerald-950/20 via-zinc-950/40 to-teal-950/20 flex items-center justify-between gap-3"
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15, duration: 0.3 }}
-          >
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
-              <Monitor className="w-3.5 h-3.5 text-emerald-500/70" />
-              <span>موقع جاهز للعرض · Ready for preview</span>
-            </div>
-            
+      ) : (
+        <div className="my-6 rounded-xl border border-border overflow-hidden bg-zinc-950 dark:bg-zinc-950/80 shadow-lg">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/60">
             <div className="flex items-center gap-2">
-              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-                <Button
-                  onClick={() => setShowPreview(true)}
-                  className="h-8 px-4 text-xs font-bold gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border-0 rounded-lg shadow-md shadow-emerald-900/30 transition-all"
-                >
-                  <Globe className="w-3.5 h-3.5" />
-                  معاينة الموقع
-                </Button>
-              </motion.div>
-              
-              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-                <Button
-                  onClick={openInNewTab}
-                  className="h-8 px-4 text-xs font-bold gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 rounded-lg shadow-sm transition-all"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  شاشة كاملة
-                </Button>
-              </motion.div>
+              <Terminal className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+              <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">{language || "code"}</span>
+              {isHtml && (
+                <span className="text-[9px] font-semibold tracking-wider bg-violet-950/50 text-violet-400 border border-violet-900/50 px-1.5 py-0.5 rounded">
+                  UNBOUND
+                </span>
+              )}
             </div>
-          </motion.div>
-        )}
-      </div>
+            <div className="flex items-center gap-1.5">
+              {isLargeCode && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsCollapsed(true)}
+                  className="h-7 px-3 text-xs bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 hover:border-zinc-700 rounded-lg transition-all shadow-sm font-arabic"
+                  dir="rtl"
+                >
+                  <span>إخفاء الكود</span>
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDownload}
+                className="h-7 px-3 text-xs gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 hover:border-zinc-700 rounded-lg transition-all shadow-sm font-arabic"
+                dir="rtl"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>تنزيل</span>
+              </Button>
+              {isHtml && (
+                <>
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowPreview(true)}
+                      className="h-7 px-3 text-xs gap-1.5 bg-gradient-to-r from-violet-950/60 to-indigo-950/60 hover:from-violet-900/60 hover:to-indigo-900/60 text-violet-400 hover:text-violet-300 border border-violet-900/40 hover:border-violet-700/60 rounded-lg transition-all shadow-sm font-semibold tracking-wide font-arabic"
+                      dir="rtl"
+                    >
+                      <Play className="w-3.5 h-3.5" />
+                      <span>معاينة</span>
+                    </Button>
+                  </motion.div>
+                  
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={openInNewTab}
+                      className="h-7 px-3 text-xs gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 hover:border-zinc-700 rounded-lg transition-all shadow-sm font-semibold tracking-wide font-arabic"
+                      dir="rtl"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>شاشة كاملة</span>
+                    </Button>
+                  </motion.div>
+                </>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopy}
+                className="h-7 px-2 hover:bg-muted text-muted-foreground hover:text-foreground gap-1.5 text-xs transition-all"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+          <pre className="p-4 overflow-x-auto text-sm font-mono text-emerald-400 leading-relaxed scrollbar-thin scrollbar-thumb-zinc-800">
+            <code>{code}</code>
+          </pre>
+
+          {/* Open Website Button — Bottom Bar for HTML blocks */}
+          {isHtml && (
+            <motion.div
+              className="px-4 py-3 border-t border-border/60 bg-gradient-to-r from-emerald-950/20 via-zinc-950/40 to-teal-950/20 flex items-center justify-between gap-3"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15, duration: 0.3 }}
+            >
+              <div className="flex items-center gap-2 text-xs text-zinc-500">
+                <Monitor className="w-3.5 h-3.5 text-emerald-500/70" />
+                <span>موقع جاهز للعرض · Ready for preview</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+                  <Button
+                    onClick={() => setShowPreview(true)}
+                    className="h-8 px-4 text-xs font-bold gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border-0 rounded-lg shadow-md shadow-emerald-900/30 transition-all font-arabic"
+                    dir="rtl"
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    معاينة الموقع
+                  </Button>
+                </motion.div>
+                
+                <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+                  <Button
+                    onClick={openInNewTab}
+                    className="h-8 px-4 text-xs font-bold gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 rounded-lg shadow-sm transition-all font-arabic"
+                    dir="rtl"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    شاشة كاملة
+                  </Button>
+                </motion.div>
+              </div>
+            </motion.div>
+          )}
+        </div>
+      )}
 
       {/* Web Preview Modal */}
       {showPreview && (
-        <WebPreviewModal html={code} onClose={() => setShowPreview(false)} />
+        <WebPreviewModal html={getBundledHtml()} onClose={() => setShowPreview(false)} />
       )}
     </>
   );
@@ -1296,6 +1457,7 @@ interface ChatMessagesProps {
   isOmniLoading?: boolean;
   isStreaming?: boolean;
   onSelectPrompt?: (prompt: string) => void;
+  unboundState?: UnboundState | null;
 }
 
 const EMPTY_MESSAGES: Message[] = [];
@@ -1306,7 +1468,8 @@ export function ChatMessages({
   omniState, 
   isOmniLoading, 
   isStreaming,
-  onSelectPrompt
+  onSelectPrompt,
+  unboundState,
 }: ChatMessagesProps) {
   const selectedModel = useChatStore((state) => state.selectedModel);
   const isDeepResearch = useFeatureToggleStore((state) => state.deepResearch);
@@ -1615,12 +1778,14 @@ Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) i
                 model={message.model}
                 reasoning={message.reasoningContent}
                 omniState={(message as any).omniState}
+                unboundState={message.model === "apex-unbound" && index === messages.length - 1 ? unboundState : undefined}
               />
             )}
           </motion.div>
         ))}
 
-        {isStreaming && !streamingContent && !streamingReasoning && selectedModel !== "apex-omni" && (
+        {isStreaming && !streamingContent && !streamingReasoning &&
+          selectedModel !== "apex-omni" && selectedModel !== "apex-unbound" && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1629,6 +1794,17 @@ Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) i
             className="flex gap-4"
           >
             <ThinkingBubble isSearch={selectedModel === "apex-elite" || isDeepResearch} />
+          </motion.div>
+        )}
+
+        {/* APEX Unbound: show pipeline card while generating, before streaming content arrives */}
+        {isStreaming && selectedModel === "apex-unbound" && unboundState && !streamingContent && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          >
+            <UnboundStatusCard state={unboundState} />
           </motion.div>
         )}
 
@@ -1643,6 +1819,7 @@ Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) i
               model={selectedModel}
               reasoning={streamingReasoning}
               omniState={selectedModel === "apex-omni" ? (omniState || undefined) : undefined}
+              unboundState={selectedModel === "apex-unbound" ? unboundState : undefined}
               isStreaming
             />
           </motion.div>
@@ -1780,7 +1957,7 @@ const modelColors: Record<string, string> = {
   "apex-pro":     "text-blue-400",
   "apex-elite":   "text-emerald-400",
   "apex-omni":    "text-amber-400",
-  "apex-unbound": "text-rose-400",
+  "apex-unbound": "text-violet-400",
 };
 
 const modelGlows: Record<string, string> = {
@@ -1788,7 +1965,7 @@ const modelGlows: Record<string, string> = {
   "apex-pro":     "shadow-[0_0_12px_rgba(37,99,235,0.35)]",
   "apex-elite":   "shadow-[0_0_12px_rgba(5,150,105,0.45)]",
   "apex-omni":    "shadow-[0_0_12px_rgba(217,119,6,0.35)]",
-  "apex-unbound": "shadow-[0_0_12px_rgba(220,38,38,0.35)]",
+  "apex-unbound": "shadow-[0_0_12px_rgba(139,92,246,0.35)]",
 };
 
 function AssistantMessage({
@@ -1797,12 +1974,14 @@ function AssistantMessage({
   reasoning,
   isStreaming,
   omniState,
+  unboundState,
 }: {
   content: string;
   model?: AIModel;
   reasoning?: string;
   isStreaming?: boolean;
   omniState?: OmniState;
+  unboundState?: UnboundState | null;
 }) {
   const [copied, setCopied] = useState(false);
   const [showReasoning, setShowReasoning] = useState(false);
@@ -1916,7 +2095,13 @@ function AssistantMessage({
           </div>
         )}
 
-        {isUnboundModel && (content.includes("[🤖") || content.includes("<plan>") || isStreaming) && (
+        {unboundState && (
+          <div className="mb-4">
+            <UnboundStatusCard state={unboundState} />
+          </div>
+        )}
+
+        {isUnboundModel && (content.includes("[🤖") || content.includes("<plan>")) && (
           <div className="mb-4 flex flex-col gap-2">
             <UnboundWebGenStatusCard content={content} isStreaming={!!isStreaming} />
             {detectedPlan && (
@@ -2079,7 +2264,7 @@ function AssistantMessage({
                       </tr>
                     );
                   },
-                  td: ({ node, children, align, style, ...props }) => {
+                  td: ({ node, children, align, style, cellIndex, ...props }: any) => {
                     const isRtl = hasArabicText(children);
                     const textAlignment = align || style?.textAlign || (isRtl ? 'right' : 'left');
                     return (
@@ -2115,7 +2300,7 @@ function AssistantMessage({
                     }
 
                     return (
-                      <CodeBlockWrapper language={lang} code={String(children).replace(/\n$/, '')} />
+                      <CodeBlockWrapper language={lang} code={String(children).replace(/\n$/, '')} parentContent={cleanedMarkdown} />
                     );
                   },
                 }}

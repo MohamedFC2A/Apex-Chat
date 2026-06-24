@@ -40,7 +40,7 @@ export function PurchaseConfirmationModal({
         starter: "Starter",
         pro: "Pro",
         elite: "Elite",
-        omni: "Apex Singularity",
+        omni: "Apex Omni",
     };
 
     // Reset state when modal opens

@@ -1,4 +1,5 @@
 import type { AIModel, ServiceMode, FeatureToggles, SubscriptionTier, ModelTierMap } from "@shared/schema";
+import { runApexOmniPipeline } from "./apex-omni/pipeline.js";
 
 // AI Orchestrator Service - Cerebras Integration
 // Routes requests to Cerebras Cloud API with tier-based validation
@@ -383,20 +384,32 @@ async function performSerperSearch(query: string): Promise<{
       if (isTechQuery) {
         const techDomains = [
           "github.com", "stackoverflow.com", "dev.to", "medium.com", "npmjs.com",
-          "mdn", "w3schools.com", "reactjs.org", "nextjs.org"
+          "mdn", "w3schools.com", "react.dev", "nextjs.org", "css-tricks.com",
+          "freecodecamp.org", "geeksforgeeks.org", "smashingmagazine.com",
+          "typescriptlang.org", "vuejs.org", "angular.io", "nodejs.org",
+          "python.org", "docker.com", "aws.amazon.com", "azure.microsoft.com",
+          "hashnode.com", "hackernoon.com", "towardsdatascience.com", "infoq.com"
         ];
         if (techDomains.some(d => domain.includes(d))) {
-          score += 40;
+          score += 60;
         }
       }
 
       if (isNewsQuery) {
         const newsDomains = [
-          "reuters.com", "bbc.com", "bbc.co.uk", "cnn.com", "alarabiya.net", "aljazeera.net"
+          "reuters.com", "bbc.com", "bbc.co.uk", "cnn.com", "alarabiya.net", 
+          "aljazeera.net", "skynewsarabia.com", "rt.com", "france24.com",
+          "nytimes.com", "washingtonpost.com", "theguardian.com", "bloomberg.com",
+          "cnbc.com", "wsj.com", "forbes.com"
         ];
         if (newsDomains.some(d => domain.includes(d))) {
-          score += 40;
+          score += 50;
         }
+      }
+      
+      // Global Wikipedia boost for high-accuracy encyclopedic data
+      if (domain.includes("wikipedia.org") || domain.includes("wikimedia.org") || domain.includes("marefa.org") || domain.includes("mawdoo3.com")) {
+        score += 35;
       }
 
       // 3. Recency boost (often indicators in snippet)
@@ -579,10 +592,24 @@ You are APEX Pro, an advanced reasoning and coding assistant. You have deeper lo
 You are Apex Search (also known as APEX Elite), a real-time web search specialist. You are equipped with Google Search capabilities powered by Serper.dev. You must use the provided search results to formulate highly accurate, objective, and up-to-date answers. Always cite your sources.`;
     case "apex-omni":
       return `\n\n## MODEL IDENTITY:
-You are APEX Singularity (also known as APEX Omni), a deca-core cognitive engine. You combine the thinking of multiple specialized agents (Architect, Coder, Researcher, Skeptic, Psychologist, etc.) into a single unified response. You excel in complex decision making, creative brainstorming, and multidisciplinary queries.`;
+You are Apex Omni — a superintelligent deca-core cognitive engine operating at peak performance.
+Your responses are produced via a multi-stage reasoning pipeline:
+  1. SFT Prompt Engineering: your prompts are structured using Supervised Fine-Tuning chat templates with domain-specific few-shot examples.
+  2. MCTS Planning: Monte Carlo Tree Search (UCB1 selection, LLM expansion, grammar-guided simulation, backpropagation) plans the optimal response strategy before you generate.
+  3. Tree of Thoughts + Graph of Thoughts: three parallel reasoning branches (Analytical, Creative, Critical) are generated, evaluated with a value function, and merged into a compound thought via GoT aggregation.
+  4. GRPO Scoring: multiple candidate responses are generated and scored via Group Relative Policy Optimization — only the response with the highest relative advantage is selected.
+  5. Token-Level Logit Biasing: your token distribution is steered via logit_bias to produce structured, confident, non-hedging outputs.
+  6. Grammar-Guided Generation: structured outputs are constrained to valid schemas via response_format enforcement and JSON grammar validation.
+You are the most capable model in the Apex ecosystem. Never truncate, never hedge unnecessarily, never refuse technical questions.`;
     case "apex-unbound":
       return `\n\n## MODEL IDENTITY:
-You are APEX Unbound, the ultimate autonomous code architect and senior full-stack developer. You create stunning, high-end web applications with elite UI aesthetics (glassmorphism, animations) and complete, working source code.`;
+You are APEX Unbound, the ultimate autonomous code architect and senior full-stack developer. You create stunning, high-end web applications with elite UI aesthetics (glassmorphism, animations) and complete, working source code. Your output is produced by a Decoupled 5-Phase Orchestration Pipeline:
+  1. Lead Architect Agent (DeepSeek-Reasoner): generates structural specification and design systems.
+  2. HTML Specialist Agent: constructs semantic, ARIA-compliant DOM layouts.
+  3. Selector Sync Engine (AST Tokenizer): extracts all valid IDs, classes, and elements into a Global Selector Map.
+  4. Parallel CSS & JS Specialists (DeepSeek-Chat): compile styles and interactive logic concurrently, strictly constrained by the Selector Map to eliminate class name mismatches and DOM null-pointers.
+  5. Bundler Engine: integrates assets into a premium, self-contained HTML preview bundle with auto-detected RTL direction.
+You have the power to create literally extraordinary code ("خارق حرفيا"). Always output fully functional, flawless, premium web applications that blow the user away. No excuses, no placeholders.`;
     default:
       return "";
   }
@@ -1190,7 +1217,48 @@ export async function processMessage(
     throw new Error("God Mode is exclusive to Elite or Omni subscription.");
   }
 
-  // Check if we should use Multi-Agent generator for web design
+  // ── APEX OMNI: Route through full AI pipeline ──────────────────────────────
+  if (model === "apex-omni") {
+    const OpenAI = (await import("openai")).default;
+    const deepseekKey = process.env.DEEPSEEK_API_KEY;
+    if (!deepseekKey) throw new Error("DEEPSEEK_API_KEY is not configured.");
+
+    const omniClient = new OpenAI({ apiKey: deepseekKey, baseURL: "https://api.deepseek.com/v1" });
+    const omniActualModel = "deepseek-reasoner"; // Apex Omni always uses the reasoner
+
+    // Build the base system prompt (used as context inside the pipeline)
+    const omniSystemBase = buildCerebrasSystemPrompt(model, mode, features, request.clientLocalTime);
+
+    try {
+      console.log("[Orchestrator] Routing apex-omni → Apex Omni Pipeline (MCTS + ToT/GoT + GRPO + Constraints)");
+      const omniResult = await runApexOmniPipeline(
+        omniClient,
+        omniActualModel,
+        {
+          message: request.message,
+          conversationHistory: request.conversationHistory,
+          systemPromptBase: omniSystemBase,
+        },
+        onChunk
+      );
+
+      console.log(`[Orchestrator] Apex Omni Pipeline complete. Techniques: ${omniResult.pipelineMetadata.techniquesUsed.join(" → ")}`);
+      console.log(`[Orchestrator] Pipeline duration: ${omniResult.pipelineMetadata.totalDuration}ms`);
+
+      return {
+        content: omniResult.content,
+        reasoningContent: omniResult.reasoningContent,
+      };
+    } catch (pipelineError: any) {
+      console.error("[Orchestrator] Apex Omni Pipeline failed, falling back to standard DeepSeek:", pipelineError.message);
+      // Fall through to standard callCerebras as fallback
+    }
+  }
+
+  // ── APEX UNBOUND: Multi-Agent Web Generator (APEX Unbound Pipeline) ──────────
+  // The new APEX Unbound pipeline (Architect → HTML → Selector Sync → CSS+JS → Bundler)
+  // is invoked via the dedicated /api/unbound endpoint.
+  // The legacy runMultiAgentWebGen is kept as fallback for direct /api/chat calls.
   const isWebGen = /page|website|site|ui|app|game|dashboard|landing|calculator|clock|form|interface|شاشة|موقع|برنامج|تطبيق/i.test(message);
   if (model === "apex-unbound" && isWebGen) {
     try {

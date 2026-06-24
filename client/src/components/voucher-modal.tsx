@@ -54,7 +54,7 @@ export function VoucherModal({ isOpen, onClose, targetTier }: VoucherModalProps)
 
             toast({
                 title: "👑 DIAMOND TIER ACTIVATED",
-                description: "Welcome to The Singularity. All features unlocked.",
+                description: "Welcome to Apex Omni. All features unlocked.",
                 duration: 5000,
             });
             setCode("");
@@ -88,10 +88,10 @@ export function VoucherModal({ isOpen, onClose, targetTier }: VoucherModalProps)
             setCode("");
             onClose();
 
-            // If Singularity tier activated
+            // If Apex Omni tier activated
             if (result.tier === "omni") {
                 toast({
-                    title: "⚡ THE SINGULARITY UNLOCKED",
+                    title: "⚡ APEX OMNI UNLOCKED",
                     description: "God Mode AI activated. Maximum intelligence enabled.",
                     duration: 5000,
                 });
@@ -147,7 +147,7 @@ export function VoucherModal({ isOpen, onClose, targetTier }: VoucherModalProps)
                             <li>• <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-300">STARTER_2025</code> - Starter Tier</li>
                             <li>• <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-300">DEEP_PRO_X</code> - Pro Tier</li>
                             <li>• <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-300">CHAOS_THEORY_100</code> - Elite Tier</li>
-                            <li>• <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-300">OMNI_GENESIS_MAX</code> - Apex Singularity</li>
+                            <li>• <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-300">OMNI_GENESIS_MAX</code> - Apex Omni</li>
                         </ul>
                     </div>
                 </div>

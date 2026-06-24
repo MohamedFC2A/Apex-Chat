@@ -22,6 +22,7 @@ import { extractSourcesAndClean } from "@/lib/sources-helper";
 import { motion, AnimatePresence } from "framer-motion";
 import { sendAIMessage, getAIClientStatus } from "@/lib/ai-client";
 import { processOmniRequest, type OmniState } from "@/lib/omni-service";
+import { runUnboundService, type UnboundState } from "@/lib/unbound-service";
 import type { Message, ChatResponse, AIModel } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
@@ -54,6 +55,21 @@ export default function ChatPage() {
 
   const [omniStateMap, setOmniStateMap] = useState<Record<string, OmniState>>({});
   const omniState = activeConversationId ? omniStateMap[activeConversationId] ?? null : null;
+
+  // APEX Unbound pipeline state
+  const [unboundStateMap, setUnboundStateMap] = useState<Record<string, UnboundState>>({});
+  const unboundState = activeConversationId ? unboundStateMap[activeConversationId] ?? null : null;
+
+  const setUnboundStateForConv = useCallback((convId: string, state: UnboundState | null) => {
+    setUnboundStateMap(prev => {
+      if (state === null) {
+        const next = { ...prev };
+        delete next[convId];
+        return next;
+      }
+      return { ...prev, [convId]: state };
+    });
+  }, []);
 
   const setOmniStateForConv = useCallback((convId: string, state: OmniState | null) => {
     setOmniStateMap(prev => {
@@ -161,6 +177,69 @@ export default function ChatPage() {
           if ((response as any).error) {
             throw new Error((response as any).message || (response as any).error);
           }
+        } else if (selectedModel === "apex-unbound") {
+          // ── APEX Unbound: route through the new multi-agent pipeline ──
+          const initialUnboundState: UnboundState = {
+            isRunning: true,
+            phases: [
+              { phase: 1, name: "Architect Agent — System Specification", status: "pending" },
+              { phase: 2, name: "HTML Agent — Semantic DOM Generation", status: "pending" },
+              { phase: 3, name: "Selector Sync Engine — Token Extraction", status: "pending" },
+              { phase: 4, name: "CSS + JS Agents — Parallel Compilation", status: "pending" },
+              { phase: 5, name: "Bundler Engine — Final Assembly", status: "pending" },
+            ],
+            content: "",
+            error: null,
+            currentPhase: 0,
+          };
+          setUnboundStateForConv(thisConvId, initialUnboundState);
+
+          let unboundContent = "";
+          try {
+            unboundContent = await runUnboundService(
+              content,
+              existingMessages.map(m => ({ role: m.role, content: m.content })),
+              (state) => setUnboundStateForConv(thisConvId, state),
+              (chunk, isReplace) => {
+                if (isReplace) {
+                  setStreamingContent(chunk);
+                } else {
+                  setStreamingContent(prev => prev + chunk);
+                }
+              }
+            );
+          } catch (unboundErr: any) {
+            // Fall back to standard sendAIMessage if pipeline fails
+            console.warn("[Unbound] Pipeline failed, falling back:", unboundErr.message);
+            response = await sendAIMessage(
+              content,
+              selectedModel,
+              existingMessages,
+              serviceMode,
+              true,
+              features,
+              reasoningLevel,
+              (chunkText, chunkReasoning) => {
+                setStreamingContent(chunkText);
+                setStreamingReasoning(chunkReasoning);
+              },
+              userMemoryContext
+            );
+            if ((response as any).error) throw new Error((response as any).message || (response as any).error);
+          }
+
+          const unboundMessage: Message = {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: unboundContent || streamingContent,
+            model: selectedModel,
+            timestamp: Date.now(),
+          };
+          addMessage(thisConvId!, unboundMessage);
+          setIsGenerating(false);
+          setStreamingContent("");
+          setStreamingReasoning("");
+          return;
         } else {
           response = await sendAIMessage(
             content,
@@ -216,7 +295,7 @@ export default function ChatPage() {
         }
       }
     },
-    [activeConversationId, createConversation, addMessage, selectedModel, serviceMode, tier, features, setIsGenerating, toast, setLocation, reasoningLevel, setOmniStateForConv]
+    [activeConversationId, createConversation, addMessage, selectedModel, serviceMode, tier, features, setIsGenerating, toast, setLocation, reasoningLevel, setOmniStateForConv, setUnboundStateForConv]
   );
 
   const handleStopGenerating = useCallback(() => {
@@ -308,6 +387,7 @@ export default function ChatPage() {
           isOmniLoading={selectedModel === "apex-omni" && !!omniState && omniState.step !== "complete"}
           isStreaming={isGenerating}
           onSelectPrompt={handleSendMessage}
+          unboundState={unboundState}
         />
       </div>
 

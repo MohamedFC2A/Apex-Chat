@@ -1,0 +1,121 @@
+/**
+ * APEX Unbound — Phase 4: JS Agent
+ *
+ * Generates clean, modern JavaScript strictly constrained by the GlobalSelectorMap.
+ * Event listeners are bound ONLY to verified IDs.
+ * Eliminates all "undefined" target exceptions.
+ *
+ * Features: ES6+, defensive null-checks, smooth animations, state management.
+ */
+
+import OpenAI from "openai";
+import type { SystemSpec } from "./architect-agent.js";
+import type { GlobalSelectorMap } from "./selector-sync-engine.js";
+import { buildSelectorConstraintPrompt, validateAgainstSelectorMap } from "./selector-sync-engine.js";
+
+export async function runJsAgent(
+  client: OpenAI,
+  model: string,
+  userMessage: string,
+  spec: SystemSpec,
+  selectorMap: GlobalSelectorMap,
+  htmlCode: string,
+  onStatus?: (msg: string) => void
+): Promise<string> {
+  onStatus?.("[JS Agent] Generating interactive logic (constrained by selector map)...");
+
+  const constraintBlock = buildSelectorConstraintPrompt(selectorMap);
+
+  const interactiveList = selectorMap.interactiveElements
+    .map((t) => `${t.cssSelector} (${t.elements.join("/")} element)`)
+    .join("\n  ");
+
+  const systemPrompt = `You are the APEX Unbound JavaScript Specialist Agent. Your role is to write modern, defensive ES6+ JavaScript that binds to ONLY verified DOM elements.
+
+${constraintBlock}
+
+INTERACTIVE ELEMENTS (bind event listeners ONLY to these):
+  ${interactiveList || "(none identified — use data-* attributes for delegation)"}
+
+JAVASCRIPT QUALITY RULES:
+1. Always use const/let — never var.
+2. ALL DOM queries MUST use null-checks: const el = document.getElementById('id'); if (!el) return;
+3. Use addEventListener — never inline onclick.
+4. Use DOMContentLoaded wrapper for all initialization code.
+5. Use modern APIs: IntersectionObserver for scroll-reveal animations (automatically adding the ".active" or ".show-animation" class when cards enter the viewport), CSS custom properties via style.setProperty(), and smooth scrollTo.
+6. Central State Management: Use a single structured plain JS object (e.g., const state = { currentSlide: 0, activeTab: 'all', searchQuery: '', isModalOpen: false }) to coordinate clicks, scroll positions, active tabs, and modal overlays.
+7. Smooth animations: Prefer CSS class toggling over direct style manipulation to ensure hardware-accelerated transitions. Add dynamic micro-interactions (e.g., header shadow and background glass-blur change on scroll, dynamic card transforms). Implement advanced Vanilla JS 3D Tilt effects on premium cards (track mousemove, calculate bounding rect, apply transform: perspective(1000px) rotateX(...) rotateY(...) scale3d(1.02, 1.02, 1.02)) to emulate Stripe/Apple quality interactivity. Use requestAnimationFrame for scroll/mouse event handlers to guarantee 60fps performance.
+8. Form handlers & Modals: Implement robust, beautiful client-side validation (e.g., validating email formats, non-empty textareas) with clear visual error feedback (e.g., toggling ".is-invalid" class). On successful submit, show a loading spinner on the submit button, wait 1.5 seconds, then open a custom success modal dialog.
+9. Fully-Featured Interactivity: You MUST write complete, production-grade, functional implementations for all planned interactive UI elements. Absolutely NO placeholder stubs, NO mock comments, and NO "// TODO" lines.
+   - Testimonial/Hero Carousels: Implement automatic slide transitions using setInterval. Pause autoplay when the user hovers (mouseenter) and resume on mouseleave. Support dot indicators and next/prev arrow clicks. Detect touch/swipe events (touchstart, touchmove, touchend) to calculate delta X and navigate slides. Implement defensive boundary wrapping. Calculate negative translate values correctly in RTL layouts (check if document.documentElement.dir === 'rtl' or isRTL).
+   - Combined Tab Filter & Live Search: Create a unified filtering function. When a user changes category tabs or types in the live search input, filter elements dynamically: show an item ONLY if it matches BOTH the active category tab AND the search query (case-insensitive title/content match). Toggle visibility smoothly using opacity/scale transition classes.
+   - Modal Controls: Modal overlays must open with scale/opacity fade-in transitions. Close modals when clicking the close button, clicking anywhere outside the modal content box, or pressing the Escape key. Lock body scroll when a modal is active (document.body.style.overflow = 'hidden') and restore it upon closing.
+10. LocalStorage Support: Persist key preferences or choices (e.g., user theme preference or recent search query) using localStorage.getItem/setItem.
+11. Performance: Debounce window scroll/resize events.
+12. Accessibility: Ensure complete keyboard navigation (e.g., allowing Tab index navigation and Space/Enter trigger activation on elements).
+${spec.isRTL ? "13. RTL awareness: handle direction-sensitive transitions, slide offsets, or slide directions (e.g., negative translate values in RTL)." : ""}
+
+FEATURES TO IMPLEMENT (based on spec):
+${spec.features.map((f) => `- ${f}`).join("\n")}
+
+REFERENCE HTML STRUCTURE (first 3000 chars):
+${htmlCode.slice(0, 3000)}
+
+OUTPUT RULES:
+1. Output ONLY raw JavaScript — no markdown, no backticks, no explanation.
+2. Wrap ALL code inside a DOMContentLoaded event listener.
+3. Add JSDoc comments for each function.
+4. Handle all null cases defensively before using any DOM element.
+5. Do NOT import any external libraries (use vanilla JS only).`;
+
+  const userPrompt = `Generate complete JavaScript for: "${userMessage}"
+Implement all interactive features from the spec. Strictly follow the Global Selector Map.`;
+
+  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userPrompt },
+  ];
+
+  const completionArgs: any = {
+    model,
+    messages,
+    max_tokens: 6000,
+    stream: false,
+  };
+  if (model !== "deepseek-reasoner") {
+    completionArgs.temperature = 0.2;
+  }
+
+  const response = await client.chat.completions.create(completionArgs);
+
+  let js = response.choices[0]?.message?.content || "";
+
+  // Strip markdown fencing
+  js = js
+    .replace(/^```javascript\s*/i, "")
+    .replace(/^```js\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```\s*$/i, "")
+    .trim();
+
+  // Ensure it's wrapped in DOMContentLoaded if not already
+  if (!js.includes("DOMContentLoaded") && js.length > 10) {
+    js = `document.addEventListener('DOMContentLoaded', function() {\n${js}\n});`;
+  }
+
+  // Validate against selector map
+  const validation = validateAgainstSelectorMap(js, selectorMap, "js");
+  if (!validation.valid) {
+    console.warn(`[JS Agent] Selector violations detected (${validation.violations.length}):`, validation.violations.slice(0, 5));
+  } else {
+    console.log("[JS Agent] Selector validation PASSED — all JS selectors verified against DOM");
+  }
+
+  onStatus?.(
+    `[JS Agent] Logic complete — ${(js.length / 1024).toFixed(1)}KB${
+      validation.violations.length > 0 ? ` (${validation.violations.length} selector warnings)` : " (0 selector violations)"
+    }`
+  );
+
+  return js;
+}
