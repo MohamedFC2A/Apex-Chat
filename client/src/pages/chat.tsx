@@ -486,7 +486,7 @@ export default function ChatPage() {
           <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
 
             {/* Left: sidebar toggle + logo + model */}
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex flex-1 items-center gap-2 min-w-0">
               {/* Always show on mobile, show only when closed on desktop */}
               {(!sidebarOpen) && (
                 <motion.div
@@ -513,7 +513,9 @@ export default function ChatPage() {
                 </div>
               </div>
 
-              <ModelSelector selectedModel={selectedModel} onSelectModel={handleModelSelect} />
+              <div className="flex-1 min-w-0 sm:flex-none sm:min-w-[200px]">
+                <ModelSelector selectedModel={selectedModel} onSelectModel={handleModelSelect} />
+              </div>
             </div>
 
             {/* Right: live status + theme */}

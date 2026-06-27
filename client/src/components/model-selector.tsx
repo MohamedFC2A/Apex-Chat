@@ -1,5 +1,4 @@
 import { useSubscriptionStore } from "@/lib/subscription-store";
-import { useFeatureToggleStore } from "@/lib/feature-toggle-store";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,7 +22,6 @@ interface ModelSelectorProps {
 export function ModelSelector({ selectedModel, onSelectModel }: ModelSelectorProps) {
   const { canAccessModel, tier } = useSubscriptionStore();
   const [isOpen, setIsOpen] = useState(false);
-  const [shakingModel, setShakingModel] = useState<AIModel | null>(null);
   
   const currentModelInfo = MODEL_INFO[selectedModel];
   const Icon = selectedModel === "apex-omni" ? InfinityIcon : (currentModelInfo?.icon || Zap);
@@ -34,11 +32,6 @@ export function ModelSelector({ selectedModel, onSelectModel }: ModelSelectorPro
   const eliteModels: AIModel[] = MODELS.filter((m) => MODEL_TIER_MAP[m] === "elite");
   const proModels: AIModel[] = MODELS.filter((m) => MODEL_TIER_MAP[m] === "pro");
   const starterModels: AIModel[] = MODELS.filter((m) => MODEL_TIER_MAP[m] === "starter");
-
-  const handleLockedModelClick = (model: AIModel) => {
-    setShakingModel(model);
-    setTimeout(() => setShakingModel(null), 500);
-  };
 
   const getButtonStyles = () => {
     if (selectedModel === "apex-unbound") {
@@ -90,7 +83,7 @@ export function ModelSelector({ selectedModel, onSelectModel }: ModelSelectorPro
         >
           <Button 
             variant="outline" 
-            className={`gap-1.5 md:gap-2 min-w-0 md:min-w-[200px] max-w-[160px] md:max-w-none relative overflow-hidden transition-all duration-300 ${currentStyles.button} ${
+            className={`model-selector-btn w-full justify-start gap-1.5 sm:gap-2 min-w-0 sm:min-w-[200px] relative overflow-hidden whitespace-nowrap transition-all duration-300 ${currentStyles.button} ${
               isFreeTier && selectedModel === "apex-flash" ? "shimmer-button" : ""
             }`}
           >
@@ -107,20 +100,20 @@ export function ModelSelector({ selectedModel, onSelectModel }: ModelSelectorPro
                 }}
               />
             )}
-            <Icon className={`w-4 h-4 z-10 ${currentStyles.iconColor || "text-foreground"}`} />
-            <span className={`flex-1 text-left truncate z-10 ${currentStyles.text}`}>
+            <Icon className={`w-4 h-4 shrink-0 z-10 ${currentStyles.iconColor || "text-foreground"}`} />
+            <span className={`flex-1 min-w-0 text-left truncate z-10 ${currentStyles.text}`}>
               {selectedModel === "apex-omni" ? "APEX OMNI" : (currentModelInfo?.name || "Select Model")}
             </span>
             {isGodModeModel && (
               <motion.span
                 animate={{ scale: [1, 1.05, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="text-[9px] font-semibold tracking-wider bg-violet-950/50 text-violet-400 border border-violet-900/50 px-1.5 py-0.5 rounded z-10"
+                className="hidden sm:inline-flex text-[9px] font-semibold tracking-wider bg-violet-950/50 text-violet-400 border border-violet-900/50 px-1.5 py-0.5 rounded z-10"
               >
                 CODE·AI
               </motion.span>
             )}
-            <ChevronDown className={`w-4 h-4 z-10 ${currentStyles.iconColor || "text-foreground"}`} />
+            <ChevronDown className={`w-4 h-4 shrink-0 z-10 ${currentStyles.iconColor || "text-foreground"}`} />
           </Button>
         </motion.div>
       </DropdownMenuTrigger>
@@ -135,7 +128,8 @@ export function ModelSelector({ selectedModel, onSelectModel }: ModelSelectorPro
             <DropdownMenuContent
               forceMount
               align="start"
-              className="w-[min(280px,calc(100vw-2rem))] bg-popover border border-border rounded-xl shadow-xl"
+              sideOffset={8}
+              className="w-[min(24rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] max-h-[min(75vh,32rem)] overscroll-contain bg-popover border border-border rounded-xl shadow-xl p-1.5"
             >
           {/* Apex Omni - Ultimate Tier */}
           <DropdownMenuLabel className="text-yellow-600 dark:text-yellow-500 text-xs tracking-wide bg-gradient-to-r from-amber-500/10 to-transparent px-3 py-2">
@@ -156,11 +150,11 @@ export function ModelSelector({ selectedModel, onSelectModel }: ModelSelectorPro
                   isSelected ? "bg-accent" : ""
                 } ${!canAccess ? "opacity-50" : ""}`}
               >
-                <div className="flex items-center gap-2 w-full">
+                <div className="flex items-start gap-2 w-full">
                   <ModelIcon className={`w-4 h-4 shrink-0 ${canAccess ? "text-amber-500 dark:text-amber-400" : "text-muted-foreground"}`} />
                   <div className="flex-1 min-w-0">
-                    <div className={`text-sm font-medium truncate ${canAccess ? "text-amber-600 dark:text-amber-300" : "text-foreground"}`}>{info.name}</div>
-                    <div className="text-xs text-muted-foreground truncate">{info.subtitle}</div>
+                    <div className={`text-sm font-medium leading-5 break-words whitespace-normal ${canAccess ? "text-amber-600 dark:text-amber-300" : "text-foreground"}`}>{info.name}</div>
+                    <div className="text-xs text-muted-foreground leading-4 break-words whitespace-normal">{info.subtitle}</div>
                   </div>
                   {!canAccess && <Lock className="w-3 h-3 shrink-0 text-muted-foreground" />}
                 </div>
@@ -187,11 +181,11 @@ export function ModelSelector({ selectedModel, onSelectModel }: ModelSelectorPro
                   isSelected ? "bg-accent" : ""
                 }`}
               >
-                <div className="flex items-center gap-2 w-full">
+                <div className="flex items-start gap-2 w-full">
                   <ModelIcon className="w-4 h-4 shrink-0 text-foreground" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate text-foreground">{info.name}</div>
-                    <div className="text-xs text-muted-foreground truncate">{info.subtitle}</div>
+                    <div className="text-sm font-medium leading-5 break-words whitespace-normal text-foreground">{info.name}</div>
+                    <div className="text-xs text-muted-foreground leading-4 break-words whitespace-normal">{info.subtitle}</div>
                   </div>
                   {!canAccess && <Lock className="w-3 h-3 shrink-0 text-muted-foreground" />}
                 </div>
@@ -216,11 +210,11 @@ export function ModelSelector({ selectedModel, onSelectModel }: ModelSelectorPro
                   isSelected ? "bg-accent" : ""
                 }`}
               >
-                <div className="flex items-center gap-2 w-full">
+                <div className="flex items-start gap-2 w-full">
                   <ModelIcon className="w-4 h-4 shrink-0 text-foreground" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate text-foreground">{info.name}</div>
-                    <div className="text-xs text-muted-foreground truncate">{info.subtitle}</div>
+                    <div className="text-sm font-medium leading-5 break-words whitespace-normal text-foreground">{info.name}</div>
+                    <div className="text-xs text-muted-foreground leading-4 break-words whitespace-normal">{info.subtitle}</div>
                   </div>
                   {!canAccess && <Lock className="w-3 h-3 shrink-0 text-muted-foreground" />}
                 </div>
@@ -243,11 +237,11 @@ export function ModelSelector({ selectedModel, onSelectModel }: ModelSelectorPro
                   isSelected ? "bg-accent" : ""
                 }`}
               >
-                <div className="flex items-center gap-2 w-full">
+                <div className="flex items-start gap-2 w-full">
                   <ModelIcon className="w-4 h-4 shrink-0 text-foreground" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate text-foreground">{info.name}</div>
-                    <div className="text-xs text-muted-foreground truncate">{info.subtitle}</div>
+                    <div className="text-sm font-medium leading-5 break-words whitespace-normal text-foreground">{info.name}</div>
+                    <div className="text-xs text-muted-foreground leading-4 break-words whitespace-normal">{info.subtitle}</div>
                   </div>
                 </div>
               </DropdownMenuItem>
