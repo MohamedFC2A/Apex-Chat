@@ -1,0 +1,78 @@
+Browserslist: browsers data (caniuse-lite) is 8 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+[1m[33mwarn[39m[22m - The class `duration-[1500ms]` is ambiguous and matches multiple utilities.
+[1m[33mwarn[39m[22m - If this is content and not a class, replace it with `duration-&lsqb;1500ms&rsqb;` to silence this warning.
+
+[1m[33mwarn[39m[22m - The class `duration-[2000ms]` is ambiguous and matches multiple utilities.
+[1m[33mwarn[39m[22m - If this is content and not a class, replace it with `duration-&lsqb;2000ms&rsqb;` to silence this warning.
+
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+[2m4:56:15 AM[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\client\src\components\mcq-quiz-widget.tsx: Unexpected token, expected "," (288:24)
+
+[0m [90m 286 |[31m     }
+ [90m 287 |[31m
+[31m[1m>[22m[31m[90m 288 |[31m     setCurrentIndex((v  [36mif[31m (reviewMode) {
+ [90m     |[31m                         [31m[1m^[22m[31m
+ [90m 289 |[31m     [36mreturn[31m (
+ [90m 290 |[31m       [33m<[31m[33mdiv[31m className[33m=[31m[32m"w-full my-4 space-y-4"[31m dir[33m=[31m{isRtl [33m?[31m [32m"rtl"[31m [33m:[31m [32m"ltr"[31m}[33m>[31m
+ [90m 291 |[31m         [33m<[31m[33mdiv[31m className[33m=[31m[32m"mb-5 flex flex-wrap items-center justify-between gap-3"[31m[33m>[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/client/src/components/mcq-quiz-widget.tsx[39m:288:24
+[33m  286|      }
+  287|  
+  288|      setCurrentIndex((v  if (reviewMode) {
+     |                          ^
+  289|      return (
+  290|        <div className="w-full my-4 space-y-4" dir={isRtl ? "rtl" : "ltr"}>[39m
+      at toParseError (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parse-error.ts:95:45)
+      at TypeScriptParserMixin.raise (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\tokenizer\index.ts:1503:19)
+      at TypeScriptParserMixin.unexpected (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\tokenizer\index.ts:1543:16)
+      at TypeScriptParserMixin.expect (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\util.ts:157:12)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:1789:14)
+      at TypeScriptParserMixin.parseExprAtom (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:1162:21)
+      at TypeScriptParserMixin.parseExprAtom (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\plugins\jsx\index.ts:583:22)
+      at TypeScriptParserMixin.parseExprSubscripts (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:734:23)
+      at TypeScriptParserMixin.parseUpdate (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:713:21)
+      at TypeScriptParserMixin.parseMaybeUnary (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:675:23)
+      at TypeScriptParserMixin.parseMaybeUnary (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\plugins\typescript\index.ts:3855:20)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:409:14)
+      at TypeScriptParserMixin.parseExprOps (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:421:23)
+      at TypeScriptParserMixin.parseMaybeConditional (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:376:23)
+      at TypeScriptParserMixin.parseMaybeAssign (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:301:21)
+      at TypeScriptParserMixin.parseMaybeAssign (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\plugins\typescript\index.ts:3727:22)
+      at callback (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:257:12)
+      at TypeScriptParserMixin.allowInAnd (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:3192:12)
+      at TypeScriptParserMixin.parseMaybeAssignAllowIn (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:256:17)
+      at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:3306:17)
+      at TypeScriptParserMixin.parseExprListItem (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:2788:18)
+      at TypeScriptParserMixin.parseCallExpressionArguments (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:1034:14)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:914:29)
+      at TypeScriptParserMixin.parseSubscript (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:796:19)
+      at TypeScriptParserMixin.parseSubscript (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\plugins\typescript\index.ts:2850:20)
+      at TypeScriptParserMixin.parseSubscripts (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:755:19)
+      at TypeScriptParserMixin.parseExprSubscripts (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:740:17)
+      at TypeScriptParserMixin.parseUpdate (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:713:21)
+      at TypeScriptParserMixin.parseMaybeUnary (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:675:23)
+      at TypeScriptParserMixin.parseMaybeUnary (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\plugins\typescript\index.ts:3855:20)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:409:14)
+      at TypeScriptParserMixin.parseExprOps (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:421:23)
+      at TypeScriptParserMixin.parseMaybeConditional (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:376:23)
+      at TypeScriptParserMixin.parseMaybeAssign (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:301:21)
+      at TypeScriptParserMixin.parseMaybeAssign (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\plugins\typescript\index.ts:3727:22)
+      at TypeScriptParserMixin.parseExpressionBase (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:226:23)
+      at callback (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:217:39)
+      at TypeScriptParserMixin.allowInAnd (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:3187:16)
+      at TypeScriptParserMixin.parseExpression (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:217:17)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\statement.ts:683:23)
+      at TypeScriptParserMixin.parseStatementContent (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\plugins\typescript\index.ts:3185:20)
+      at TypeScriptParserMixin.parseStatementLike (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\statement.ts:477:17)
+      at TypeScriptParserMixin.parseStatementListItem (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\statement.ts:426:17)
+      at TypeScriptParserMixin.parseBlockOrModuleBlockBody (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\statement.ts:1439:16)
+      at TypeScriptParserMixin.parseBlockBody (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\statement.ts:1412:10)
+      at TypeScriptParserMixin.parseBlock (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\statement.ts:1380:10)
+      at TypeScriptParserMixin.parseFunctionBody (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:2616:24)
+      at TypeScriptParserMixin.parseArrowExpression (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:2553:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:1837:12)
+      at TypeScriptParserMixin.parseExprAtom (C:\Users\Mo_Matany\Downloads\Apex-Chat\Apex-Chat\node_modules\@babel\parser\src\parser\expression.ts:1162:21)

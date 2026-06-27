@@ -111,6 +111,7 @@ export const messageSchema = z.object({
   id: z.string(),
   role: z.enum(MessageRoles),
   content: z.string(),
+  contextContent: z.string().optional(),
   model: z.enum(AIModels).optional(),
   reasoningContent: z.string().optional(),
   timestamp: z.number(),
@@ -152,6 +153,9 @@ export const chatRequestSchema = z.object({
   userMemoryContext: z.array(z.object({
     title: z.string(),
     lastQuery: z.string(),
+    summary: z.string().optional(),
+    relevance: z.number().optional(),
+    updatedAt: z.number().optional(),
   })).optional(),
   clientLocalTime: z.string().optional(),
   stream: z.boolean().optional(),

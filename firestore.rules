@@ -34,9 +34,13 @@ service cloud.firestore {
       // 1. المستخدم مسجل دخول
       // 2. الكود لسه active (قبل التعديل)
       // 3. المستخدم مش موجود في usedBy (قبل التعديل)
+      // 4. عدم التلاعب بقيمة الكارت أو الكود أو عدد الاستخدامات الأقصى (حماية ضد الثغرات)
       allow update: if request.auth != null 
                     && resource.data.status == 'active'
-                    && !(request.auth.uid in resource.data.get('usedBy', []));
+                    && !(request.auth.uid in resource.data.get('usedBy', []))
+                    && request.resource.data.amount == resource.data.amount
+                    && request.resource.data.code == resource.data.code
+                    && request.resource.data.maxUses == resource.data.maxUses;
       
       // ❌ منع الحذف نهائياً
       allow delete: if false;

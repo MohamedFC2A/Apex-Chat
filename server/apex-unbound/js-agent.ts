@@ -12,6 +12,7 @@ import OpenAI from "openai";
 import type { SystemSpec } from "./architect-agent.js";
 import type { GlobalSelectorMap } from "./selector-sync-engine.js";
 import { buildSelectorConstraintPrompt, validateAgainstSelectorMap } from "./selector-sync-engine.js";
+import { getDeepSeekRequestParams } from "../deepseek-model-router.js";
 
 export async function runJsAgent(
   client: OpenAI,
@@ -46,14 +47,26 @@ JAVASCRIPT QUALITY RULES:
 6. Central State Management: Use a single structured plain JS object (e.g., const state = { currentSlide: 0, activeTab: 'all', searchQuery: '', isModalOpen: false }) to coordinate clicks, scroll positions, active tabs, and modal overlays.
 7. Smooth animations: Prefer CSS class toggling over direct style manipulation to ensure hardware-accelerated transitions. Add dynamic micro-interactions (e.g., header shadow and background glass-blur change on scroll, dynamic card transforms). Implement advanced Vanilla JS 3D Tilt effects on premium cards (track mousemove, calculate bounding rect, apply transform: perspective(1000px) rotateX(...) rotateY(...) scale3d(1.02, 1.02, 1.02)) to emulate Stripe/Apple quality interactivity. Use requestAnimationFrame for scroll/mouse event handlers to guarantee 60fps performance.
 8. Form handlers & Modals: Implement robust, beautiful client-side validation (e.g., validating email formats, non-empty textareas) with clear visual error feedback (e.g., toggling ".is-invalid" class). On successful submit, show a loading spinner on the submit button, wait 1.5 seconds, then open a custom success modal dialog.
-9. Fully-Featured Interactivity: You MUST write complete, production-grade, functional implementations for all planned interactive UI elements. Absolutely NO placeholder stubs, NO mock comments, and NO "// TODO" lines.
-   - Testimonial/Hero Carousels: Implement automatic slide transitions using setInterval. Pause autoplay when the user hovers (mouseenter) and resume on mouseleave. Support dot indicators and next/prev arrow clicks. Detect touch/swipe events (touchstart, touchmove, touchend) to calculate delta X and navigate slides. Implement defensive boundary wrapping. Calculate negative translate values correctly in RTL layouts (check if document.documentElement.dir === 'rtl' or isRTL).
-   - Combined Tab Filter & Live Search: Create a unified filtering function. When a user changes category tabs or types in the live search input, filter elements dynamically: show an item ONLY if it matches BOTH the active category tab AND the search query (case-insensitive title/content match). Toggle visibility smoothly using opacity/scale transition classes.
-   - Modal Controls: Modal overlays must open with scale/opacity fade-in transitions. Close modals when clicking the close button, clicking anywhere outside the modal content box, or pressing the Escape key. Lock body scroll when a modal is active (document.body.style.overflow = 'hidden') and restore it upon closing.
+9. Fully-Featured Interactivity & Mandatory Click/Event Actions: You MUST write complete, production-grade, functional implementations for all planned interactive UI elements and EVERY SINGLE button in the HTML document. There must be 0 mock buttons or placeholders, and NO "// TODO" lines. If a button exists, it MUST have a registered click or submit handler that performs a visible, real action:
+   - Navigation & Scroll buttons: Must perform smooth scrolling to their targeted sections (e.g., using element.scrollIntoView({ behavior: 'smooth' })).
+   - Toggles & Status buttons: Must toggle active states visually (e.g. adding active classes, changing styles, updating text descriptions).
+   - Carousel & slider controls: Implement automatic slide transitions using setInterval. Pause autoplay when the user hovers (mouseenter) and resume on mouseleave. Support dot indicators and next/prev arrow clicks. Detect touch/swipe events (touchstart, touchmove, touchend) to calculate delta X and navigate slides. Implement defensive boundary wrapping. Calculate negative translate values correctly in RTL layouts (check if document.documentElement.dir === 'rtl' or isRTL).
+   - Filter tabs & Live search: Create a unified filtering function. When a user changes category tabs or types in the live search input, filter elements dynamically: show an item ONLY if it matches BOTH the active category tab AND the search query (case-insensitive title/content match). Toggle visibility smoothly using opacity/scale transition classes.
+   - Modal overlays & trigger buttons: Modal overlays must open with scale/opacity fade-in transitions. Close modals when clicking the close button, clicking anywhere outside the modal content box, or pressing the Escape key. Lock body scroll when a modal is active (document.body.style.overflow = 'hidden') and restore it upon closing.
 10. LocalStorage Support: Persist key preferences or choices (e.g., user theme preference or recent search query) using localStorage.getItem/setItem.
 11. Performance: Debounce window scroll/resize events.
 12. Accessibility: Ensure complete keyboard navigation (e.g., allowing Tab index navigation and Space/Enter trigger activation on elements).
-${spec.isRTL ? "13. RTL awareness: handle direction-sensitive transitions, slide offsets, or slide directions (e.g., negative translate values in RTL)." : ""}
+13. Multi-Page Client-Side Router: You MUST implement a hash-based single-bundle router:
+   - Use the planned pages: ${(spec.pages || []).map((page) => `#${page.id} -> #view-${page.id}`).join(", ") || "#home -> #view-home"}.
+   - Listen to hashchange and click events on [data-route].
+   - Update window.location.hash when route links are clicked.
+   - Toggle page views using ".page-view", "${spec.uiStateContract?.activeClass || "is-active"}", and "${spec.uiStateContract?.hiddenClass || "is-hidden"}".
+   - Toggle route link active state using ".route-link" and "${spec.uiStateContract?.activeClass || "is-active"}".
+   - Fall back to the first page when the hash is empty or unknown.
+   - Never throw if a page view or route link is missing.
+14. UI State & Event Contract: Follow this contract literally:
+${JSON.stringify(spec.uiStateContract || {}, null, 2)}
+${spec.isRTL ? "15. RTL awareness: handle direction-sensitive transitions, slide offsets, or slide directions (e.g., negative translate values in RTL)." : ""}
 
 FEATURES TO IMPLEMENT (based on spec):
 ${spec.features.map((f) => `- ${f}`).join("\n")}
@@ -66,7 +79,8 @@ OUTPUT RULES:
 2. Wrap ALL code inside a DOMContentLoaded event listener.
 3. Add JSDoc comments for each function.
 4. Handle all null cases defensively before using any DOM element.
-5. Do NOT import any external libraries (use vanilla JS only).`;
+5. Do NOT import any external libraries (use vanilla JS only).
+6. Write a complete, highly-detailed vanilla JS application. Support comprehensive state management, event listeners for every single button and interactive element, touch carousel handlers, scroll animations, dynamic 3D tilt effects, local storage settings, form validations, search filter algorithms. The JS code must be fully realized, extensive, and easily exceed thousands of lines without using any shorthand, mock comments, or "// TODO" sections. All buttons in the document must have complete functionality. Let it exceed thousands of lines to ensure maximum feature density.`;
 
   const userPrompt = `Generate complete JavaScript for: "${userMessage}"
 Implement all interactive features from the spec. Strictly follow the Global Selector Map.`;
@@ -79,12 +93,10 @@ Implement all interactive features from the spec. Strictly follow the Global Sel
   const completionArgs: any = {
     model,
     messages,
-    max_tokens: 6000,
+    max_tokens: 12000,
     stream: false,
+    ...getDeepSeekRequestParams(model, 0.2),
   };
-  if (model !== "deepseek-reasoner") {
-    completionArgs.temperature = 0.2;
-  }
 
   const response = await client.chat.completions.create(completionArgs);
 

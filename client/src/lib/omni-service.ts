@@ -172,72 +172,87 @@ export async function processOmniRequest(
   
   const agentTypes = Object.keys(AGENT_CONFIGS) as (keyof typeof AGENT_CONFIGS)[];
   
-  // PERFORMANCE OPTIMIZED: Fast parallel execution with 15s timeout
-  const agentPromises = agentTypes.map(async (agentType, index) => {
-    const minDisplayTime = delay(800); // Reduced from 1.5s for speed
-    
-    currentState = {
-      ...currentState,
-      agents: {
-        ...currentState.agents,
-        [agentType]: {
-          ...currentState.agents[agentType],
-          status: "drafting",
-          draft: `Analyzing via ${AGENT_CONFIGS[agentType].name}...`,
-        },
-      },
-    };
-    onStateUpdate(currentState);
-    
-    try {
-      // 15s timeout race condition
-      const timeout = delay(15000).then(() => "__TIMEOUT__");
-      const responseOrTimeout = await Promise.race([
-        callAgent(agentType, message, conversationHistory),
-        timeout,
-      ]);
-      
-      await minDisplayTime;
-      
-      const response = responseOrTimeout === "__TIMEOUT__" ? "" : (responseOrTimeout as string);
-      
-      currentState = {
-        ...currentState,
-        agents: {
-          ...currentState.agents,
-          [agentType]: {
-            ...currentState.agents[agentType],
-            status: "complete",
-            draft: response ? response.substring(0, 60) + "..." : "Timeout",
-            response,
-          },
-        },
-      };
-      onStateUpdate(currentState);
-      
-      return { agentType, response };
-    } catch (error) {
-      await minDisplayTime;
-      currentState = {
-        ...currentState,
-        agents: {
-          ...currentState.agents,
-          [agentType]: {
-            ...currentState.agents[agentType],
-            status: "complete",
-            draft: "Unavailable",
-            response: "",
-          },
-        },
-      };
-      onStateUpdate(currentState);
-      return { agentType, response: "" };
-    }
-  });
+  const agentResults: Array<{ agentType: string; response: string }> = [];
   
-  // Execute all agents in parallel
-  const settled = await Promise.allSettled(agentPromises);
-  const agentResults = settled.map((s) => (s.status === "fulfilled" ? s.value : { agentType: "unknown", response: "" }));
+  // Execute in batches of 5 to avoid browser's 6-connection queue stalling limit
+  const batchSize = 5;
+  for (let i = 0; i < agentTypes.length; i += batchSize) {
+    const batch = agentTypes.slice(i, i + batchSize);
+    
+    const batchPromises = batch.map(async (agentType) => {
+      const minDisplayTime = delay(800); // Reduced from 1.5s for speed
+      
+      currentState = {
+        ...currentState,
+        agents: {
+          ...currentState.agents,
+          [agentType]: {
+            ...currentState.agents[agentType],
+            status: "drafting",
+            draft: `Analyzing via ${AGENT_CONFIGS[agentType].name}...`,
+          },
+        },
+      };
+      onStateUpdate(currentState);
+      
+      try {
+        // Increased timeout from 15s to 45s to resolve API / connection latency timeouts
+        const timeout = delay(45000).then(() => "__TIMEOUT__");
+        const responseOrTimeout = await Promise.race([
+          callAgent(agentType, message, conversationHistory),
+          timeout,
+        ]);
+        
+        await minDisplayTime;
+        
+        const response = responseOrTimeout === "__TIMEOUT__" ? "" : (responseOrTimeout as string);
+        if (responseOrTimeout === "__TIMEOUT__") {
+          console.warn(`[Omni Service] Agent ${agentType} timed out after 45s.`);
+        }
+        
+        currentState = {
+          ...currentState,
+          agents: {
+            ...currentState.agents,
+            [agentType]: {
+              ...currentState.agents[agentType],
+              status: "complete",
+              draft: response ? response.substring(0, 60) + "..." : "Timeout",
+              response,
+            },
+          },
+        };
+        onStateUpdate(currentState);
+        
+        return { agentType, response };
+      } catch (error) {
+        await minDisplayTime;
+        currentState = {
+          ...currentState,
+          agents: {
+            ...currentState.agents,
+            [agentType]: {
+              ...currentState.agents[agentType],
+              status: "complete",
+              draft: "Unavailable",
+              response: "",
+            },
+          },
+        };
+        onStateUpdate(currentState);
+        return { agentType, response: "" };
+      }
+    });
+    
+    const settledBatch = await Promise.allSettled(batchPromises);
+    settledBatch.forEach((s) => {
+      if (s.status === "fulfilled") {
+        agentResults.push(s.value);
+      } else {
+        agentResults.push({ agentType: "unknown", response: "" });
+      }
+    });
+  }
   
   // Stage 3: TERRIFYING LOGIC - Judge Model Scoring + Synthesis
   currentState = {

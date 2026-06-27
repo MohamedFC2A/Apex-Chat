@@ -4,6 +4,22 @@
  */
 
 import type { ChatResponse, AIModel, Message } from "@shared/schema";
+import {
+  buildQuizGenerationInstructions,
+  buildQuizRepairInstructions,
+  detectQuizIntent as detectStructuredQuizIntent,
+  formatQuizAsCodeBlock,
+  parseQuizRequest,
+  tryParseQuizFromText,
+} from "@shared/mcq";
+import {
+  buildPdfGenerationInstructions,
+  buildPdfRepairInstructions,
+  detectPdfIntent as detectStructuredPdfIntent,
+  formatPdfAsCodeBlock,
+  parsePdfRequest,
+  tryParsePdfFromText,
+} from "@shared/pdf";
 
 // ========== CONFIGURATION ==========
 
@@ -12,12 +28,53 @@ const DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions";
 
 // Model mapping: ApexChat model → DeepSeek model ID
 const MODEL_MAP: Record<string, string> = {
-  "apex-flash": "deepseek-v4-flash",
-  "apex-pro": "deepseek-v4-pro",
-  "apex-elite": "deepseek-v4-pro",
-  "apex-omni": "deepseek-v4-pro",
-  "apex-unbound": "deepseek-v4-pro",
+  "apex-flash": "deepseek-chat",
+  "apex-pro": "deepseek-reasoner",
+  "apex-elite": "deepseek-reasoner",
+  "apex-omni": "deepseek-reasoner",
+  "apex-unbound": "deepseek-reasoner",
 };
+
+type DeepSeekTask = "reasoning" | "generation";
+type LightweightMessage = Pick<Message, "role" | "content">;
+
+const OFFICIAL_DEEPSEEK_ALIASES: Record<string, Record<DeepSeekTask, string>> = {
+  "deepseek-chat": {
+    reasoning: "deepseek-v4-flash",
+    generation: "deepseek-v4-flash",
+  },
+  "deepseek-reasoner": {
+    reasoning: "deepseek-v4-pro",
+    generation: "deepseek-v4-pro",
+  },
+};
+
+function mapDeepSeekModelForClient(model: AIModel, task: DeepSeekTask): string {
+  return MODEL_MAP[model] || model;
+}
+
+function getDeepSeekRequestParams(model: string): Record<string, any> {
+  if (model === "deepseek-reasoner") {
+    return {};
+  }
+
+  if (model === "deepseek-v4-pro" || model === "deepseek-v4-flash" || model.includes("v4")) {
+    return {
+      reasoning_effort: "max",
+      extra_body: {
+        thinking: {
+          type: "enabled",
+        },
+      },
+    };
+  }
+
+  return {
+    temperature: 0.7,
+    top_p: 0.9,
+    max_tokens: 4096,
+  };
+}
 
 // ========== SYSTEM PROMPTS ==========
 
@@ -68,6 +125,73 @@ When presenting comparative data, features, specs, or structural summaries, you 
 - Format comparative educational content in structured, easy-to-read Markdown tables.`,
 };
 
+const MCQ_GENERATION_PROTOCOL = `\n\n## MCQ QUIZ GENERATION PROTOCOL:
+When the user asks for a quiz, exam, test, multiple-choice questions, or MCQ content, you MUST output the quiz inside a single fenced code block labeled \`\`\`mcq-quiz.
+
+Rules:
+1. Output valid JSON only inside the mcq-quiz block. No comments, no trailing commas, no prose before or after the block.
+2. The JSON schema must be:
+{
+  "title": "Quiz title",
+  "description": "Short description",
+  "mode": "practice",
+  "startingDifficulty": "easy" or "medium" or "hard" or "impossible",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Question text",
+      "options": {
+        "a": "Option A",
+        "b": "Option B",
+        "c": "Option C",
+        "d": "Option D"
+      },
+      "correctAnswer": "a",
+      "explanation": "A clear explanation of why the correct answer is correct.",
+      "difficulty": "easy" or "medium" or "hard" or "impossible"
+    }
+  ]
+}
+3. IMPORTANT: You MUST generate a diverse pool of at least 6 to 8 questions in total so the adaptive testing engine can select questions based on user performance.
+4. Distribute the difficulty levels across the generated questions:
+   - At least 1-2 "easy" questions (basics, direct facts)
+   - At least 2 "medium" questions (application, normal understanding)
+   - At least 2 "hard" questions (complex scenarios, deep details)
+   - At least 1-2 "impossible" questions (extremely advanced edge cases, trick questions, expert level details)
+5. Detect the difficulty requested by the user in their prompt (e.g. if they say "سهل" or "easy" set "startingDifficulty" to "easy"; if they say "صعب" or "hard" set "startingDifficulty" to "hard"; if they say "مستحيل" or "impossible" set it to "impossible"). If they don't request a difficulty, default "startingDifficulty" to "medium".
+6. Use exactly 4 options per question.
+7. Match the user's language exactly. If the user writes in Arabic, all quiz fields, questions, options, difficulty values, and explanations must be in Arabic, but keep the difficulty JSON keys/values as "easy", "medium", "hard", "impossible" in English.
+8. Default to "practice" mode.`;
+
+const PDF_GENERATION_PROTOCOL = `\n\n## PDF DOCUMENT GENERATION PROTOCOL:
+When the user asks for a PDF, report, document, or exported file, you MUST output the result inside a single fenced code block labeled \`\`\`pdf-document.
+
+Rules:
+1. Output valid JSON only inside the pdf-document block. No comments, no trailing commas, and no prose before or after the block.
+2. The JSON schema must include:
+{
+  "title": "Document title",
+  "subtitle": "Optional subtitle",
+  "language": "ar" or "en" or "mixed",
+  "theme": "dark" or "light" or "auto",
+  "pageSize": "a4" or "letter",
+  "coverPage": true,
+  "tableOfContents": true,
+  "sections": [
+    {
+      "id": "section-1",
+      "type": "heading" or "paragraph" or "code" or "math" or "table" or "list" or "image" or "divider" or "quote" or "callout",
+      "content": "Section content",
+      "direction": "rtl" or "ltr"
+    }
+  ]
+}
+3. Use "code" sections for source code and include a "language" field.
+4. Use "math" sections for LaTeX equations.
+5. Use "table" sections with "headers" and "rows".
+6. Match the user's language exactly and use RTL direction for Arabic text.
+7. Return only one valid \`\`\`pdf-document fenced block.`;
+
 // ========== CLIENT ORCHESTRATION & SERPER SEARCH HELPERS ==========
 
 interface SerperSearchResult {
@@ -80,6 +204,281 @@ interface SerperImageResult {
   title: string;
   imageUrl: string;
   source: string;
+}
+
+function isQuizIntent(message: string): boolean {
+  return /(?:^|\s)(mcq|msq|quiz|exam|test)(?:\s|$)|اختبار|امتحان|اسئلة اختيار|اختيار من متعدد|سؤال(?:ات)?/i.test(message);
+}
+
+function hasMCQQuizBlock(content: string): boolean {
+  return /```mcq-quiz\s*[\r\n]+[\s\S]*?```/i.test(content);
+}
+
+function hasPDFDocumentBlock(content: string): boolean {
+  return /```pdf-document\s*[\r\n]+[\s\S]*?```/i.test(content);
+}
+
+function quizMentionsTopic(content: string, topic: string): boolean {
+  const normalizedTopic = topic.trim().toLowerCase();
+  if (!normalizedTopic || normalizedTopic === "موضوع عام") return true;
+  return content.toLowerCase().includes(normalizedTopic);
+}
+
+function extractQuizTopic(message: string): string {
+  const stopWords = new Set([
+    "mcq", "msq", "quiz", "exam", "test",
+    "اختبار", "امتحان", "اعملي", "اعمل", "سوي", "سويلي", "انشئ", "أنشئ",
+    "كون", "كوّن", "اسئلة", "أسئلة", "اسئله", "سؤال", "سؤالات", "سوال",
+    "لي", "عن", "في", "من", "على", "اختيار", "متعدد", "اختيارمن", "اختيارمنمتعدد"
+  ]);
+
+  const tokens = message
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/[^A-Za-z0-9\u0600-\u06FF\s-]/g, " ")
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .filter((token) => !stopWords.has(token.toLowerCase()));
+
+  return tokens.join(" ").trim() || "موضوع عام";
+}
+
+function buildQuizFocusedMessage(message: string): string {
+  const topic = extractQuizTopic(message);
+  return `The user is explicitly asking for a multiple-choice quiz.
+Original user message: ${message}
+Required topic: ${topic}
+Requirements:
+- Generate the quiz now without asking follow-up questions.
+- If the user did not specify the number of questions, generate 5 questions.
+- Default difficulty: medium.
+- Default mode: practice.
+- The quiz must be specifically about the required topic, not general knowledge.
+- Return it only in the mcq-quiz JSON format.`;
+}
+
+async function forceQuizBlockResponseClient(
+  apiKey: string,
+  model: string,
+  userMessage: string,
+  responseText: string,
+  conversationHistory: LightweightMessage[] = [],
+  systemPrompt?: string
+): Promise<string> {
+  const inferredTopic = extractQuizTopic(userMessage);
+  const response = await fetch(DEEPSEEK_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        ...(systemPrompt ? [{ role: "system", content: `${systemPrompt}\n${MCQ_GENERATION_PROTOCOL}` }] : []),
+        {
+          role: "system",
+          content: `The user has already requested a quiz and provided enough information.
+You must generate the final quiz now.
+Never ask a follow-up question.
+If the user did not specify the number of questions, default to 5.
+If the user did not specify the level, default to medium.
+If the user did not specify the mode, default to practice.
+If the topic is short or slightly misspelled, infer the intended academic topic from the user message and continue.
+The inferred topic from the user's message is: "${inferredTopic}".
+The quiz must actually be about that topic, not a generic topic.
+Generate the quiz specifically about: "${inferredTopic}".
+Return only one valid \`\`\`mcq-quiz fenced block with valid JSON.`
+        },
+        ...conversationHistory.slice(-4).map((item) => ({
+          role: item.role,
+          content: item.content
+        })),
+        {
+          role: "user",
+          content: `User request:\n${userMessage}\n\nRequired topic:\n${inferredTopic}\n\nPrevious assistant response that failed formatting:\n${responseText}\n\nGenerate the quiz now in the required mcq-quiz JSON format, specifically about the required topic above.`
+        }
+      ],
+      max_tokens: 4096,
+      stream: false,
+      ...getDeepSeekRequestParams(model),
+    })
+  });
+
+  if (!response.ok) {
+    return responseText;
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || responseText;
+}
+
+async function generateDedicatedQuizDirect(
+  apiKey: string,
+  actualModel: string,
+  model: AIModel,
+  message: string,
+  onChunk?: (content: string, reasoning: string) => void
+): Promise<ChatResponse> {
+  const quizRequest = parseQuizRequest(message);
+  const baseParams = getDeepSeekRequestParams(actualModel);
+
+  const runAttempt = async (userContent: string) => {
+    const response = await fetch(DEEPSEEK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: actualModel,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a dedicated structured quiz generation engine. Your only job is to produce accurate multiple-choice quizzes in strict mcq-quiz JSON format. Never chat conversationally. Never ask follow-up questions. Never output prose outside the mcq-quiz block."
+          },
+          { role: "user", content: userContent }
+        ],
+        max_tokens: 4096,
+        stream: false,
+        ...baseParams,
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`DeepSeek API Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || "";
+    const reasoningContent = data.choices?.[0]?.message?.reasoning_content || "";
+    const quiz = tryParseQuizFromText(content, quizRequest);
+    return { content, reasoningContent, quiz };
+  };
+
+  const firstAttempt = await runAttempt(buildQuizGenerationInstructions(quizRequest));
+  let finalContent = firstAttempt.content;
+  let finalReasoning = firstAttempt.reasoningContent || "";
+
+  if (!firstAttempt.quiz) {
+    const secondAttempt = await runAttempt(buildQuizRepairInstructions(quizRequest, firstAttempt.content || message));
+    finalContent = secondAttempt.quiz ? formatQuizAsCodeBlock(secondAttempt.quiz) : secondAttempt.content || finalContent;
+    finalReasoning = secondAttempt.reasoningContent || finalReasoning;
+  } else {
+    finalContent = formatQuizAsCodeBlock(firstAttempt.quiz);
+  }
+
+  if (onChunk) {
+    for (let index = 0; index < finalContent.length; index += 220) {
+      onChunk(finalContent.slice(index, index + 220), finalReasoning);
+    }
+  }
+
+  return {
+    id: crypto.randomUUID(),
+    content: finalContent,
+    reasoningContent: finalReasoning || undefined,
+    model,
+    conversationId: crypto.randomUUID()
+  };
+}
+
+async function generateDedicatedPdfDirect(
+  apiKey: string,
+  actualModel: string,
+  model: AIModel,
+  message: string,
+  onChunk?: (content: string, reasoning: string) => void
+): Promise<ChatResponse> {
+  const pdfRequest = parsePdfRequest(message);
+  const baseParams = getDeepSeekRequestParams(actualModel);
+
+  const runAttempt = async (userContent: string) => {
+    const response = await fetch(DEEPSEEK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: actualModel,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a dedicated structured PDF generation engine. Your only job is to produce accurate PDFDocument JSON in strict pdf-document format. Never chat conversationally. Never ask follow-up questions. Never output prose outside the pdf-document block."
+          },
+          { role: "user", content: userContent }
+        ],
+        max_tokens: 4096,
+        stream: false,
+        ...baseParams,
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`DeepSeek API Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || "";
+    const reasoningContent = data.choices?.[0]?.message?.reasoning_content || "";
+    const document = tryParsePdfFromText(content, pdfRequest);
+    return { content, reasoningContent, document };
+  };
+
+  const firstAttempt = await runAttempt(buildPdfGenerationInstructions(pdfRequest));
+  let finalContent = firstAttempt.content;
+  let finalReasoning = firstAttempt.reasoningContent || "";
+
+  if (!firstAttempt.document) {
+    const secondAttempt = await runAttempt(buildPdfRepairInstructions(pdfRequest, firstAttempt.content || message));
+    finalContent = secondAttempt.document ? formatPdfAsCodeBlock(secondAttempt.document) : secondAttempt.content || finalContent;
+    finalReasoning = secondAttempt.reasoningContent || finalReasoning;
+  } else {
+    finalContent = formatPdfAsCodeBlock(firstAttempt.document);
+  }
+
+  if (!hasPDFDocumentBlock(finalContent)) {
+    finalContent = `\`\`\`pdf-document\n${JSON.stringify(
+      {
+        title: pdfRequest.language === "ar" ? `مستند ${pdfRequest.topic}` : `${pdfRequest.topic} Document`,
+        language: pdfRequest.language,
+        theme: "dark",
+        pageSize: "a4",
+        coverPage: pdfRequest.includeCoverPage,
+        tableOfContents: pdfRequest.includeTableOfContents,
+        sections: [
+          {
+            id: "section-1",
+            type: "paragraph",
+            direction: pdfRequest.language === "ar" ? "rtl" : "ltr",
+            content:
+              pdfRequest.language === "ar"
+                ? `تعذر إنشاء المستند بالكامل، لكن هذا محتوى احتياطي لموضوع ${pdfRequest.topic}.`
+                : `Unable to generate the document fully, but this is fallback content for ${pdfRequest.topic}.`,
+          },
+        ],
+      },
+      null,
+      2
+    )}\n\`\`\``;
+  }
+
+  if (onChunk) {
+    for (let index = 0; index < finalContent.length; index += 220) {
+      onChunk(finalContent.slice(index, index + 220), finalReasoning);
+    }
+  }
+
+  return {
+    id: crypto.randomUUID(),
+    content: finalContent,
+    reasoningContent: finalReasoning || undefined,
+    model,
+    conversationId: crypto.randomUUID()
+  };
 }
 
 const SERPER_API_KEY = import.meta.env.VITE_SERPER_API_KEY || "0adc781c41f363a53ce1f72f199f494b9436bafd";
@@ -473,6 +872,8 @@ function buildClientSystemPrompt(
   clientLocalTime?: string
 ): string {
   let prompt = SYSTEM_PROMPTS[mode as keyof typeof SYSTEM_PROMPTS] || SYSTEM_PROMPTS.standard;
+  prompt += MCQ_GENERATION_PROTOCOL;
+  prompt += PDF_GENERATION_PROTOCOL;
   
   // Model Identity Prompt
   prompt += buildModelSystemPrompt(model);
@@ -558,23 +959,33 @@ ${prompt}`;
 export async function callDeepSeekDirect(
   message: string,
   model: AIModel,
-  conversationHistory: Message[] = [],
+  conversationHistory: LightweightMessage[] = [],
   mode: string = "standard",
   isGodMode: boolean = false,
   features: { thinking: boolean; deepResearch: boolean; godMode: boolean } = { thinking: false, deepResearch: false, godMode: false },
   reasoningLevel: string = "none",
   onChunk?: (content: string, reasoning: string) => void,
-  userMemoryContext?: Array<{ title: string; lastQuery: string }>,
+  userMemoryContext?: Array<{ title: string; lastQuery: string; summary?: string; relevance?: number; updatedAt?: number }>,
   clientLocalTime?: string
 ): Promise<ChatResponse> {
   if (!DEEPSEEK_API_KEY) {
     throw new Error("DEEPSEEK API KEY is missing. Please add VITE_DEEPSEEK_API_KEY to environment variables.");
   }
 
-  let actualModel = "deepseek-chat";
-  if (model === "apex-omni" || model === "apex-unbound") {
-    actualModel = "deepseek-reasoner";
+  const task: DeepSeekTask = model === "apex-flash" ? "generation" : "reasoning";
+  const actualModel = mapDeepSeekModelForClient(model, task);
+
+  if (detectStructuredPdfIntent(message)) {
+    return generateDedicatedPdfDirect(DEEPSEEK_API_KEY, actualModel, model, message, onChunk);
   }
+
+  if (detectStructuredQuizIntent(message)) {
+    return generateDedicatedQuizDirect(DEEPSEEK_API_KEY, actualModel, model, message, onChunk);
+  }
+
+  const quizIntent = isQuizIntent(message);
+  const inferredQuizTopic = quizIntent ? extractQuizTopic(message) : "";
+  const effectiveUserMessage = quizIntent ? buildQuizFocusedMessage(message) : message;
 
   // Handle client-side search logic if search is active
   const isSearchActive = model === "apex-elite" || features.deepResearch;
@@ -603,20 +1014,30 @@ export async function callDeepSeekDirect(
     ...features,
     godMode: isGodMode ? true : features.godMode
   }, clientLocalTime);
+  systemPrompt += `\n\n=== ANTI-HALLUCINATION AND CONTEXT PRIORITY ===
+Context priority order:
+1. The user's current message and any ATTACHMENT_EVIDENCE block.
+2. Structured search/tool data.
+3. Recent conversation history.
+4. Relevance-ranked memory from past chats.
+
+If the answer is not supported by the current prompt, attachment evidence, tool data, or recent history, say that the information is not available instead of guessing.
+When ATTACHMENT_EVIDENCE is present, quote or summarize only what was extracted. Clearly say "not found in the attachment" for missing details.`;
 
   // Inject User Memory Context
   if (userMemoryContext && userMemoryContext.length > 0) {
     const memoryStr = userMemoryContext
-      .map((c, idx) => `[Chat ${idx + 1}] Topic Title: "${c.title}" | Last user query: "${c.lastQuery}"`)
+      .map((c, idx) => `[Memory ${idx + 1}] Title: "${c.title}" | Relevance: ${typeof c.relevance === "number" ? c.relevance.toFixed(2) : "n/a"} | Last user query: "${c.lastQuery}"${c.summary ? `\nSummary:\n${c.summary}` : ""}`)
       .join("\n");
     systemPrompt += `\n\n=== USER PROFILE & PAST CHATS MEMORY ===
-You have access to a unified memory system of the user's past conversations. Here are their recent topics of interest and questions:
+You have access to compact, relevance-ranked memory from the user's past conversations. Treat this as contextual memory, not as verified evidence.
 ${memoryStr}
 
 IMPORTANT MEMORY PROTOCOL:
-1. You MUST maintain continuity across chats. If the user's current prompt is conceptually related to any of their past interests listed above, intelligently connect the two.
-2. Show that you remember them and their interests by making smart references, e.g. "كما ذكرنا سابقاً بخصوص موضوع [س]..." (As we mentioned earlier regarding topic X...) or "بما أنك قمت بالبحث عن [س] سابقاً..." (Since you searched for X previously...).
-3. Keep the connections natural, smart, and highly interactive. Never make them feel intrusive, but let the user feel you possess a continuous, intelligent memory of their interactions.`;
+1. Use memory only when it is directly relevant to the current request.
+2. Never invent facts from memory. If the current prompt or attached files conflict with memory, prioritize the current prompt and attachments.
+3. Do not mention memory unless it materially improves the answer.
+4. For file/PDF/image questions, attachment evidence is stronger than memory.`;
   }
 
   if (isSearchActive && searchContext) {
@@ -699,7 +1120,7 @@ Do not repeat or generate another markdown image for this URL in your response c
       role: m.role,
       content: m.content
     })),
-    { role: "user", content: message }
+    { role: "user", content: effectiveUserMessage }
   ];
 
   console.log(`☁️ Directly calling DeepSeek Cloud (${actualModel}) from browser...`);
@@ -707,14 +1128,9 @@ Do not repeat or generate another markdown image for this URL in your response c
   const requestBody: any = {
     model: actualModel,
     messages,
-    stream: !!onChunk
+    stream: !!onChunk,
+    ...getDeepSeekRequestParams(actualModel),
   };
-
-  if (actualModel !== "deepseek-reasoner") {
-    requestBody.temperature = 0.7;
-    requestBody.top_p = 0.9;
-    requestBody.max_tokens = 4096;
-  }
 
   const response = await fetch(DEEPSEEK_URL, {
     method: "POST",
@@ -728,6 +1144,39 @@ Do not repeat or generate another markdown image for this URL in your response c
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: { message: `HTTP Error ${response.status}` } }));
     throw new Error(error.error?.message || `DeepSeek API Error: ${response.status}`);
+  }
+
+  if (quizIntent && onChunk) {
+    const data = await response.json();
+    let content = data.choices?.[0]?.message?.content || "";
+    const reasoningContent = data.choices?.[0]?.message?.reasoning_content || "";
+
+    if (!hasMCQQuizBlock(content) || !quizMentionsTopic(content, inferredQuizTopic)) {
+      content = await forceQuizBlockResponseClient(
+        DEEPSEEK_API_KEY,
+        actualModel,
+        message,
+        content,
+        conversationHistory,
+        systemPrompt
+      );
+    }
+
+    if (foundImage && !content.includes(foundImage.imageUrl)) {
+      content = `![${foundImage.title}](${foundImage.imageUrl})\n\n` + content;
+    }
+
+    for (let index = 0; index < content.length; index += 220) {
+      onChunk(content.slice(index, index + 220), reasoningContent);
+    }
+
+    return {
+      id: crypto.randomUUID(),
+      content,
+      reasoningContent: reasoningContent || undefined,
+      model,
+      conversationId: crypto.randomUUID()
+    };
   }
 
   if (onChunk) {
@@ -792,6 +1241,17 @@ Do not repeat or generate another markdown image for this URL in your response c
     console.log("✅ DeepSeek response received directly");
     let content = data.choices[0].message.content || "";
     const reasoningContent = data.choices[0].message.reasoning_content || undefined;
+
+    if (quizIntent && (!hasMCQQuizBlock(content) || !quizMentionsTopic(content, inferredQuizTopic))) {
+      content = await forceQuizBlockResponseClient(
+        DEEPSEEK_API_KEY,
+        actualModel,
+        message,
+        content,
+        conversationHistory,
+        systemPrompt
+      );
+    }
     
     if (foundImage && !content.includes(foundImage.imageUrl)) {
       content = `![${foundImage.title}](${foundImage.imageUrl})\n\n` + content;
@@ -812,13 +1272,13 @@ Do not repeat or generate another markdown image for this URL in your response c
 export async function sendAIMessage(
   message: string,
   model: AIModel,
-  conversationHistory: Message[] = [],
+  conversationHistory: LightweightMessage[] = [],
   mode: string = "standard",
   isGodMode: boolean = false,
   features: { thinking: boolean; deepResearch: boolean; godMode: boolean } = { thinking: false, deepResearch: false, godMode: false },
   reasoningLevel: string = "none",
   onChunk?: (content: string, reasoning: string) => void,
-  userMemoryContext?: Array<{ title: string; lastQuery: string }>
+  userMemoryContext?: Array<{ title: string; lastQuery: string; summary?: string; relevance?: number; updatedAt?: number }>
 ): Promise<ChatResponse> {
   try {
     console.log(`☁️ Cloud AI: Routing to backend proxy for DeepSeek (${model}) (stream: ${!!onChunk})`);

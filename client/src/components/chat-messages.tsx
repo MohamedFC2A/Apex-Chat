@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useChatStore } from "@/lib/store";
 import { useFeatureToggleStore } from "@/lib/feature-toggle-store";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -6,15 +6,20 @@ import { Button } from "@/components/ui/button";
 import { 
   User, Sparkles, Brain, Zap, Cpu, Crown, ChevronDown, ChevronRight, Copy, Check, Skull, ChevronUp, Clock,
   Terminal, Shield, BookOpen, Palette, Target, RotateCw, BarChart3, Lock, Globe, Key, FolderOpen, Folder, Hammer, Wrench, Settings, TrendingUp, TrendingDown, MessageSquare, Lightbulb, CheckCircle2, XCircle,
-  Rocket, Bot, AlertTriangle, Search, Trophy, Info, Activity, ExternalLink, X, Monitor, Smartphone, Code2, Play, Maximize2, Download
+  Rocket, Bot, AlertTriangle, Search, Trophy, Info, Activity, ExternalLink, X, Monitor, Smartphone, Code2, Play, Maximize2, Download, FileDown
 } from "lucide-react";
 import type { Message, AIModel } from "@shared/schema";
 import { OmniStatusCard } from "@/components/omni-status-card";
 import { UnboundStatusCard } from "@/components/unbound-status-card";
+import { MCQQuizLoadingCard, MCQQuizWidget } from "@/components/mcq-quiz-widget";
+import { PDFExportWidget } from "@/components/pdf-export-widget";
+import { PDFLoadingCard } from "@/components/pdf-loading-card";
 import type { OmniState } from "@/lib/omni-service";
 import type { UnboundState } from "@/lib/unbound-service";
 import { ThinkingBubble } from "@/components/chat-message";
 import ReactMarkdown from "react-markdown";
+import katex from "katex";
+
 import remarkGfm from "remark-gfm";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -26,6 +31,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 function MarkdownImage({ src, alt, ...props }: { src?: string; alt?: string; [key: string]: any }) {
   const [imageSrc, setImageSrc] = useState(src);
@@ -349,6 +355,8 @@ function extractHtmlFromContent(content: string): string | null {
 
   // Assemble HTML + CSS + JS if available
   let bundled = htmlCode;
+  const htmlAlreadyHasCss = /<style[\s>]/i.test(bundled) || /<link[^>]+rel=["']stylesheet["']/i.test(bundled);
+  const htmlAlreadyHasJs = /<script[\s>]/i.test(bundled);
 
   // Inject viewport meta if head/html tags exist but viewport is missing
   if (!/<meta[^>]*name=["']viewport["']/i.test(bundled)) {
@@ -367,7 +375,7 @@ function extractHtmlFromContent(content: string): string | null {
   }
 
   // Inject CSS
-  if (cssCode) {
+  if (cssCode && !htmlAlreadyHasCss) {
     const styleTag = `\n  <style>\n${cssCode}\n  </style>\n`;
     if (/<\/head>/i.test(bundled)) {
       bundled = bundled.replace(/(<\/head>)/i, `${styleTag}$1`);
@@ -379,7 +387,7 @@ function extractHtmlFromContent(content: string): string | null {
   }
 
   // Inject JS
-  if (jsCode) {
+  if (jsCode && !htmlAlreadyHasJs) {
     const scriptTag = `\n  <script>\n${jsCode}\n  </script>\n`;
     if (/<\/body>/i.test(bundled)) {
       bundled = bundled.replace(/(<\/body>)/i, `${scriptTag}$1`);
@@ -389,6 +397,46 @@ function extractHtmlFromContent(content: string): string | null {
   }
 
   return bundled;
+}
+
+function getMCQQuizState(content: string): {
+  hasPendingBlock: boolean;
+  sanitizedContent: string;
+} {
+  const completeBlockRegex = /```mcq-quiz\s*\n[\s\S]*?```/gi;
+  const completeMatches = content.match(completeBlockRegex) || [];
+  const contentWithoutCompleteBlocks = content.replace(completeBlockRegex, "");
+  const pendingBlockRegex = /```mcq-quiz\s*\n[\s\S]*$/i;
+  const hasPendingBlock = pendingBlockRegex.test(contentWithoutCompleteBlocks);
+
+  if (!hasPendingBlock) {
+    return { hasPendingBlock: false, sanitizedContent: content };
+  }
+
+  return {
+    hasPendingBlock: true,
+    sanitizedContent: content.replace(pendingBlockRegex, "").trimEnd(),
+  };
+}
+
+function getPDFDocumentState(content: string): {
+  hasPendingBlock: boolean;
+  sanitizedContent: string;
+} {
+  const completeBlockRegex = /```pdf-document\s*\n[\s\S]*?```/gi;
+  const completeMatches = content.match(completeBlockRegex) || [];
+  const contentWithoutCompleteBlocks = content.replace(completeBlockRegex, "");
+  const pendingBlockRegex = /```pdf-document\s*\n[\s\S]*$/i;
+  const hasPendingBlock = pendingBlockRegex.test(contentWithoutCompleteBlocks);
+
+  if (!hasPendingBlock || completeMatches.length === 0 && !pendingBlockRegex.test(content)) {
+    return { hasPendingBlock, sanitizedContent: hasPendingBlock ? content.replace(pendingBlockRegex, "").trimEnd() : content };
+  }
+
+  return {
+    hasPendingBlock: true,
+    sanitizedContent: content.replace(pendingBlockRegex, "").trimEnd(),
+  };
 }
 
 // ─── Status Cleaners & Tracking ───────────────────────────────────────────────
@@ -414,7 +462,69 @@ function cleanStatusMarkers(content: string): string {
   // Hide streaming unclosed plan tags
   cleaned = cleaned.replace(/<plan>[\s\S]*/gi, "");
 
-  return cleaned.trim();
+  // 5. Remove Web Search Context and Image Links blocks
+  cleaned = cleaned.replace(/=== REAL-TIME WEB SEARCH CONTEXT ===[\s\S]*?(?=(?:\*\*\[Phase|\[Phase|\#\# APEX|### Architecture|\`\`\`html|$))/i, "");
+  cleaned = cleaned.replace(/=== REAL TOPIC IMAGE LINKS ===[\s\S]*?(?=(?:\*\*\[Phase|\[Phase|\#\# APEX|### Architecture|\`\`\`html|$))/i, "");
+
+  // 6. Split by lines and remove logging lines
+  const lines = cleaned.split('\n');
+  let inFencedCodeBlock = false;
+  const filteredLines = lines.filter(line => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("```")) {
+      inFencedCodeBlock = !inFencedCodeBlock;
+      return true;
+    }
+    if (inFencedCodeBlock) return true;
+    if (!trimmed) return true; // keep blank lines for markdown spacing
+    
+    // Check if it is a phase header or search/architect activity log
+    if (trimmed.startsWith('**[Phase') || trimmed.startsWith('[Phase') || trimmed.startsWith('**Phase')) return false;
+    if (trimmed.startsWith('Searching Google for')) return false;
+    if (trimmed.startsWith('Collecting supporting references')) return false;
+    if (trimmed.startsWith('Analyzing requirements')) return false;
+    if (trimmed.startsWith('Updating system specification')) return false;
+    if (trimmed.startsWith('Updating the formal specification')) return false;
+    if (trimmed.startsWith('Preparing a formal project specification')) return false;
+    if (trimmed.startsWith('Constructing semantic DOM')) return false;
+    if (trimmed.startsWith('Constructing the semantic multi-page DOM')) return false;
+    if (trimmed.startsWith('Extracting DOM tokens')) return false;
+    if (trimmed.startsWith('Registering DOM selectors')) return false;
+    if (trimmed.startsWith('Generating styles and logic')) return false;
+    if (trimmed.startsWith('Producing the responsive style layer')) return false;
+    if (trimmed.startsWith('Compiling assets into')) return false;
+    if (trimmed.startsWith('Compiling the approved assets')) return false;
+    if (trimmed.startsWith('Auditing integration consistency')) return false;
+    if (trimmed.startsWith('AI Customization Questionnaire is active')) return false;
+    if (trimmed.startsWith('Please confirm the configuration choices')) return false;
+    
+    // Check if it is an agent output line starting with >
+    if (trimmed.startsWith('>')) return false;
+    
+    // Check if it is a general metadata line from spec generation
+    if (trimmed.startsWith('Project:') || trimmed.startsWith('Colors:') || trimmed.startsWith('Fonts:') || trimmed.startsWith('System Specification') || trimmed.startsWith('Goal:') || trimmed.startsWith('Description:')) return false;
+    if (trimmed.startsWith('HTML generated -') || trimmed.startsWith('**HTML generated**')) return false;
+    if (trimmed.startsWith('Markup package completed -') || trimmed.startsWith('**Markup package completed**')) return false;
+    if (trimmed.startsWith('Selector Map built -') || trimmed.startsWith('**Selector Map built**')) return false;
+    if (trimmed.startsWith('Selector registry completed -') || trimmed.startsWith('**Selector registry completed**')) return false;
+    if (trimmed.startsWith('Parallel compilation complete') || trimmed.startsWith('**Parallel compilation complete**')) return false;
+    if (trimmed.startsWith('Presentation and logic package completed') || trimmed.startsWith('**Presentation and logic package completed**')) return false;
+    if (trimmed.startsWith('Bundle assembled -') || trimmed.startsWith('**Bundle assembled**')) return false;
+    if (trimmed.startsWith('Release bundle assembled -') || trimmed.startsWith('**Release bundle assembled**')) return false;
+    if (trimmed.startsWith('Quality review completed -') || trimmed.startsWith('**Quality review completed**')) return false;
+    if (trimmed.startsWith('**Spec generated**') || trimmed.startsWith('**Spec updated**')) return false;
+    if (trimmed.startsWith('**Specification approved for confirmation**') || trimmed.startsWith('**Specification updated**')) return false;
+    if (trimmed.startsWith('Resuming with selected choices:') || trimmed.startsWith('**Resuming with selected choices:**')) return false;
+    if (trimmed.startsWith('Confirmed configuration:') || trimmed.startsWith('**Confirmed configuration:**')) return false;
+    
+    // Remove individual Source/Image references if they slipped through
+    if (trimmed.startsWith('[Source') || trimmed.startsWith('Snippet:') || trimmed.startsWith('Link:')) return false;
+    if (trimmed.startsWith('[Image') || trimmed.startsWith('URL:')) return false;
+
+    return true;
+  });
+
+  return filteredLines.join('\n').trim();
 }
 
 // ─── Plan Extractors & Parsers ────────────────────────────────────────────────
@@ -584,7 +694,7 @@ interface UnboundPlanCardProps {
 }
 
 export function UnboundPlanCard({ planText, messageContent, isStreaming }: UnboundPlanCardProps) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const sections = parsePlanContent(planText, messageContent);
 
   let totalItems = 0;
@@ -599,13 +709,6 @@ export function UnboundPlanCard({ planText, messageContent, isStreaming }: Unbou
   return (
     <div className="relative font-sans text-xs my-1 w-full text-foreground max-w-xl animate-in fade-in duration-300">
       <div className="relative rounded-xl border border-zinc-900 bg-zinc-950/80 backdrop-blur-xl shadow-lg overflow-hidden">
-        
-        {/* Progress bar glow */}
-        <div 
-          className="absolute top-0 left-0 h-[2px] bg-gradient-to-r from-violet-600 via-fuchsia-500 to-emerald-500 transition-all duration-700" 
-          style={{ width: `${progressPercent}%` }}
-        />
-
         {/* Header bar */}
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -858,6 +961,241 @@ export function UnboundWebGenStatusCard({ content, isStreaming }: UnboundWebGenS
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+// ─── Unbound Console Logs Terminal ──────────────────────────────────────────
+interface LogItem {
+  type: 'info' | 'success' | 'warning' | 'error' | 'search' | 'image' | 'phase';
+  text: string;
+}
+
+function parseLogs(content: string): LogItem[] {
+  const lines = content.split('\n');
+  const logs: LogItem[] = [];
+  
+  let inSearchContext = false;
+  let inImageLinks = false;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    
+    // Check for search context headers
+    if (line.includes('=== REAL-TIME WEB SEARCH CONTEXT ===')) {
+      inSearchContext = true;
+      inImageLinks = false;
+      logs.push({ type: 'phase', text: '🔍 Starting Integrated Web Search...' });
+      continue;
+    }
+    if (line.includes('=== REAL TOPIC IMAGE LINKS ===')) {
+      inSearchContext = false;
+      inImageLinks = true;
+      logs.push({ type: 'phase', text: '🖼️ Extracting Media & Image Assets...' });
+      continue;
+    }
+    
+    // Parse search context details
+    if (inSearchContext) {
+      if (line.startsWith('[Source')) {
+        logs.push({ type: 'search', text: `Reference: ${line.substring(line.indexOf('Title:') + 6).trim()}` });
+      } else if (line.startsWith('Link:')) {
+        logs.push({ type: 'info', text: `   ↳ URL: ${line.substring(5).trim()}` });
+      }
+      // If we hit next phase, turn off search context flag
+      if (line.startsWith('**[Phase') || line.startsWith('[Phase') || line.includes('=== REAL TOPIC IMAGE LINKS ===')) {
+        inSearchContext = false;
+      } else {
+        continue;
+      }
+    }
+    
+    // Parse image links details
+    if (inImageLinks) {
+      if (line.startsWith('[Image')) {
+        logs.push({ type: 'image', text: `Asset: ${line.substring(line.indexOf('Title:') + 6).trim()}` });
+      } else if (line.startsWith('URL:')) {
+        logs.push({ type: 'info', text: `   ↳ URL: ${line.substring(4).trim()}` });
+      }
+      // If we hit next phase, turn off image link flag
+      if (line.startsWith('**[Phase') || line.startsWith('[Phase')) {
+        inImageLinks = false;
+      } else {
+        continue;
+      }
+    }
+    
+    // Phase header lines
+    if (line.startsWith('**[Phase') || line.startsWith('[Phase')) {
+      const cleanPhase = line.replace(/\*\*/g, '').trim();
+      logs.push({ type: 'phase', text: cleanPhase });
+      continue;
+    }
+    
+    // Spec metadata or settings
+    if (line.startsWith('Project:') || line.startsWith('Colors:') || line.startsWith('Fonts:') || line.startsWith('System Specification') || line.startsWith('Goal:') || line.startsWith('Description:') || line.startsWith('Interface palette:') || line.startsWith('Typography system:')) {
+      logs.push({ type: 'info', text: line });
+      continue;
+    }
+    if (line.startsWith('> Project:') || line.startsWith('> Colors:') || line.startsWith('> Fonts:')) {
+      logs.push({ type: 'info', text: line.substring(1).trim() });
+      continue;
+    }
+    
+    // Status logs starting with >
+    if (line.startsWith('>')) {
+      const logText = line.substring(1).trim();
+      let type: LogItem['type'] = 'info';
+      if (logText.toLowerCase().includes('complete') || logText.toLowerCase().includes('success') || logText.includes('PASSED') || logText.startsWith('✓')) {
+        type = 'success';
+      } else if (logText.toLowerCase().includes('warning') || logText.toLowerCase().includes('violation')) {
+        type = 'warning';
+      } else if (logText.toLowerCase().includes('error') || logText.toLowerCase().includes('failed')) {
+        type = 'error';
+      }
+      logs.push({ type, text: logText });
+      continue;
+    }
+    
+    // Intermediate results summary
+    if (line.startsWith('**HTML generated**') || line.startsWith('HTML generated -') ||
+        line.startsWith('**Selector Map built**') || line.startsWith('Selector Map built -') ||
+        line.startsWith('**Selector registry completed**') || line.startsWith('Selector registry completed -') ||
+        line.startsWith('**Parallel compilation complete**') || line.startsWith('Parallel compilation complete -') ||
+        line.startsWith('**Presentation and logic package completed**') || line.startsWith('Presentation and logic package completed -') ||
+        line.startsWith('**Bundle assembled**') || line.startsWith('Bundle assembled -') ||
+        line.startsWith('**Release bundle assembled**') || line.startsWith('Release bundle assembled -') ||
+        line.startsWith('**Quality review completed**') || line.startsWith('Quality review completed -') ||
+        line.startsWith('**Spec generated**') || line.startsWith('**Spec updated**') ||
+        line.startsWith('**Specification approved for confirmation**') || line.startsWith('**Specification updated**') ||
+        line.startsWith('Resuming with selected choices:') || line.startsWith('**Resuming with selected choices:**') ||
+        line.startsWith('Confirmed configuration:') || line.startsWith('**Confirmed configuration:**')
+    ) {
+      const cleanText = line.replace(/\*\*/g, '').trim();
+      logs.push({ type: 'success', text: `✓ ${cleanText}` });
+      continue;
+    }
+  }
+  
+  return logs;
+}
+
+interface UnboundConsoleProps {
+  content: string;
+  isStreaming: boolean;
+}
+
+export function UnboundConsole({ content, isStreaming }: UnboundConsoleProps) {
+  const [isOpen, setIsOpen] = useState(true);
+  const consoleEndRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const logs = parseLogs(content);
+
+  // Auto-scroll logs to bottom during active streaming
+  useEffect(() => {
+    if (isStreaming && consoleEndRef.current) {
+      consoleEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [logs.length, isStreaming]);
+
+  if (logs.length === 0) return null;
+
+  return (
+    <div className="relative font-mono text-xs my-3 w-full text-foreground max-w-xl">
+      <div className="relative rounded-xl border border-zinc-950 bg-zinc-950/80 backdrop-blur-xl shadow-lg overflow-hidden animate-in fade-in duration-300">
+        
+        {/* Terminal Header */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          type="button"
+          className="w-full flex items-center justify-between p-3 hover:bg-white/5 transition-all text-left border-b border-zinc-900 bg-zinc-950/40"
+        >
+          <div className="flex items-center gap-2.5">
+            {/* Terminal Window Controls */}
+            <div className="flex items-center gap-1.5 mr-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
+            </div>
+            
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+              <Terminal className="w-3.5 h-3.5 text-violet-400 animate-pulse" />
+              <span>APEX Console Logs</span>
+              {isStreaming && (
+                <span className="flex items-center gap-1 text-[9px] text-emerald-400 font-sans tracking-normal lowercase normal-case">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  compiling...
+                </span>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-zinc-900 text-zinc-400 border border-zinc-800">
+              {logs.length} Lines
+            </span>
+            {isOpen ? (
+              <ChevronUp className="w-4 h-4 text-zinc-500" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-zinc-500" />
+            )}
+          </div>
+        </button>
+
+        {/* Terminal Content */}
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <div 
+                ref={containerRef}
+                className="p-3.5 bg-zinc-950/95 font-mono text-[10px] leading-relaxed max-h-60 overflow-y-auto space-y-1.5 scrollbar-thin scrollbar-thumb-zinc-800/80 scrollbar-track-transparent text-left"
+              >
+                {logs.map((log, idx) => {
+                  let colorClass = "text-zinc-300";
+                  if (log.type === "phase") {
+                    colorClass = "text-violet-400 font-bold border-b border-zinc-900/60 pb-1 mt-2.5 first:mt-0";
+                  } else if (log.type === "success") {
+                    colorClass = "text-emerald-400";
+                  } else if (log.type === "warning") {
+                    colorClass = "text-amber-400";
+                  } else if (log.type === "error") {
+                    colorClass = "text-red-400";
+                  } else if (log.type === "search") {
+                    colorClass = "text-sky-400";
+                  } else if (log.type === "image") {
+                    colorClass = "text-fuchsia-400";
+                  } else if (log.type === "info") {
+                    colorClass = "text-zinc-500";
+                  }
+
+                  return (
+                    <div 
+                      key={idx} 
+                      className={cn(
+                        "whitespace-pre-wrap select-all selection:bg-violet-500/20", 
+                        colorClass
+                      )}
+                    >
+                      {log.type !== "phase" && <span className="text-zinc-600 mr-2 select-none">&gt;</span>}
+                      {log.text}
+                    </div>
+                  );
+                })}
+                <div ref={consoleEndRef} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </div>
     </div>
   );
@@ -1175,6 +1513,176 @@ function replaceEmojisWithIcons(text: string): React.ReactNode {
   return parts.length > 0 ? parts : cleanText;
 }
 
+interface MathBlockProps {
+  formula: string;
+}
+
+function MathBlock({ formula }: MathBlockProps) {
+  const containerRef = useRef<HTMLSpanElement>(null);
+  const isArabic = /[\u0600-\u06FF]/.test(formula);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      try {
+        katex.render(formula, containerRef.current, {
+          displayMode: true,
+          throwOnError: false,
+          trust: true,
+        });
+      } catch (err) {
+        console.error("Failed to render math block:", err);
+        containerRef.current.textContent = formula;
+      }
+    }
+  }, [formula]);
+
+  return (
+    <span className="block my-5 mx-auto w-full max-w-xl animate-in fade-in duration-300">
+      <span 
+        className="relative block overflow-hidden rounded-lg border border-zinc-850 bg-zinc-950/90 p-5 shadow-sm"
+        dir={isArabic ? "rtl" : "ltr"}
+      >
+        {/* Sleek Vertical Accent Line */}
+        <span className={cn(
+          "absolute top-0 bottom-0 w-1.5 bg-violet-600/80",
+          isArabic ? "right-0" : "left-0"
+        )} />
+
+        {/* KaTeX Output container (forced to LTR internally so rendering is correct) */}
+        <span 
+          ref={containerRef} 
+          className="block text-base md:text-lg font-bold text-foreground text-center overflow-x-auto py-2.5 select-all custom-scrollbar" 
+          dir="ltr"
+        />
+      </span>
+    </span>
+  );
+}
+
+interface MathInlineProps {
+  formula: string;
+}
+
+function MathInline({ formula }: MathInlineProps) {
+  const containerRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      try {
+        katex.render(formula, containerRef.current, {
+          displayMode: false,
+          throwOnError: false,
+          trust: true,
+        });
+      } catch (err) {
+        console.error("Failed to render math inline:", err);
+        containerRef.current.textContent = formula;
+      }
+    }
+  }, [formula]);
+
+  return (
+    <span 
+      ref={containerRef} 
+      className="inline-block bg-zinc-900/60 border border-zinc-800/80 px-2 py-0.5 rounded text-[13.5px] font-bold text-violet-400 font-mono mx-1 align-middle"
+      dir="ltr"
+    />
+  );
+}
+
+interface MathSegment {
+  type: 'text' | 'math-block' | 'math-inline';
+  content: string;
+}
+
+function parseMathAndText(text: string): MathSegment[] {
+  const segments: MathSegment[] = [];
+  let currentIndex = 0;
+
+  // matches standard LaTeX forms ($$, \[, \() and parenthesised terms/formulas like (R_s = \frac{I_g R_g}{I - I_g})
+  const regex = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|([(\[])[\s\S]+?([)\]]))/g;
+  
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    const matchIndex = match.index;
+    const matchText = match[0];
+    
+    if (matchIndex > currentIndex) {
+      segments.push({
+        type: 'text',
+        content: text.substring(currentIndex, matchIndex),
+      });
+    }
+    
+    if (matchText.startsWith('$$') && matchText.endsWith('$$')) {
+      segments.push({
+        type: 'math-block',
+        content: matchText.slice(2, -2).trim(),
+      });
+    } else if (matchText.startsWith('\\[') || matchText.startsWith('\\[')) {
+      segments.push({
+        type: 'math-block',
+        content: matchText.replace(/^\\\[/, '').replace(/\\\]$/, '').trim(),
+      });
+    } else if (matchText.startsWith('\\(')) {
+      segments.push({
+        type: 'math-inline',
+        content: matchText.replace(/^\\\(/, '').replace(/\\\)$/, '').trim(),
+      });
+    } else {
+      const inside = matchText.slice(1, -1).trim();
+      
+      const containsFrac = inside.includes('\\frac');
+      const containsSubscript = /[a-zA-Z]_[a-zA-Z0-9]/.test(inside);
+      const isSingleVariable = /^[A-Za-z](\s*,\s*[A-Za-z])*$/.test(inside);
+      const containsMathOperators = /[a-zA-Z].*?[=+\-*/].*?[a-zA-Z0-9]/.test(inside);
+      const containsLaTeX = /\\[a-zA-Z]+/.test(inside);
+
+      if (containsFrac || containsSubscript || isSingleVariable || containsMathOperators || containsLaTeX) {
+        const isBlock = inside.includes('=') || inside.length > 15;
+        segments.push({
+          type: isBlock ? 'math-block' : 'math-inline',
+          content: inside,
+        });
+      } else {
+        segments.push({
+          type: 'text',
+          content: matchText,
+        });
+      }
+    }
+    
+    currentIndex = regex.lastIndex;
+  }
+  
+  if (currentIndex < text.length) {
+    segments.push({
+      type: 'text',
+      content: text.substring(currentIndex),
+    });
+  }
+  
+  return segments;
+}
+
+function renderTextWithMath(text: string): React.ReactNode {
+  const segments = parseMathAndText(text);
+  const nodes: React.ReactNode[] = [];
+  
+  segments.forEach((segment, idx) => {
+    if (segment.type === 'math-block') {
+      nodes.push(<MathBlock key={`mb-${idx}`} formula={segment.content} />);
+    } else if (segment.type === 'math-inline') {
+      nodes.push(<MathInline key={`mi-${idx}`} formula={segment.content} />);
+    } else {
+      const emojiNode = replaceEmojisWithIcons(segment.content);
+      nodes.push(<React.Fragment key={`txt-${idx}`}>{emojiNode}</React.Fragment>);
+    }
+  });
+  
+  return nodes;
+}
+
 // Helper to recursively detect if any child node contains Arabic characters
 const hasArabicText = (node: React.ReactNode): boolean => {
   if (typeof node === 'string') {
@@ -1201,6 +1709,14 @@ function CodeBlockWrapper({ language, code, parentContent }: { language: string;
   const isHtml = language === "html" || language === "htm" ||
     (!language && (/<!DOCTYPE\s+html/i.test(code) || /^\s*<html/i.test(code)));
 
+  if (language === "mcq-quiz") {
+    return <MCQQuizWidget jsonText={code} />;
+  }
+
+  if (language === "pdf-document") {
+    return <PDFExportWidget jsonText={code} />;
+  }
+
   const getBundledHtml = () => {
     if (!isHtml) return code;
     if (parentContent) {
@@ -1222,7 +1738,8 @@ function CodeBlockWrapper({ language, code, parentContent }: { language: string;
                   : language === "json" ? "json" 
                   : language === "typescript" || language === "ts" ? "ts" 
                   : "html";
-    const blob = new Blob([code], { type: "text/plain" });
+    const downloadCode = isHtml ? getBundledHtml() : code;
+    const blob = new Blob([downloadCode], { type: isHtml ? "text/html" : "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -1273,13 +1790,13 @@ function CodeBlockWrapper({ language, code, parentContent }: { language: string;
           <div className="flex items-center gap-2">
             {isHtml && (
               <Button
-                onClick={() => setShowPreview(true)}
+                onClick={openInNewTab}
                 size="sm"
-                className="h-8 px-3 text-xs gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-lg border-0 shadow-sm font-arabic"
+                className="h-8 px-3 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg border-0 shadow-sm font-arabic"
                 dir="rtl"
               >
-                <Globe className="w-3.5 h-3.5" />
-                <span>معاينة الموقع</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>فتح الموقع</span>
               </Button>
             )}
             <Button
@@ -1338,33 +1855,16 @@ function CodeBlockWrapper({ language, code, parentContent }: { language: string;
                 <span>تنزيل</span>
               </Button>
               {isHtml && (
-                <>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowPreview(true)}
-                      className="h-7 px-3 text-xs gap-1.5 bg-gradient-to-r from-violet-950/60 to-indigo-950/60 hover:from-violet-900/60 hover:to-indigo-900/60 text-violet-400 hover:text-violet-300 border border-violet-900/40 hover:border-violet-700/60 rounded-lg transition-all shadow-sm font-semibold tracking-wide font-arabic"
-                      dir="rtl"
-                    >
-                      <Play className="w-3.5 h-3.5" />
-                      <span>معاينة</span>
-                    </Button>
-                  </motion.div>
-                  
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={openInNewTab}
-                      className="h-7 px-3 text-xs gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 hover:border-zinc-700 rounded-lg transition-all shadow-sm font-semibold tracking-wide font-arabic"
-                      dir="rtl"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>شاشة كاملة</span>
-                    </Button>
-                  </motion.div>
-                </>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={openInNewTab}
+                  className="h-7 px-3 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white border-0 rounded-lg transition-all shadow-sm font-semibold font-arabic"
+                  dir="rtl"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>فتح الموقع</span>
+                </Button>
               )}
               <Button
                 variant="ghost"
@@ -1390,50 +1890,8 @@ function CodeBlockWrapper({ language, code, parentContent }: { language: string;
             <code>{code}</code>
           </pre>
 
-          {/* Open Website Button — Bottom Bar for HTML blocks */}
-          {isHtml && (
-            <motion.div
-              className="px-4 py-3 border-t border-border/60 bg-gradient-to-r from-emerald-950/20 via-zinc-950/40 to-teal-950/20 flex items-center justify-between gap-3"
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15, duration: 0.3 }}
-            >
-              <div className="flex items-center gap-2 text-xs text-zinc-500">
-                <Monitor className="w-3.5 h-3.5 text-emerald-500/70" />
-                <span>موقع جاهز للعرض · Ready for preview</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-                  <Button
-                    onClick={() => setShowPreview(true)}
-                    className="h-8 px-4 text-xs font-bold gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border-0 rounded-lg shadow-md shadow-emerald-900/30 transition-all font-arabic"
-                    dir="rtl"
-                  >
-                    <Globe className="w-3.5 h-3.5" />
-                    معاينة الموقع
-                  </Button>
-                </motion.div>
-                
-                <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-                  <Button
-                    onClick={openInNewTab}
-                    className="h-8 px-4 text-xs font-bold gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 rounded-lg shadow-sm transition-all font-arabic"
-                    dir="rtl"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    شاشة كاملة
-                  </Button>
-                </motion.div>
-              </div>
-            </motion.div>
-          )}
-        </div>
-      )}
 
-      {/* Web Preview Modal */}
-      {showPreview && (
-        <WebPreviewModal html={getBundledHtml()} onClose={() => setShowPreview(false)} />
+        </div>
       )}
     </>
   );
@@ -1458,6 +1916,7 @@ interface ChatMessagesProps {
   isStreaming?: boolean;
   onSelectPrompt?: (prompt: string) => void;
   unboundState?: UnboundState | null;
+  onSelectUnboundChoice?: (choice: any) => void;
 }
 
 const EMPTY_MESSAGES: Message[] = [];
@@ -1470,6 +1929,7 @@ export function ChatMessages({
   isStreaming,
   onSelectPrompt,
   unboundState,
+  onSelectUnboundChoice,
 }: ChatMessagesProps) {
   const selectedModel = useChatStore((state) => state.selectedModel);
   const isDeepResearch = useFeatureToggleStore((state) => state.deepResearch);
@@ -1482,173 +1942,72 @@ export function ChatMessages({
     return conv?.messages ?? EMPTY_MESSAGES;
   });
 
-  const [dynamicSuggestions, setDynamicSuggestions] = useState<Array<{ title: string; desc: string; prompt: string }>>([]);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const lastUserMessage = useMemo(() => {
+    return [...messages].reverse().find((m) => m.role === "user");
+  }, [messages]);
+
+  const isQuizRequest = useMemo(() => {
+    return !!(
+      lastUserMessage &&
+      /(?:^|\s)(mcq|msq|quiz|exam|test)(?:\s|$)|اختبار|امتحان|اسئلة اختيار|اختيار من متعدد/i.test(lastUserMessage.content)
+    );
+  }, [lastUserMessage]);
+
+  const isPdfRequest = useMemo(() => {
+    return !!(
+      lastUserMessage &&
+      /(?:^|\s)(?:pdf|document|report|export\s+pdf|generate\s+(?:a\s+)?(?:pdf|document|report)|create\s+(?:a\s+)?(?:pdf|document|report))(?:\s|$)|(?:ملف\s*pdf|وثيقة|مستند|تقرير|حول(?:ه|ها)?\s*(?:ل|إلى)?\s*pdf|اعمل(?:ي|لي)?\s*pdf|صد[ّ]?ر)/i.test(lastUserMessage.content)
+    );
+  }, [lastUserMessage]);
 
   useEffect(() => {
-    // Only fetch suggestions when there are no messages in the active chat (welcome screen)
-    if (messages.length > 0 || streamingContent || streamingReasoning) return;
-
-    let active = true;
-
-    // Compile memory context from other conversations (excluding active)
-    const pastConversations = conversations.filter(c => c.id !== activeConversationId && c.messages.length > 0);
-    const userMemoryContext = pastConversations.slice(0, 5).map(c => {
-      const userMessages = c.messages.filter(m => m.role === "user");
-      return {
-        title: c.title,
-        lastQuery: userMessages[userMessages.length - 1]?.content || ""
-      };
-    });
-
-    const cacheKey = JSON.stringify(userMemoryContext);
-
-    // Smart Local Cache Check
-    try {
-      const cachedDataStr = localStorage.getItem("apex_chat_suggestions_cache");
-      if (cachedDataStr) {
-        const cached = JSON.parse(cachedDataStr);
-        if (cached && cached.key === cacheKey && Array.isArray(cached.suggestions) && cached.suggestions.length > 0) {
-          console.log("⚡ Loaded suggestions from local cache instantly");
-          setDynamicSuggestions(cached.suggestions);
-          return;
-        }
-      }
-    } catch (e) {
-      console.warn("Failed to read suggestions cache:", e);
-    }
-
-    const saveToCache = (suggestions: any) => {
-      try {
-        localStorage.setItem("apex_chat_suggestions_cache", JSON.stringify({
-          key: cacheKey,
-          suggestions
-        }));
-      } catch (e) {
-        console.warn("Failed to write suggestions cache:", e);
-      }
-    };
-
-    const fetchSuggestions = async () => {
-      setIsLoadingSuggestions(true);
-      try {
-        const res = await fetch("/api/suggestions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userMemoryContext })
-        });
-        if (!res.ok) throw new Error("Failed to fetch suggestions");
-        const data = await res.json();
-        if (active && Array.isArray(data) && data.length > 0) {
-          setDynamicSuggestions(data);
-          saveToCache(data);
-        }
-      } catch (err) {
-        console.warn("Failed to load suggestions from backend, attempting client-side fallback:", err);
-        const deepseekKey = import.meta.env.VITE_DEEPSEEK_API_KEY || "";
-        if (deepseekKey) {
-          try {
-            console.log("☁️ Client-side suggestions fallback generator triggered...");
-            const systemPrompt = `You are an expert conversational AI agent. You must generate 4 intriguing, high-curiosity suggestion prompts in Arabic for the chat welcome screen.
-Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) in this format:
-[
-  {
-    "title": "Short title in Arabic (2-3 words)",
-    "desc": "Intriguing description in Arabic (4-6 words)",
-    "prompt": "The actual full question/prompt in Arabic to send to the AI"
-  }
-]`;
-            let prompt = "";
-            if (userMemoryContext && Array.isArray(userMemoryContext) && userMemoryContext.length > 0) {
-              const historyStr = userMemoryContext
-                .map((c: any) => `- Conversation Title: "${c.title}", Last Query: "${c.lastQuery}"`)
-                .join("\n");
-              prompt = `The user has the following past conversation history and recent queries:\n${historyStr}\n\nBased on these previous interests, generate 4 highly personalized, curious, and specific suggestion questions in Arabic. Each question must provoke high interest and curiosity (فضول) for the user to explore further. Make them logical next steps or interesting related topics rather than repeating their past questions.`;
-            } else {
-              prompt = `Generate 4 general, highly intriguing, and curious suggestion questions in Arabic. They should cover exciting and mind-bending topics like advanced science, future AI, philosophy, creative writing, or high-tech concepts, making the user extremely curious to click and read the answers.`;
-            }
-
-            const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${deepseekKey}`
-              },
-              body: JSON.stringify({
-                model: "deepseek-chat",
-                messages: [
-                  { role: "system", content: systemPrompt },
-                  { role: "user", content: prompt }
-                ],
-                max_tokens: 600,
-                temperature: 0.8
-              })
-            });
-
-            if (response.ok) {
-              const resultData = await response.json();
-              const content = resultData.choices[0]?.message?.content || "";
-              const cleanJson = content.replace(/```json|```/g, "").trim();
-              const suggestions = JSON.parse(cleanJson);
-              if (active && Array.isArray(suggestions) && suggestions.length > 0) {
-                setDynamicSuggestions(suggestions);
-                saveToCache(suggestions);
-              }
-            }
-          } catch (fallbackErr) {
-            console.error("Client-side suggestions fallback generator failed:", fallbackErr);
-          }
-        }
-      } finally {
-        if (active) setIsLoadingSuggestions(false);
-      }
-    };
-
-    fetchSuggestions();
-
     return () => {
-      active = false;
+      useChatStore.getState().setActiveQuizProgress(null);
     };
-  }, [conversations.length, activeConversationId, messages.length, streamingContent, streamingReasoning]);
+  }, []);
 
   const getSuggestionIcon = (title: string) => {
     const t = title.toLowerCase();
-    if (/كود|برمج|موقع|react|code|html|css|js|python/i.test(t)) return Terminal;
-    if (/مقارن|تحليل|فرق|compare|analysis|vs/i.test(t)) return BarChart3;
-    if (/تخطيط|جدول|تنظيم|رياضة|plan|calendar|schedule/i.test(t)) return Activity;
+    if (/عطور/i.test(t)) return Palette;
+    if (/عيادة/i.test(t)) return Activity;
+    if (/لوحة/i.test(t)) return Monitor;
+    if (/معرض/i.test(t)) return User;
     return MessageSquare;
   };
 
   const DEFAULT_SUGGESTIONS = [
     {
-      title: "الكتابة وصناعة المحتوى",
-      desc: "مقالات، رسائل إيميل، أو نصوص إبداعية",
-      prompt: "اكتب لي مقالاً احترافياً عن فوائد الذكاء الاصطناعي في حياتنا اليومية",
+      title: "متجر عطور فاخر",
+      desc: "تصميم متجر إلكتروني جذاب وتفاعلي للمنتجات الراقية",
+      prompt: "صمم لي متجر عطور فاخر بتأثيرات زجاجية (Glassmorphic) وسلة مشتريات تفاعلية وحركات دخول انسيابية",
     },
     {
-      title: "المقارنات والتحليل",
-      desc: "تحليل الأفكار ومقارنة البيانات المعقدة",
-      prompt: "قارن بين نموذج الذكاء الاصطناعي الهجين والنموذج السحابي من حيث الكفاءة والأمان",
+      title: "عيادة طبية متكاملة",
+      desc: "موقع طبي احترافي مع حجز مواعيد وتنسيق ذكي",
+      prompt: "صمم موقعاً لعيادة طبية حديثة يشمل واجهة حجز مواعيد تفاعلية، معرض لخدمات العيادة، وقائمة الأطباء بتصميم أنيق",
     },
     {
-      title: "البرمجة وحل المشكلات",
-      desc: "كتابة وتعديل الأكواد البرمجية بكفاءة",
-      prompt: "اكتب كود React مخصص لصفحة لوحة تحكم (Dashboard) باستخدام TailwindCSS",
+      title: "لوحة تحكم SaaS",
+      desc: "تخطيط احترافي لعرض البيانات والرسوم البيانية",
+      prompt: "صمم لوحة تحكم سحابية (SaaS Dashboard) لعرض مبيعات شركة مع فلاتر فرز حية، ورسوم بيانية تفاعلية بلغة جافا سكريبت",
     },
     {
-      title: "التخطيط والتنظيم اليومي",
-      desc: "جداول رياضية، خطط عمل، وتنظيم المهام",
-      prompt: "صمم لي جدول تمارين رياضية منزلي لمدة أسبوع لزيادة اللياقة البدنية",
+      title: "معرض أعمال للمصممين",
+      desc: "موقع شخصي لعرض المشاريع بتأثيرات ثلاثية الأبعاد",
+      prompt: "صمم موقع معرض أعمال شخصي لمصمم واجهات مستخدم يشمل بطاقات مشاريع تفاعلية مع تأثير الـ 3D Tilt ونموذج تواصل مخصص",
     },
   ];
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isAutoScroll, setIsAutoScroll] = useState(true);
+  const isAutoScrollRef = useRef(true);
   const prevMessagesLength = useRef(messages.length);
+  const getScrollContainer = () => messagesEndRef.current?.closest(".chat-scroll-container") as HTMLElement | null;
 
   // Re-enable auto-scroll when user sends a new message
   useEffect(() => {
     if (messages.length > prevMessagesLength.current) {
+      isAutoScrollRef.current = true;
       setIsAutoScroll(true);
     }
     prevMessagesLength.current = messages.length;
@@ -1656,16 +2015,14 @@ Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) i
 
   // Monitor manual scrolls
   useEffect(() => {
-    const container = messagesEndRef.current?.closest(".overflow-y-auto");
+    const container = getScrollContainer();
     if (!container) return;
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
-      const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
-      setIsAutoScroll(prev => {
-        if (prev !== isAtBottom) return isAtBottom;
-        return prev;
-      });
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 140;
+      isAutoScrollRef.current = isAtBottom;
+      setIsAutoScroll(isAtBottom);
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
@@ -1674,24 +2031,36 @@ Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) i
 
   // Handle actual scrolling
   useEffect(() => {
-    if (!isAutoScroll) return;
-
-    const container = messagesEndRef.current?.closest(".overflow-y-auto");
+    const container = getScrollContainer();
     if (!container) return;
 
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 180;
+
+    // If we think we should auto scroll, but the user is actually not at the bottom anymore,
+    // it means they manually scrolled up. Cancel autoscroll.
+    if (isAutoScrollRef.current && !isAtBottom) {
+      isAutoScrollRef.current = false;
+      setIsAutoScroll(false);
+      return;
+    }
+
+    if (!isAutoScrollRef.current) return;
+
+    const targetTop = Math.max(0, scrollHeight - clientHeight);
     if (isStreaming) {
-      container.scrollTop = container.scrollHeight;
+      container.scrollTop = targetTop;
     } else {
       container.scrollTo({
-        top: container.scrollHeight,
+        top: targetTop,
         behavior: "smooth"
       });
     }
-  }, [messages, streamingContent, isAutoScroll, isStreaming]);
+  }, [messages, streamingContent, isStreaming]);
 
   if (messages.length === 0 && !streamingContent && !streamingReasoning) {
     const ModelIcon = modelIcons[selectedModel] || Sparkles;
-    const displaySuggestions = dynamicSuggestions.length > 0 ? dynamicSuggestions : DEFAULT_SUGGESTIONS;
+    const displaySuggestions = DEFAULT_SUGGESTIONS;
 
     return (
       <div className="flex flex-col items-center justify-center py-10 md:py-16 max-w-2xl mx-auto px-4 text-center space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[60vh]">
@@ -1711,45 +2080,28 @@ Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) i
         </div>
 
         {/* Suggestions Grid */}
-        {isLoadingSuggestions ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 w-full" dir="rtl">
-            {[0, 1, 2, 3].map((idx) => (
-              <div
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 w-full" dir="rtl">
+          {displaySuggestions.map((item, idx) => {
+            const SugIcon = getSuggestionIcon(item.title);
+            return (
+              <motion.button
                 key={idx}
-                className="flex flex-col items-start text-right p-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/10 shadow-sm animate-pulse min-h-[92px] w-full"
+                onClick={() => onSelectPrompt && onSelectPrompt(item.prompt)}
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="flex flex-col text-right p-3.5 rounded-xl border border-zinc-800 bg-zinc-900/10 hover:bg-zinc-900/30 hover:border-violet-500/20 shadow-sm transition-all duration-200 cursor-pointer min-w-0 font-arabic relative overflow-hidden group"
               >
-                <div className="flex items-center gap-2.5 mb-2 w-full">
-                  <div className="w-7 h-7 rounded-lg bg-zinc-800/80 shrink-0 animate-pulse" />
-                  <div className="h-4 bg-zinc-800/80 rounded w-1/3 animate-pulse" />
-                </div>
-                <div className="h-3 bg-zinc-800/80 rounded w-2/3 mt-1.5 animate-pulse" />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 w-full" dir="rtl">
-            {displaySuggestions.map((item, idx) => {
-              const SugIcon = getSuggestionIcon(item.title);
-              return (
-                <motion.button
-                  key={idx}
-                  onClick={() => onSelectPrompt && onSelectPrompt(item.prompt)}
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex flex-col text-right p-3.5 rounded-xl border border-zinc-800 bg-zinc-900/10 hover:bg-zinc-900/30 hover:border-violet-500/20 shadow-sm transition-all duration-200 cursor-pointer min-w-0 font-arabic relative overflow-hidden group"
-                >
-                  <div className="flex items-center gap-2.5 mb-1.5 w-full">
-                    <div className="w-7 h-7 rounded-lg bg-zinc-850 border border-zinc-800 flex items-center justify-center shrink-0 text-violet-400 group-hover:text-violet-300 transition-colors">
-                      <SugIcon className="w-4 h-4" />
-                    </div>
-                    <h4 className="text-sm font-bold text-foreground truncate">{item.title}</h4>
+                <div className="flex items-center gap-2.5 mb-1.5 w-full">
+                  <div className="w-7 h-7 rounded-lg bg-zinc-850 border border-zinc-800 flex items-center justify-center shrink-0 text-violet-400 group-hover:text-violet-300 transition-colors">
+                    <SugIcon className="w-4 h-4" />
                   </div>
-                  <p className="text-xs text-muted-foreground leading-normal line-clamp-2 pr-1">{item.desc}</p>
-                </motion.button>
-              );
-            })}
-          </div>
-        )}
+                  <h4 className="text-sm font-bold text-foreground truncate">{item.title}</h4>
+                </div>
+                <p className="text-xs text-muted-foreground leading-normal line-clamp-2 pr-1">{item.desc}</p>
+              </motion.button>
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -1778,7 +2130,9 @@ Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) i
                 model={message.model}
                 reasoning={message.reasoningContent}
                 omniState={(message as any).omniState}
-                unboundState={message.model === "apex-unbound" && index === messages.length - 1 ? unboundState : undefined}
+                unboundState={message.model === "apex-unbound" && index === messages.length - 1 && !isStreaming ? unboundState : undefined}
+                onSelectUnboundChoice={onSelectUnboundChoice}
+                isPipelineActive={isStreaming}
               />
             )}
           </motion.div>
@@ -1793,18 +2147,22 @@ Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) i
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="flex gap-4"
           >
-            <ThinkingBubble isSearch={selectedModel === "apex-elite" || isDeepResearch} />
+            <ThinkingBubble 
+              isSearch={selectedModel === "apex-elite" || isDeepResearch} 
+              isQuiz={isQuizRequest}
+              isPdf={isPdfRequest}
+            />
           </motion.div>
         )}
 
-        {/* APEX Unbound: show pipeline card while generating, before streaming content arrives */}
-        {isStreaming && selectedModel === "apex-unbound" && unboundState && !streamingContent && (
+        {/* APEX Unbound: show pipeline card while generating or when paused waiting for questionnaire choice */}
+        {selectedModel === "apex-unbound" && unboundState && !unboundState.completedAt && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
-            <UnboundStatusCard state={unboundState} />
+            <UnboundStatusCard state={unboundState} onSelectChoice={onSelectUnboundChoice} />
           </motion.div>
         )}
 
@@ -1819,7 +2177,8 @@ Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) i
               model={selectedModel}
               reasoning={streamingReasoning}
               omniState={selectedModel === "apex-omni" ? (omniState || undefined) : undefined}
-              unboundState={selectedModel === "apex-unbound" ? unboundState : undefined}
+              unboundState={undefined}
+              onSelectUnboundChoice={onSelectUnboundChoice}
               isStreaming
             />
           </motion.div>
@@ -1903,41 +2262,24 @@ function WebsitePreviewBanner({ html }: { html: string }) {
             </div>
             <div className="min-w-0 font-sans text-left">
               <p className="text-sm font-bold text-violet-300 truncate">الموقع جاهز للعرض والتشغيل</p>
-              <p className="text-[11px] text-zinc-500 truncate">Website ready · Preview or open full screen</p>
+              <p className="text-[11px] text-zinc-500 truncate">Website ready · Preview or open in a full page</p>
             </div>
           </div>
-
-          {/* Right: Actions */}
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} className="flex-1 sm:flex-initial">
-              <Button
-                onClick={() => setShowPreview(true)}
-                className="w-full h-8 px-4 text-xs font-bold gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white border-0 rounded-lg shadow-md shadow-violet-900/30 transition-all"
-              >
-                <Play className="w-3.5 h-3.5" />
-                معاينة
-              </Button>
-            </motion.div>
-            
-            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} className="flex-1 sm:flex-initial">
-              <Button
-                onClick={openInNewTab}
-                className="w-full h-8 px-4 text-xs font-bold gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 rounded-lg shadow-sm transition-all"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                شاشة كاملة
-              </Button>
-            </motion.div>
+            <Button
+              onClick={openInNewTab}
+              className="w-full sm:w-auto h-9 px-5 text-xs font-semibold gap-2 bg-emerald-600 hover:bg-emerald-500 text-white border-0 rounded-lg shadow-sm transition-all duration-200 font-arabic flex items-center justify-center"
+              dir="rtl"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span>فتح الموقع</span>
+            </Button>
           </div>
         </div>
 
         {/* Bottom glow */}
         <div className="h-px bg-gradient-to-r from-transparent via-orange-500/20 to-transparent" />
       </motion.div>
-
-      {showPreview && (
-        <WebPreviewModal html={html} onClose={() => setShowPreview(false)} />
-      )}
     </>
   );
 }
@@ -1975,6 +2317,8 @@ function AssistantMessage({
   isStreaming,
   omniState,
   unboundState,
+  onSelectUnboundChoice,
+  isPipelineActive,
 }: {
   content: string;
   model?: AIModel;
@@ -1982,17 +2326,25 @@ function AssistantMessage({
   isStreaming?: boolean;
   omniState?: OmniState;
   unboundState?: UnboundState | null;
+  onSelectUnboundChoice?: (choice: any) => void;
+  isPipelineActive?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   const [showReasoning, setShowReasoning] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const { toast } = useToast();
 
   const { cleanContent, sources } = extractSourcesAndClean(content);
+  const mcqState = getMCQQuizState(cleanContent);
+  const pdfState = getPDFDocumentState(mcqState.sanitizedContent);
 
   const isUnboundModel = model === "apex-unbound";
-  const cleanedMarkdown = isUnboundModel ? cleanStatusMarkers(cleanContent) : cleanContent;
+  const cleanedMarkdown = isUnboundModel
+    ? cleanStatusMarkers(pdfState.sanitizedContent)
+    : pdfState.sanitizedContent;
 
   // Detect if this message contains a launchable website (can extract as soon as HTML block closes)
-  const detectedHtml = extractHtmlFromContent(cleanedMarkdown);
+  const detectedHtml = extractHtmlFromContent(cleanContent);
 
   // Detect if this message contains an architectural plan
   const detectedPlan = isUnboundModel ? extractPlanFromContent(cleanContent) : null;
@@ -2002,6 +2354,237 @@ function AssistantMessage({
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const handleExportPdf = async () => {
+    if (!cleanedMarkdown.trim()) return;
+    setIsExportingPdf(true);
+
+    try {
+      const response = await fetch("/api/export/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          exportType: "message",
+          content: cleanedMarkdown,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.message || `PDF export failed with status ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const disposition = response.headers.get("content-disposition") || "";
+      const match = disposition.match(/filename="([^"]+)"/i);
+      const filename = match?.[1] || "apex-message.pdf";
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "PDF ready",
+        description: "The assistant response was exported successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "PDF export failed",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  const markdownComponents = useMemo(() => ({
+    pre: ({ node, children, ...props }: any) => {
+      return <>{children}</>;
+    },
+    img: ({ node, src, alt, ...props }: any) => (
+      <MarkdownImage src={src} alt={alt} {...props} />
+    ),
+    p: ({ node, children, ...props }: any) => {
+      const isRtl = hasArabicText(children);
+      return (
+        <p 
+          className={cn("text-foreground leading-relaxed my-2 text-[15px]", isRtl ? "font-arabic text-right" : "text-left")}
+          dir={isRtl ? "rtl" : "ltr"}
+          {...props}
+        >
+          {React.Children.map(children, child => 
+            typeof child === "string" ? renderTextWithMath(child) : child
+          )}
+        </p>
+      );
+    },
+    li: ({ node, children, ...props }: any) => {
+      const isRtl = hasArabicText(children);
+      return (
+        <li 
+          className={cn("text-foreground leading-relaxed my-1.5 text-[15px]", isRtl ? "font-arabic text-right" : "text-left")}
+          dir={isRtl ? "rtl" : "ltr"}
+          {...props}
+        >
+          {React.Children.map(children, child => 
+            typeof child === "string" ? renderTextWithMath(child) : child
+          )}
+        </li>
+      );
+    },
+    strong: ({ node, children, ...props }: any) => (
+      <strong className="font-bold text-foreground" {...props}>
+        {React.Children.map(children, child => 
+          typeof child === "string" ? renderTextWithMath(child) : child
+        )}
+      </strong>
+    ),
+    em: ({ node, children, ...props }: any) => (
+      <em className="italic text-muted-foreground" {...props}>
+        {React.Children.map(children, child => 
+          typeof child === "string" ? renderTextWithMath(child) : child
+        )}
+      </em>
+    ),
+    h1: ({ node, children, ...props }: any) => {
+      const isRtl = hasArabicText(children);
+      return (
+        <h1 
+          className={cn("text-2xl font-extrabold text-foreground mt-8 mb-4 tracking-tight", isRtl ? "font-arabic text-right" : "text-left")}
+          dir={isRtl ? "rtl" : "ltr"}
+          {...props}
+        >
+          {React.Children.map(children, child => 
+            typeof child === "string" ? renderTextWithMath(child) : child
+          )}
+        </h1>
+      );
+    },
+    h2: ({ node, children, ...props }: any) => {
+      const isRtl = hasArabicText(children);
+      return (
+        <h2 
+          className={cn("text-xl font-bold text-foreground mt-6 mb-3 tracking-tight border-b border-border pb-1", isRtl ? "font-arabic text-right" : "text-left")}
+          dir={isRtl ? "rtl" : "ltr"}
+          {...props}
+        >
+          {React.Children.map(children, child => 
+            typeof child === "string" ? renderTextWithMath(child) : child
+          )}
+        </h2>
+      );
+    },
+    h3: ({ node, children, ...props }: any) => {
+      const isRtl = hasArabicText(children);
+      return (
+        <h3 
+          className={cn("text-lg font-bold text-foreground mt-4 mb-2 tracking-tight", isRtl ? "font-arabic text-right" : "text-left")}
+          dir={isRtl ? "rtl" : "ltr"}
+          {...props}
+        >
+          {React.Children.map(children, child => 
+            typeof child === "string" ? renderTextWithMath(child) : child
+          )}
+        </h3>
+      );
+    },
+    table: ({ node, children, ...props }: any) => {
+      const isRtlTable = hasArabicText(children);
+      return (
+        <div className="overflow-x-auto my-6 rounded-xl border border-zinc-800/80 shadow-lg bg-zinc-950/40 backdrop-blur-md max-w-full transition-all duration-300 hover:shadow-xl hover:border-zinc-700/60">
+          <table 
+            className="w-full text-sm border-collapse text-foreground font-sans" 
+            dir={isRtlTable ? 'rtl' : 'ltr'}
+            {...props}
+          >
+            {children}
+          </table>
+        </div>
+      );
+    },
+    thead: ({ node, ...props }: any) => (
+      <thead className="bg-zinc-900/90 border-b border-zinc-700/50" {...props} />
+    ),
+    th: ({ node, children, align, style, cellindex, ...props }: any) => {
+      const isRtl = hasArabicText(children);
+      const textAlignment = align || style?.textAlign || (isRtl ? 'right' : 'left');
+      return (
+        <th 
+          className={cn(
+            "px-5 py-3.5 border border-zinc-800/80 font-bold text-zinc-200 tracking-wider text-xs uppercase bg-zinc-900/40",
+            isRtl && 'font-arabic',
+            textAlignment === 'right' && 'text-right',
+            textAlignment === 'left' && 'text-left',
+            textAlignment === 'center' && 'text-center'
+          )}
+          dir={isRtl ? 'rtl' : 'ltr'}
+          style={style}
+          {...props}
+        >
+          {React.Children.map(children, child => 
+            typeof child === "string" ? renderTextWithMath(child) : child
+          )}
+        </th>
+      );
+    },
+    tr: ({ node, children, ...props }: any) => {
+      const cells = React.Children.toArray(children);
+      return (
+        <tr className="hover:bg-zinc-800/20 even:bg-zinc-900/10 transition-colors duration-150 border-b border-zinc-900 last:border-0" {...props}>
+          {cells.map((cell, index) => {
+            if (React.isValidElement(cell)) {
+              return React.cloneElement(cell as React.ReactElement<any>, { cellindex: index });
+            }
+            return cell;
+          })}
+        </tr>
+      );
+    },
+    td: ({ node, children, align, style, cellindex, ...props }: any) => {
+      const isRtl = hasArabicText(children);
+      const textAlignment = align || style?.textAlign || (isRtl ? 'right' : 'left');
+      return (
+        <td 
+          className={cn(
+            "px-5 py-4 border border-zinc-800/40 align-middle leading-relaxed text-[13.5px] text-zinc-300",
+            isRtl && 'font-arabic',
+            textAlignment === 'right' && 'text-right',
+            textAlignment === 'left' && 'text-left',
+            textAlignment === 'center' && 'text-center'
+          )}
+          dir={isRtl ? 'rtl' : 'ltr'}
+          style={style}
+          {...props}
+        >
+          {React.Children.map(children, child => 
+            typeof child === "string" ? renderTextWithMath(child) : child
+          )}
+        </td>
+      );
+    },
+    code: ({ node, className, children, ...props }: any) => {
+      const inline = (props as any).inline as boolean | undefined;
+      const match = /language-([\w-]+)/.exec(className || '');
+      const lang = match ? match[1] : '';
+      
+      if (inline) {
+        return (
+          <code className="bg-muted px-1.5 py-0.5 rounded border border-border text-emerald-600 dark:text-emerald-400 font-mono text-xs" {...props}>
+            {children}
+          </code>
+        );
+      }
+
+      return (
+        <CodeBlockWrapper language={lang} code={String(children).replace(/\n$/, '')} parentContent={cleanContent} />
+      );
+    },
+  }), [cleanContent]);
 
   const ModelIcon = model ? modelIcons[model] || Sparkles : Sparkles;
   const gradient = model ? (modelGradients[model] || "from-violet-500 to-indigo-600") : "from-violet-500 to-indigo-600";
@@ -2044,19 +2627,33 @@ function AssistantMessage({
               </span>
             </div>
           </div>
-          {content && (
+          {content && !/```(?:mcq-quiz|pdf-document)/i.test(content) && (
             <motion.div whileTap={{ scale: 0.9 }}>
-              <Button
-                variant="ghost" size="sm"
-                onClick={handleCopy}
-                className="opacity-0 group-hover:opacity-100 transition-all h-6 px-2 hover:bg-white/6 text-muted-foreground hover:text-foreground rounded-lg"
-              >
-                {copied ? (
-                  <><Check className="w-3 h-3 mr-1 text-emerald-400" /><span className="text-xs">Copied</span></>
-                ) : (
-                  <><Copy className="w-3 h-3 mr-1" /><span className="text-xs">Copy</span></>
-                )}
-              </Button>
+              <div className="flex items-center gap-1 opacity-0 transition-all group-hover:opacity-100">
+                <Button
+                  variant="ghost" size="sm"
+                  onClick={handleExportPdf}
+                  disabled={isExportingPdf}
+                  className="h-6 px-2 hover:bg-white/6 text-muted-foreground hover:text-foreground rounded-lg"
+                >
+                  {isExportingPdf ? (
+                    <><RotateCw className="w-3 h-3 mr-1 animate-spin" /><span className="text-xs">PDF</span></>
+                  ) : (
+                    <><FileDown className="w-3 h-3 mr-1" /><span className="text-xs">PDF</span></>
+                  )}
+                </Button>
+                <Button
+                  variant="ghost" size="sm"
+                  onClick={handleCopy}
+                  className="h-6 px-2 hover:bg-white/6 text-muted-foreground hover:text-foreground rounded-lg"
+                >
+                  {copied ? (
+                    <><Check className="w-3 h-3 mr-1 text-emerald-400" /><span className="text-xs">Copied</span></>
+                  ) : (
+                    <><Copy className="w-3 h-3 mr-1" /><span className="text-xs">Copy</span></>
+                  )}
+                </Button>
+              </div>
             </motion.div>
           )}
         </div>
@@ -2095,13 +2692,13 @@ function AssistantMessage({
           </div>
         )}
 
-        {unboundState && (
+        {unboundState && !isStreaming && (
           <div className="mb-4">
-            <UnboundStatusCard state={unboundState} />
+            <UnboundStatusCard state={unboundState} onSelectChoice={onSelectUnboundChoice} />
           </div>
         )}
 
-        {isUnboundModel && (content.includes("[🤖") || content.includes("<plan>")) && (
+        {isUnboundModel && (content.includes("[🤖") || content.includes("<plan>") || content.includes("===") || content.includes("[Phase")) && (
           <div className="mb-4 flex flex-col gap-2">
             <UnboundWebGenStatusCard content={content} isStreaming={!!isStreaming} />
             {detectedPlan && (
@@ -2111,205 +2708,24 @@ function AssistantMessage({
                 isStreaming={!!isStreaming} 
               />
             )}
+            <UnboundConsole content={content} isStreaming={!!isStreaming} />
           </div>
         )}
 
         {content && (
           <div className={cn("prose prose-sm dark:prose-invert max-w-none", isStreaming && "streaming-active")}>
             <div className="prose dark:prose-invert max-w-none">
+              {mcqState.hasPendingBlock && isStreaming && <MCQQuizLoadingCard />}
+              {pdfState.hasPendingBlock && isStreaming && <PDFLoadingCard language={/[\u0600-\u06FF]/.test(cleanContent) ? "ar" : "en"} />}
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
-                components={{
-                  img: ({ node, src, alt, ...props }) => (
-                    <MarkdownImage src={src} alt={alt} {...props} />
-                  ),
-                  p: ({ node, children, ...props }) => {
-                    const isRtl = hasArabicText(children);
-                    return (
-                      <p 
-                        className={cn("text-foreground leading-relaxed my-2 text-[15px]", isRtl ? "font-arabic text-right" : "text-left")}
-                        dir={isRtl ? "rtl" : "ltr"}
-                        {...props}
-                      >
-                        {React.Children.map(children, child => 
-                          typeof child === "string" ? replaceEmojisWithIcons(child) : child
-                        )}
-                      </p>
-                    );
-                  },
-                  li: ({ node, children, ...props }) => {
-                    const isRtl = hasArabicText(children);
-                    return (
-                      <li 
-                        className={cn("text-foreground leading-relaxed my-1.5 text-[15px]", isRtl ? "font-arabic text-right" : "text-left")}
-                        dir={isRtl ? "rtl" : "ltr"}
-                        {...props}
-                      >
-                        {React.Children.map(children, child => 
-                          typeof child === "string" ? replaceEmojisWithIcons(child) : child
-                        )}
-                      </li>
-                    );
-                  },
-                  strong: ({ node, children, ...props }) => (
-                    <strong className="font-bold text-foreground" {...props}>
-                      {React.Children.map(children, child => 
-                        typeof child === "string" ? replaceEmojisWithIcons(child) : child
-                      )}
-                    </strong>
-                  ),
-                  em: ({ node, children, ...props }) => (
-                    <em className="italic text-muted-foreground" {...props}>
-                      {React.Children.map(children, child => 
-                        typeof child === "string" ? replaceEmojisWithIcons(child) : child
-                      )}
-                    </em>
-                  ),
-                  h1: ({ node, children, ...props }) => {
-                    const isRtl = hasArabicText(children);
-                    return (
-                      <h1 
-                        className={cn("text-2xl font-extrabold text-foreground mt-8 mb-4 tracking-tight", isRtl ? "font-arabic text-right" : "text-left")}
-                        dir={isRtl ? "rtl" : "ltr"}
-                        {...props}
-                      >
-                        {React.Children.map(children, child => 
-                          typeof child === "string" ? replaceEmojisWithIcons(child) : child
-                        )}
-                      </h1>
-                    );
-                  },
-                  h2: ({ node, children, ...props }) => {
-                    const isRtl = hasArabicText(children);
-                    return (
-                      <h2 
-                        className={cn("text-xl font-bold text-foreground mt-6 mb-3 tracking-tight border-b border-border pb-1", isRtl ? "font-arabic text-right" : "text-left")}
-                        dir={isRtl ? "rtl" : "ltr"}
-                        {...props}
-                      >
-                        {React.Children.map(children, child => 
-                          typeof child === "string" ? replaceEmojisWithIcons(child) : child
-                        )}
-                      </h2>
-                    );
-                  },
-                  h3: ({ node, children, ...props }) => {
-                    const isRtl = hasArabicText(children);
-                    return (
-                      <h3 
-                        className={cn("text-lg font-bold text-foreground mt-4 mb-2 tracking-tight", isRtl ? "font-arabic text-right" : "text-left")}
-                        dir={isRtl ? "rtl" : "ltr"}
-                        {...props}
-                      >
-                        {React.Children.map(children, child => 
-                          typeof child === "string" ? replaceEmojisWithIcons(child) : child
-                        )}
-                      </h3>
-                    );
-                  },
-                  table: ({ node, children, ...props }) => {
-                    const isRtlTable = hasArabicText(children);
-                    return (
-                      <div className="overflow-x-auto my-6 rounded-xl border border-zinc-800/80 shadow-lg bg-zinc-950/40 backdrop-blur-md max-w-full transition-all duration-300 hover:shadow-xl hover:border-zinc-700/60">
-                        <table 
-                          className="w-full text-sm border-collapse text-foreground font-sans" 
-                          dir={isRtlTable ? 'rtl' : 'ltr'}
-                          {...props}
-                        >
-                          {children}
-                        </table>
-                      </div>
-                    );
-                  },
-                  thead: ({ node, ...props }) => (
-                    <thead className="bg-zinc-900/90 border-b border-zinc-700/50" {...props} />
-                  ),
-                  th: ({ node, children, align, style, cellIndex, ...props }: any) => {
-                    const isRtl = hasArabicText(children);
-                    const textAlignment = align || style?.textAlign || (isRtl ? 'right' : 'left');
-                    const rawText = extractTextFromChildren(children);
-                    const shouldShowImage = cellIndex === undefined || cellIndex !== 0;
-                    return (
-                      <th 
-                        className={cn(
-                          "px-5 py-3.5 border border-zinc-800/80 font-bold text-zinc-200 tracking-wider text-xs uppercase bg-zinc-900/40",
-                          isRtl && 'font-arabic',
-                          textAlignment === 'right' && 'text-right',
-                          textAlignment === 'left' && 'text-left',
-                          textAlignment === 'center' && 'text-center'
-                        )}
-                        dir={isRtl ? 'rtl' : 'ltr'}
-                        style={style}
-                        {...props}
-                      >
-                        {shouldShowImage && <EntityHeaderImage title={rawText} />}
-                        <div className={cn(shouldShowImage && "mt-1")}>
-                          {React.Children.map(children, child => 
-                            typeof child === "string" ? replaceEmojisWithIcons(child) : child
-                          )}
-                        </div>
-                      </th>
-                    );
-                  },
-                  tr: ({ node, children, ...props }) => {
-                    const cells = React.Children.toArray(children);
-                    return (
-                      <tr className="hover:bg-zinc-800/20 even:bg-zinc-900/10 transition-colors duration-150 border-b border-zinc-900 last:border-0" {...props}>
-                        {cells.map((cell, index) => {
-                          if (React.isValidElement(cell)) {
-                            return React.cloneElement(cell as React.ReactElement<any>, { cellIndex: index });
-                          }
-                          return cell;
-                        })}
-                      </tr>
-                    );
-                  },
-                  td: ({ node, children, align, style, cellIndex, ...props }: any) => {
-                    const isRtl = hasArabicText(children);
-                    const textAlignment = align || style?.textAlign || (isRtl ? 'right' : 'left');
-                    return (
-                      <td 
-                        className={cn(
-                          "px-5 py-4 border border-zinc-800/40 align-middle leading-relaxed text-[13.5px] text-zinc-300",
-                          isRtl && 'font-arabic',
-                          textAlignment === 'right' && 'text-right',
-                          textAlignment === 'left' && 'text-left',
-                          textAlignment === 'center' && 'text-center'
-                        )}
-                        dir={isRtl ? 'rtl' : 'ltr'}
-                        style={style}
-                        {...props}
-                      >
-                        {React.Children.map(children, child => 
-                          typeof child === "string" ? replaceEmojisWithIcons(child) : child
-                        )}
-                      </td>
-                    );
-                  },
-                  code: ({ node, className, children, ...props }) => {
-                    const inline = (props as any).inline as boolean | undefined;
-                    const match = /language-(\w+)/.exec(className || '');
-                    const lang = match ? match[1] : '';
-                    
-                    if (inline) {
-                      return (
-                        <code className="bg-muted px-1.5 py-0.5 rounded border border-border text-emerald-600 dark:text-emerald-400 font-mono text-xs" {...props}>
-                          {children}
-                        </code>
-                      );
-                    }
-
-                    return (
-                      <CodeBlockWrapper language={lang} code={String(children).replace(/\n$/, '')} parentContent={cleanedMarkdown} />
-                    );
-                  },
-                }}
+                components={markdownComponents}
               >
                 {cleanedMarkdown}
               </ReactMarkdown>
             </div>
             {/* Website Preview Banner — appears for ANY model that generates HTML */}
-            {detectedHtml && !isStreaming && (
+            {detectedHtml && !isStreaming && !isPipelineActive && (
               <WebsitePreviewBanner html={detectedHtml} />
             )}
 

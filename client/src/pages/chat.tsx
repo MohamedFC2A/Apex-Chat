@@ -10,7 +10,7 @@ import { SubscriptionBadge } from "@/components/subscription-badge";
 import { ModelSelector } from "@/components/model-selector";
 import { ContextMeter } from "@/components/context-meter";
 import { Button } from "@/components/ui/button";
-import { PanelLeft, BookOpen, ExternalLink, Copy, Check, Zap } from "lucide-react";
+import { PanelLeft, BookOpen, ExternalLink, Copy, Check, Zap, FileDown, Loader2 } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { sendAIMessage, getAIClientStatus } from "@/lib/ai-client";
 import { processOmniRequest, type OmniState } from "@/lib/omni-service";
 import { runUnboundService, type UnboundState } from "@/lib/unbound-service";
+import { buildCompactConversationHistory, buildRelevantMemoryContext } from "@/lib/context-engine";
 import type { Message, ChatResponse, AIModel } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
@@ -52,6 +53,7 @@ export default function ChatPage() {
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [isExportingConversation, setIsExportingConversation] = useState(false);
 
   const [omniStateMap, setOmniStateMap] = useState<Record<string, OmniState>>({});
   const omniState = activeConversationId ? omniStateMap[activeConversationId] ?? null : null;
@@ -88,6 +90,12 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
+    // Clear streaming content when active conversation changes to prevent text bleeding/overlap
+    setStreamingContent("");
+    setStreamingReasoning("");
+  }, [activeConversationId]);
+
+  useEffect(() => {
     // Smart light vibration feedback on model change for mobile devices
     if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
       try {
@@ -105,7 +113,7 @@ export default function ChatPage() {
   }, [selectedModel]);
 
   const handleSendMessage = useCallback(
-    async (content: string) => {
+    async (content: string, displayContent?: string) => {
       let conversationId = activeConversationId;
       const store = useChatStore.getState();
       let existingMessages: Message[] = [];
@@ -121,7 +129,8 @@ export default function ChatPage() {
       const userMessage: Message = {
         id: crypto.randomUUID(),
         role: "user",
-        content,
+        content: displayContent || content,
+        contextContent: displayContent ? content : undefined,
         timestamp: Date.now(),
       };
 
@@ -132,16 +141,8 @@ export default function ChatPage() {
       setStreamingReasoning("");
 
       try {
-        const pastConversations = store.conversations.filter(
-          c => c.id !== thisConvId && c.messages.length > 0
-        );
-        const userMemoryContext = pastConversations.slice(0, 5).map(c => {
-          const userMessages = c.messages.filter(m => m.role === "user");
-          return {
-            title: c.title,
-            lastQuery: userMessages[userMessages.length - 1]?.content || ""
-          };
-        });
+        const compactHistory = buildCompactConversationHistory(existingMessages);
+        const userMemoryContext = buildRelevantMemoryContext(store.conversations, thisConvId, content);
 
         let response: ChatResponse;
         const isGodModeModel = selectedModel === "apex-unbound";
@@ -171,7 +172,7 @@ export default function ChatPage() {
                 setStreamingContent(state.finalResponse);
               }
             },
-            existingMessages.map(m => ({ role: m.role, content: m.content }))
+            compactHistory
           );
 
           if ((response as any).error) {
@@ -179,42 +180,80 @@ export default function ChatPage() {
           }
         } else if (selectedModel === "apex-unbound") {
           // ── APEX Unbound: route through the new multi-agent pipeline ──
+          const currentUnboundState = unboundStateMap[thisConvId];
+          const previousSpec = currentUnboundState?.spec || null;
+          const previousSelectedChoices = currentUnboundState?.selectedChoices || null;
+          const isFollowUp = !!previousSpec;
+
           const initialUnboundState: UnboundState = {
             isRunning: true,
             phases: [
-              { phase: 1, name: "Architect Agent — System Specification", status: "pending" },
-              { phase: 2, name: "HTML Agent — Semantic DOM Generation", status: "pending" },
-              { phase: 3, name: "Selector Sync Engine — Token Extraction", status: "pending" },
-              { phase: 4, name: "CSS + JS Agents — Parallel Compilation", status: "pending" },
-              { phase: 5, name: "Bundler Engine — Final Assembly", status: "pending" },
+              { phase: 1, name: "Requirements Architecture — Formal Specification", status: "pending" },
+              { phase: 2, name: "Requirements Confirmation — Configuration Brief", status: isFollowUp ? "done" : "pending" },
+              { phase: 3, name: "Markup Engineering — Semantic DOM", status: "pending" },
+              { phase: 4, name: "Interface Contract — Selector Registry", status: "pending" },
+              { phase: 5, name: "Presentation and Logic — Parallel Build", status: "pending" },
+              { phase: 6, name: "Quality Review — Integration Audit", status: "pending" },
+              { phase: 7, name: "Release Packaging — Single Bundle", status: "pending" },
             ],
             content: "",
             error: null,
             currentPhase: 0,
+            selectedChoices: previousSelectedChoices,
+            spec: previousSpec,
           };
+
+          if (isFollowUp && previousSelectedChoices) {
+            const p2Idx = initialUnboundState.phases.findIndex(p => p.phase === 2);
+            if (p2Idx !== -1) {
+              initialUnboundState.phases[p2Idx].detail = `Selected ${previousSelectedChoices.length} customization choices`;
+            }
+          }
+
           setUnboundStateForConv(thisConvId, initialUnboundState);
 
-          let unboundContent = "";
           try {
-            unboundContent = await runUnboundService(
+            const result = await runUnboundService(
               content,
-              existingMessages.map(m => ({ role: m.role, content: m.content })),
-              (state) => setUnboundStateForConv(thisConvId, state),
+              compactHistory,
+              (state) => setUnboundStateForConv(thisConvId, { ...initialUnboundState, ...state }),
               (chunk, isReplace) => {
                 if (isReplace) {
                   setStreamingContent(chunk);
                 } else {
                   setStreamingContent(prev => prev + chunk);
                 }
-              }
+              },
+              previousSpec,
+              currentUnboundState?.searchResults || null,
+              previousSelectedChoices,
+              isFollowUp
             );
+
+            if (result.hasQuestion) {
+              // Pause the generation process on the client UI, keeping unboundStateMap active
+              setIsGenerating(false);
+            } else {
+              // Complete normally
+              const unboundMessage: Message = {
+                id: crypto.randomUUID(),
+                role: "assistant",
+                content: result.content || streamingContent,
+                model: selectedModel,
+                timestamp: Date.now(),
+              };
+              addMessage(thisConvId!, unboundMessage);
+              setIsGenerating(false);
+              setStreamingContent("");
+              setStreamingReasoning("");
+            }
           } catch (unboundErr: any) {
             // Fall back to standard sendAIMessage if pipeline fails
             console.warn("[Unbound] Pipeline failed, falling back:", unboundErr.message);
             response = await sendAIMessage(
               content,
               selectedModel,
-              existingMessages,
+              compactHistory,
               serviceMode,
               true,
               features,
@@ -226,25 +265,25 @@ export default function ChatPage() {
               userMemoryContext
             );
             if ((response as any).error) throw new Error((response as any).message || (response as any).error);
-          }
 
-          const unboundMessage: Message = {
-            id: crypto.randomUUID(),
-            role: "assistant",
-            content: unboundContent || streamingContent,
-            model: selectedModel,
-            timestamp: Date.now(),
-          };
-          addMessage(thisConvId!, unboundMessage);
-          setIsGenerating(false);
-          setStreamingContent("");
-          setStreamingReasoning("");
+            const fallbackMessage: Message = {
+              id: crypto.randomUUID(),
+              role: "assistant",
+              content: response.content || streamingContent,
+              model: selectedModel,
+              timestamp: Date.now(),
+            };
+            addMessage(thisConvId!, fallbackMessage);
+            setIsGenerating(false);
+            setStreamingContent("");
+            setStreamingReasoning("");
+          }
           return;
         } else {
           response = await sendAIMessage(
             content,
             selectedModel,
-            existingMessages,
+            compactHistory,
             serviceMode,
             isGodModeModel,
             features,
@@ -304,11 +343,128 @@ export default function ChatPage() {
     setStreamingReasoning("");
   }, [setIsGenerating]);
 
+  const handleSelectUnboundChoices = useCallback(async (choices: Array<{ questionId: string; title: string; description: string; theme: string }>) => {
+    if (!activeConversationId) return;
+    const store = useChatStore.getState();
+    const conversation = store.conversations.find(c => c.id === activeConversationId);
+    const existingMessages = conversation?.messages || [];
+    const thisConvId = activeConversationId;
+    const currentUnboundState = unboundStateMap[thisConvId];
+    if (!currentUnboundState) return;
+
+    const nextState = {
+      ...currentUnboundState,
+      isRunning: true,
+      selectedChoices: choices,
+      questions: null,
+    };
+    
+    const p2Idx = nextState.phases.findIndex(p => p.phase === 2);
+    if (p2Idx !== -1) {
+      nextState.phases[p2Idx].status = "done";
+      nextState.phases[p2Idx].detail = `Selected ${choices.length} design styles`;
+    }
+
+    setUnboundStateForConv(thisConvId, nextState);
+    setIsGenerating(true);
+    setLastError(null);
+
+    const userMessages = existingMessages.filter(m => m.role === "user");
+    const lastUserMessage = userMessages[userMessages.length - 1];
+    const originalQuery = lastUserMessage ? lastUserMessage.content : "";
+    const compactHistory = buildCompactConversationHistory(existingMessages);
+
+    try {
+      const result = await runUnboundService(
+        originalQuery,
+        compactHistory,
+        (state) => setUnboundStateForConv(thisConvId, { ...nextState, ...state }),
+        (chunk, isReplace) => {
+          if (isReplace) {
+            setStreamingContent(chunk);
+          } else {
+            setStreamingContent(prev => prev + chunk);
+          }
+        },
+        currentUnboundState.spec,
+        currentUnboundState.searchResults,
+        choices
+      );
+
+      const unboundMessage: Message = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: result.content || streamingContent,
+        model: selectedModel,
+        timestamp: Date.now(),
+      };
+      addMessage(thisConvId!, unboundMessage);
+      setIsGenerating(false);
+      setStreamingContent("");
+      setStreamingReasoning("");
+    } catch (err: any) {
+      setLastError(err.message || "Failed to resume pipeline");
+      setIsGenerating(false);
+    }
+  }, [activeConversationId, unboundStateMap, setUnboundStateForConv, addMessage, selectedModel, streamingContent]);
+
   const handleModelSelect = (model: AIModel) => setSelectedModel(model);
   const isGodMode = selectedModel === "apex-unbound";
+  const activeConversation = conversations.find(c => c.id === activeConversationId);
+
+  const handleExportConversation = useCallback(async () => {
+    if (!activeConversation || activeConversation.messages.length === 0) return;
+    setIsExportingConversation(true);
+
+    try {
+      const response = await fetch("/api/export/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          exportType: "conversation",
+          messages: activeConversation.messages.map((message) => ({
+            role: message.role,
+            content: message.contextContent || message.content,
+            timestamp: message.timestamp,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.message || `PDF export failed with status ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const disposition = response.headers.get("content-disposition") || "";
+      const match = disposition.match(/filename=\"([^\"]+)\"/i);
+      const filename = match?.[1] || "apex-conversation.pdf";
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Conversation exported",
+        description: "The full chat was downloaded as PDF.",
+      });
+    } catch (error) {
+      toast({
+        title: "Conversation export failed",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExportingConversation(false);
+    }
+  }, [activeConversation, toast]);
 
   return (
-    <div className="flex flex-col h-full text-foreground min-h-0 relative overflow-hidden apex-bg">
+    <div className="chat-shell flex flex-col h-full text-foreground min-h-0 relative overflow-hidden apex-bg">
 
       {/* ── Ambient glow orbs removed ── */}
       {isGodMode && (
@@ -319,7 +475,6 @@ export default function ChatPage() {
           />
         </div>
       )}
-
       {/* ══════════ HEADER ══════════ */}
       <motion.header
         className="flex-shrink-0 relative z-20"
@@ -332,15 +487,22 @@ export default function ChatPage() {
 
             {/* Left: sidebar toggle + logo + model */}
             <div className="flex items-center gap-2.5 min-w-0">
-              {!sidebarOpen && (
-                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                  <Button
-                    variant="ghost" size="icon"
+              {/* Always show on mobile, show only when closed on desktop */}
+              {(!sidebarOpen) && (
+                <motion.div
+                  whileHover={{ scale: 1.08 }}
+                  whileTap={{ scale: 0.92 }}
+                  initial={{ opacity: 0, x: -4 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.18 }}
+                >
+                  <button
                     onClick={() => setSidebarOpen(true)}
-                    className="h-8 w-8 flex-shrink-0 text-muted-foreground hover:text-foreground hover:bg-white/6 rounded-xl transition-all duration-200"
+                    className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/8 hover:border-white/15 text-white/50 hover:text-white/80 transition-all duration-150"
+                    aria-label="فتح القائمة"
                   >
                     <PanelLeft className="w-4 h-4" />
-                  </Button>
+                  </button>
                 </motion.div>
               )}
 
@@ -355,7 +517,23 @@ export default function ChatPage() {
             </div>
 
             {/* Right: live status + theme */}
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2">
+              {activeConversation?.messages.length ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleExportConversation}
+                  disabled={isExportingConversation}
+                  className="h-9 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-zinc-300 hover:bg-white/[0.06]"
+                >
+                  {isExportingConversation ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <FileDown className="mr-2 h-4 w-4" />
+                  )}
+                  <span className="text-xs font-arabic">تصدير المحادثة PDF</span>
+                </Button>
+              ) : null}
               <AnimatePresence>
                 {isGenerating && (
                   <motion.div
@@ -370,7 +548,9 @@ export default function ChatPage() {
                   </motion.div>
                 )}
               </AnimatePresence>
-              <ContextMeter />
+              <div className="hidden sm:block">
+                <ContextMeter />
+              </div>
             </div>
           </div>
         </div>
@@ -379,7 +559,7 @@ export default function ChatPage() {
       </motion.header>
 
       {/* ══════════ MESSAGES ══════════ */}
-      <div className="flex-1 overflow-y-auto min-h-0 relative z-10">
+      <div className="chat-scroll-container flex-1 overflow-y-auto overscroll-contain min-h-0 relative z-10">
         <ChatMessages
           streamingContent={streamingContent}
           streamingReasoning={streamingReasoning}
@@ -388,6 +568,7 @@ export default function ChatPage() {
           isStreaming={isGenerating}
           onSelectPrompt={handleSendMessage}
           unboundState={unboundState}
+          onSelectUnboundChoice={handleSelectUnboundChoices}
         />
       </div>
 
@@ -399,9 +580,8 @@ export default function ChatPage() {
         transition={{ duration: 0.45, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
-        <div className="bg-background/55 backdrop-blur-2xl pb-3.5 md:pb-4 pt-3">
+        <div className="chat-input-dock bg-background/55 backdrop-blur-2xl pb-3.5 md:pb-4 pt-3">
           {(() => {
-            const activeConversation = conversations.find(c => c.id === activeConversationId);
             const assistantMessages = activeConversation?.messages.filter(m => m.role === "assistant") || [];
             const lastAssistantMessage = assistantMessages[assistantMessages.length - 1];
             const { sources } = extractSourcesAndClean(lastAssistantMessage?.content || "");
@@ -413,6 +593,10 @@ export default function ChatPage() {
                 hasSources={sources.length > 0}
                 sourcesCount={sources.length}
                 lastError={lastError}
+                unboundState={unboundState}
+                onSelectUnboundChoices={handleSelectUnboundChoices}
+                conversationId={activeConversationId}
+                omniState={omniState}
               />
             );
           })()}
@@ -437,7 +621,6 @@ export default function ChatPage() {
 
           <div className="flex-1 overflow-y-auto px-4 py-6 md:px-8 space-y-4 max-w-4xl mx-auto w-full" dir="rtl">
             {(() => {
-              const activeConversation = conversations.find(c => c.id === activeConversationId);
               const assistantMessages = activeConversation?.messages.filter(m => m.role === "assistant") || [];
               const lastAssistantMessage = assistantMessages[assistantMessages.length - 1];
               const { sources } = extractSourcesAndClean(lastAssistantMessage?.content || "");

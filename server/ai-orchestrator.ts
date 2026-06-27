@@ -1,5 +1,24 @@
 import type { AIModel, ServiceMode, FeatureToggles, SubscriptionTier, ModelTierMap } from "@shared/schema";
+import {
+  buildQuizGenerationInstructions,
+  buildQuizRepairInstructions,
+  detectQuizIntent as detectStructuredQuizIntent,
+  formatQuizAsCodeBlock,
+  parseQuizRequest,
+  tryParseQuizFromText,
+} from "@shared/mcq";
+import {
+  buildPdfGenerationInstructions,
+  buildPdfRepairInstructions,
+  detectPdfIntent as detectStructuredPdfIntent,
+  formatPdfAsCodeBlock,
+  parsePdfRequest,
+  tryParsePdfFromText,
+} from "@shared/pdf";
 import { runApexOmniPipeline } from "./apex-omni/pipeline.js";
+import { getDeepSeekRequestParams, mapDeepSeekModelForTask } from "./deepseek-model-router.js";
+import { runApexSearch } from "./apex-search-engine.js";
+import { buildApexFootballContext } from "./apex-football-engine.js";
 
 // AI Orchestrator Service - Cerebras Integration
 // Routes requests to Cerebras Cloud API with tier-based validation
@@ -12,7 +31,7 @@ interface OrchestratorRequest {
   subscriptionTier: SubscriptionTier;
   features: FeatureToggles;
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>;
-  userMemoryContext?: Array<{ title: string; lastQuery: string }>;
+  userMemoryContext?: Array<{ title: string; lastQuery: string; summary?: string; relevance?: number; updatedAt?: number }>;
   clientLocalTime?: string;
 }
 
@@ -31,6 +50,304 @@ interface SerperImageResult {
   title: string;
   imageUrl: string;
   source: string;
+}
+
+function isQuizIntent(message: string): boolean {
+  return /(?:^|\s)(mcq|msq|quiz|exam|test)(?:\s|$)|اختبار|امتحان|اسئلة اختيار|اختيار من متعدد|سؤال(?:ات)?/i.test(message);
+}
+
+function hasMCQQuizBlock(content: string): boolean {
+  return /```mcq-quiz\s*[\r\n]+[\s\S]*?```/i.test(content);
+}
+
+function hasPDFDocumentBlock(content: string): boolean {
+  return /```pdf-document\s*[\r\n]+[\s\S]*?```/i.test(content);
+}
+
+function quizMentionsTopic(content: string, topic: string): boolean {
+  const normalizedTopic = topic.trim().toLowerCase();
+  if (!normalizedTopic || normalizedTopic === "موضوع عام") return true;
+  return content.toLowerCase().includes(normalizedTopic);
+}
+
+function extractQuizTopic(message: string): string {
+  const stopWords = new Set([
+    "mcq", "msq", "quiz", "exam", "test",
+    "اختبار", "امتحان", "اعملي", "اعمل", "سوي", "سويلي", "انشئ", "أنشئ",
+    "كون", "كوّن", "اسئلة", "أسئلة", "اسئله", "سؤال", "سؤالات", "سوال",
+    "لي", "عن", "في", "من", "على", "اختيار", "متعدد", "اختيارمن", "اختيارمنمتعدد"
+  ]);
+
+  const tokens = message
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/[^A-Za-z0-9\u0600-\u06FF\s-]/g, " ")
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .filter((token) => !stopWords.has(token.toLowerCase()));
+
+  return tokens.join(" ").trim() || "موضوع عام";
+}
+
+function buildQuizFocusedMessage(message: string): string {
+  const topic = extractQuizTopic(message);
+  return `The user is explicitly asking for a multiple-choice quiz.
+Original user message: ${message}
+Required topic: ${topic}
+Requirements:
+- Generate the quiz now without asking follow-up questions.
+- If the user did not specify the number of questions, generate 5 questions.
+- Default difficulty: medium.
+- Default mode: practice.
+- The quiz must be specifically about the required topic, not general knowledge.
+- Return it only in the mcq-quiz JSON format.`;
+}
+
+async function forceQuizBlockResponse(
+  client: any,
+  model: string,
+  userMessage: string,
+  responseText: string,
+  conversationHistory: Array<{ role: "user" | "assistant"; content: string }> = [],
+  systemPrompt?: string
+): Promise<string> {
+  const inferredTopic = extractQuizTopic(userMessage);
+  const formatterMessages = [
+    ...(systemPrompt ? [{ role: "system" as const, content: `${systemPrompt}\n${MCQ_GENERATION_PROTOCOL}` }] : []),
+    {
+      role: "system" as const,
+      content: `The user has already requested a quiz and provided enough information.
+You must generate the final quiz now.
+Never ask a follow-up question.
+If the user did not specify the number of questions, default to 5.
+If the user did not specify the level, default to medium.
+If the user did not specify the mode, default to practice.
+If the topic is short or slightly misspelled, infer the intended academic topic from the user message and continue.
+The inferred topic from the user's message is: "${inferredTopic}".
+The quiz must actually be about that topic, not a generic topic.
+Generate the quiz specifically about: "${inferredTopic}".
+Return only one valid \`\`\`mcq-quiz fenced block with valid JSON.`
+    },
+    ...conversationHistory.slice(-4).map((item) => ({
+      role: item.role,
+      content: item.content,
+    })),
+    {
+      role: "user" as const,
+      content: `User request:\n${userMessage}\n\nRequired topic:\n${inferredTopic}\n\nPrevious assistant response that failed formatting:\n${responseText}\n\nGenerate the quiz now in the required mcq-quiz JSON format, specifically about the required topic above.`
+    }
+  ];
+
+  const formatted = await client.chat.completions.create({
+    model,
+    messages: formatterMessages,
+    max_tokens: 4096,
+    stream: false,
+    ...getDeepSeekRequestParams(model, 0.4),
+  });
+
+  return formatted.choices[0]?.message?.content || responseText;
+}
+
+function streamTextChunks(
+  text: string,
+  onChunk: (chunk: { content?: string; reasoningContent?: string }) => void,
+  chunkSize = 220
+) {
+  for (let index = 0; index < text.length; index += chunkSize) {
+    onChunk({ content: text.slice(index, index + chunkSize) });
+  }
+}
+
+async function generateDedicatedQuizResponse(
+  client: any,
+  actualModel: string,
+  request: OrchestratorRequest,
+  onChunk?: (chunk: { content?: string; reasoningContent?: string }) => void
+): Promise<OrchestratorResponse> {
+  const quizRequest = parseQuizRequest(request.message);
+  const maxTokens = Math.min(getModelParameters(request.model).maxTokens, 4096);
+  const baseParams = getDeepSeekRequestParams(actualModel, 0.2);
+
+  const buildMessages = (userContent: string) => [
+    {
+      role: "system" as const,
+      content:
+        "You are a dedicated structured quiz generation engine. Your only job is to produce accurate multiple-choice quizzes in strict mcq-quiz JSON format. Never chat conversationally. Never ask follow-up questions. Never output prose outside the mcq-quiz block.",
+    },
+    { role: "user" as const, content: userContent },
+  ];
+
+  const candidateContents: string[] = [];
+
+  const runAttempt = async (userContent: string) => {
+    const response = await client.chat.completions.create({
+      model: actualModel,
+      messages: buildMessages(userContent),
+      max_tokens: maxTokens,
+      stream: false,
+      ...baseParams,
+    });
+
+    const content = response.choices[0]?.message?.content || "";
+    const reasoningContent = (response.choices[0]?.message as any)?.reasoning_content || "";
+    candidateContents.push(content);
+
+    const quiz = tryParseQuizFromText(content, quizRequest);
+    return { content, reasoningContent, quiz };
+  };
+
+  const firstAttempt = await runAttempt(buildQuizGenerationInstructions(quizRequest));
+  if (firstAttempt.quiz) {
+    const formatted = formatQuizAsCodeBlock(firstAttempt.quiz);
+    if (onChunk) {
+      if (firstAttempt.reasoningContent) {
+        onChunk({ reasoningContent: firstAttempt.reasoningContent });
+      }
+      streamTextChunks(formatted, onChunk);
+    }
+    return { content: formatted, reasoningContent: firstAttempt.reasoningContent || undefined };
+  }
+
+  const secondAttempt = await runAttempt(
+    buildQuizRepairInstructions(quizRequest, candidateContents[candidateContents.length - 1] || request.message)
+  );
+  if (secondAttempt.quiz) {
+    const formatted = formatQuizAsCodeBlock(secondAttempt.quiz);
+    if (onChunk) {
+      if (secondAttempt.reasoningContent) {
+        onChunk({ reasoningContent: secondAttempt.reasoningContent });
+      }
+      streamTextChunks(formatted, onChunk);
+    }
+    return { content: formatted, reasoningContent: secondAttempt.reasoningContent || undefined };
+  }
+
+  const finalContent = candidateContents[candidateContents.length - 1] || firstAttempt.content || "";
+  const fallbackContent = hasMCQQuizBlock(finalContent) ? finalContent : `\`\`\`mcq-quiz\n${JSON.stringify({
+    title: quizRequest.language === "ar" ? `اختبار ${quizRequest.topic}` : `${quizRequest.topic} Quiz`,
+    description:
+      quizRequest.language === "ar"
+        ? `تعذر تطبيع الرد بالكامل، لكن هذا مسار احتياطي لموضوع ${quizRequest.topic}`
+        : `Fallback quiz response for ${quizRequest.topic}`,
+    mode: quizRequest.mode,
+    questions: [],
+  }, null, 2)}\n\`\`\``;
+
+  if (onChunk) {
+    streamTextChunks(fallbackContent, onChunk);
+  }
+
+  return {
+    content: fallbackContent,
+    reasoningContent: secondAttempt.reasoningContent || firstAttempt.reasoningContent || undefined,
+  };
+}
+
+async function generateDedicatedPdfResponse(
+  client: any,
+  actualModel: string,
+  request: OrchestratorRequest,
+  onChunk?: (chunk: { content?: string; reasoningContent?: string }) => void
+): Promise<OrchestratorResponse> {
+  const pdfRequest = parsePdfRequest(request.message);
+  const maxTokens = Math.min(getModelParameters(request.model).maxTokens, 4096);
+  const baseParams = getDeepSeekRequestParams(actualModel, 0.2);
+
+  const buildMessages = (userContent: string) => [
+    {
+      role: "system" as const,
+      content:
+        "You are a dedicated structured PDF document generation engine. Your only job is to produce accurate PDFDocument JSON in strict pdf-document format. Never chat conversationally. Never ask follow-up questions. Never output prose outside the pdf-document block.",
+    },
+    { role: "user" as const, content: userContent },
+  ];
+
+  const candidateContents: string[] = [];
+
+  const runAttempt = async (userContent: string) => {
+    const response = await client.chat.completions.create({
+      model: actualModel,
+      messages: buildMessages(userContent),
+      max_tokens: maxTokens,
+      stream: false,
+      ...baseParams,
+    });
+
+    const content = response.choices[0]?.message?.content || "";
+    const reasoningContent = (response.choices[0]?.message as any)?.reasoning_content || "";
+    candidateContents.push(content);
+
+    const document = tryParsePdfFromText(content, pdfRequest);
+    return { content, reasoningContent, document };
+  };
+
+  const firstAttempt = await runAttempt(buildPdfGenerationInstructions(pdfRequest));
+  if (firstAttempt.document) {
+    const formatted = formatPdfAsCodeBlock(firstAttempt.document);
+    if (onChunk) {
+      if (firstAttempt.reasoningContent) {
+        onChunk({ reasoningContent: firstAttempt.reasoningContent });
+      }
+      streamTextChunks(formatted, onChunk);
+    }
+    return { content: formatted, reasoningContent: firstAttempt.reasoningContent || undefined };
+  }
+
+  const secondAttempt = await runAttempt(
+    buildPdfRepairInstructions(pdfRequest, candidateContents[candidateContents.length - 1] || request.message)
+  );
+  if (secondAttempt.document) {
+    const formatted = formatPdfAsCodeBlock(secondAttempt.document);
+    if (onChunk) {
+      if (secondAttempt.reasoningContent) {
+        onChunk({ reasoningContent: secondAttempt.reasoningContent });
+      }
+      streamTextChunks(formatted, onChunk);
+    }
+    return { content: formatted, reasoningContent: secondAttempt.reasoningContent || undefined };
+  }
+
+  const finalContent = candidateContents[candidateContents.length - 1] || firstAttempt.content || "";
+  const fallbackContent =
+    hasPDFDocumentBlock(finalContent)
+      ? finalContent
+      : `\`\`\`pdf-document\n${JSON.stringify(
+          {
+            title: pdfRequest.language === "ar" ? `مستند ${pdfRequest.topic}` : `${pdfRequest.topic} Document`,
+            subtitle:
+              pdfRequest.language === "ar"
+                ? `تعذر تطبيع الرد بالكامل، لكن هذا مسار احتياطي لموضوع ${pdfRequest.topic}`
+                : `Fallback PDF response for ${pdfRequest.topic}`,
+            language: pdfRequest.language,
+            theme: "dark",
+            pageSize: "a4",
+            coverPage: pdfRequest.includeCoverPage,
+            tableOfContents: pdfRequest.includeTableOfContents,
+            sections: [
+              {
+                id: "section-1",
+                type: "paragraph",
+                direction: pdfRequest.language === "ar" ? "rtl" : "ltr",
+                content:
+                  pdfRequest.language === "ar"
+                    ? `تعذر إنشاء المستند بالكامل، لكن هذا محتوى احتياطي لموضوع ${pdfRequest.topic}.`
+                    : `Unable to normalize the document completely, but this is fallback content for ${pdfRequest.topic}.`,
+              },
+            ],
+          },
+          null,
+          2
+        )}\n\`\`\``;
+
+  if (onChunk) {
+    streamTextChunks(fallbackContent, onChunk);
+  }
+
+  return {
+    content: fallbackContent,
+    reasoningContent: secondAttempt.reasoningContent || firstAttempt.reasoningContent || undefined,
+  };
 }
 
 function scoreSerperImage(img: any, query: string): number {
@@ -311,178 +628,31 @@ async function performSerperSearch(query: string): Promise<{
   organic: SerperSearchResult[];
   image?: SerperImageResult;
 }> {
-  const apiKey = process.env.SERPER_API_KEY || "0adc781c41f363a53ce1f72f199f494b9436bafd";
-  
   try {
-    const { textQuery, imageQuery } = await optimizeSearchQueries(query);
-    console.log(`[Serper API] Performing full search: textQuery="${textQuery}", imageQuery="${imageQuery}"...`);
-    
-    // 1. Text Search request (fetch 25 results to filter and deduplicate down to top 12)
-    const searchPromise = fetch("https://google.serper.dev/search", {
-      method: "POST",
-      headers: {
-        "X-API-KEY": apiKey,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ q: textQuery, num: 25 })
-    }).then(res => {
-      if (!res.ok) throw new Error(`Serper text search failed with status ${res.status}`);
-      return res.json();
-    });
-
-    // 2. Image Search request
-    const imagePromise = fetch("https://google.serper.dev/images", {
-      method: "POST",
-      headers: {
-        "X-API-KEY": apiKey,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ q: imageQuery, num: 8 })
-    }).then(res => {
-      if (!res.ok) throw new Error(`Serper image search failed with status ${res.status}`);
-      return res.json();
-    });
-
-    const [searchData, imageData] = await Promise.all([searchPromise, imagePromise]);
-
-    // Algorithmic processing of organic search results: Relevance scoring and domain-based deduplication
-    const rawOrganic = searchData.organic || [];
-    const searchKeywords = textQuery.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-    
-    const isSportsQuery = /(كورة|كرة|مباراة|دوري|كأس|لاعب|رياضة|الملعب|الأهلي|الزمالك|ريال مدريد|برشلونة|الهلال|النصر|العراق|football|soccer|match|vs|score|league|cup|goal|player|stadium|club)/gi.test(query);
-    const isTechQuery = /(code|function|api|database|react|typescript|python|html|css|developer|programming|git|npm|كود|برمجة|دالة|موقع|برنامج|قاعدة بيانات)/gi.test(query);
-    const isNewsQuery = /(خبر|أخبار|حدث|رئيس|وزير|سياسة|news|politics|president|minister|today|yesterday|أمس|اليوم)/gi.test(query);
-
-    const scoredResults = rawOrganic.map((item: any) => {
-      const title = item.title || "";
-      const snippet = item.snippet || "";
-      const link = item.link || "";
-      const domain = getDomainName(link);
-      
-      let score = 100;
-
-      // 1. Keyword overlap scoring
-      const titleLower = title.toLowerCase();
-      const snippetLower = snippet.toLowerCase();
-      searchKeywords.forEach(kw => {
-        if (titleLower.includes(kw)) score += 12;
-        if (snippetLower.includes(kw)) score += 6;
-      });
-
-      // 2. Specialized domain boosting
-      if (isSportsQuery) {
-        const sportsDomains = [
-          "kooora.com", "yallakora.com", "filgoal.com", "btolat.com", "beinsports.com",
-          "goal.com", "skysports.com", "espn.com", "sofascore.com", "livescore.com",
-          "alarabiya.net/sport", "alarabiya.net"
-        ];
-        if (sportsDomains.some(d => domain.includes(d))) {
-          score += 60;
+    const apexResults = await runApexSearch(query, { intent: "answer" });
+    const organic = apexResults.organic.slice(0, 12).map((item) => ({
+      title: item.title,
+      link: item.link,
+      snippet: item.snippet,
+    }));
+    const primaryImage = apexResults.imageAssets.find((asset) => asset.role === "hero") || apexResults.imageAssets[0];
+    const selectedImage = primaryImage
+      ? {
+          title: primaryImage.title,
+          imageUrl: primaryImage.optimizedUrl,
+          source: primaryImage.source,
         }
-      }
-      
-      if (isTechQuery) {
-        const techDomains = [
-          "github.com", "stackoverflow.com", "dev.to", "medium.com", "npmjs.com",
-          "mdn", "w3schools.com", "react.dev", "nextjs.org", "css-tricks.com",
-          "freecodecamp.org", "geeksforgeeks.org", "smashingmagazine.com",
-          "typescriptlang.org", "vuejs.org", "angular.io", "nodejs.org",
-          "python.org", "docker.com", "aws.amazon.com", "azure.microsoft.com",
-          "hashnode.com", "hackernoon.com", "towardsdatascience.com", "infoq.com"
-        ];
-        if (techDomains.some(d => domain.includes(d))) {
-          score += 60;
-        }
-      }
+      : apexResults.image;
 
-      if (isNewsQuery) {
-        const newsDomains = [
-          "reuters.com", "bbc.com", "bbc.co.uk", "cnn.com", "alarabiya.net", 
-          "aljazeera.net", "skynewsarabia.com", "rt.com", "france24.com",
-          "nytimes.com", "washingtonpost.com", "theguardian.com", "bloomberg.com",
-          "cnbc.com", "wsj.com", "forbes.com"
-        ];
-        if (newsDomains.some(d => domain.includes(d))) {
-          score += 50;
-        }
-      }
-      
-      // Global Wikipedia boost for high-accuracy encyclopedic data
-      if (domain.includes("wikipedia.org") || domain.includes("wikimedia.org") || domain.includes("marefa.org") || domain.includes("mawdoo3.com")) {
-        score += 35;
-      }
-
-      // 3. Recency boost (often indicators in snippet)
-      const recencyKeywords = ["hours ago", "ساعة", "دقائق", "minutes ago", "today", "اليوم", "أمس", "yesterday"];
-      if (recencyKeywords.some(kw => snippetLower.includes(kw))) {
-        score += 30;
-      }
-
-      return {
-        title,
-        link,
-        snippet,
-        domain,
-        score
-      };
-    });
-
-    // Domain Deduplication: Keep at most 2 results from the same domain
-    const domainCounts: Record<string, number> = {};
-    const deduplicatedResults: any[] = [];
-
-    // Sort by score descending to evaluate highest relevance first
-    scoredResults.sort((a: any, b: any) => b.score - a.score);
-
-    for (const res of scoredResults) {
-      if (res.domain) {
-        const count = domainCounts[res.domain] || 0;
-        if (count >= 2) {
-          continue; // skip single source overload
-        }
-        domainCounts[res.domain] = count + 1;
-      }
-      deduplicatedResults.push({
-        title: res.title,
-        link: res.link,
-        snippet: res.snippet
-      });
-    }
-
-    // Slice to top 12 to ensure robust context containing at least 10 sources
-    const organic = deduplicatedResults.slice(0, 12);
-
-    const images = imageData.images || [];
-    let selectedImage = undefined;
-    
-    if (images.length > 0) {
-      const scoredImages = images.map((img: any) => ({
-        img,
-        score: scoreSerperImage(img, imageQuery)
-      }));
-      scoredImages.sort((a: any, b: any) => b.score - a.score);
-      
-      console.log(`[Serper API] Scored images for optimized image query: "${imageQuery}"`);
-      scoredImages.slice(0, 3).forEach((item: any, idx: number) => {
-        console.log(`  Candidate ${idx + 1}: ${item.img.imageUrl} (Score: ${item.score}, Source: ${item.img.source})`);
-      });
-
-      const bestImage = scoredImages[0];
-      if (bestImage && bestImage.score > -100) {
-        selectedImage = {
-          title: bestImage.img.title || "",
-          imageUrl: bestImage.img.imageUrl || bestImage.img.thumbnailUrl || "",
-          source: bestImage.img.source || ""
-        };
-      }
-    }
-
+    console.log(
+      `[Apex Search] Server search selected ${organic.length} references and ${apexResults.imageAssets.length || apexResults.images.length} image candidates.`
+    );
     return {
       organic,
       image: selectedImage
     };
   } catch (error) {
-    console.error("[Serper API] Error during search:", error);
+    console.error("[Apex Search] Error during search:", error);
     return { organic: [] };
   }
 }
@@ -578,6 +748,65 @@ You can highlight critical concepts, definitions, or major points dynamically us
 - Do NOT use other highlight types. Standardize only on these two simple, premium tags ('important' and 'info') to maintain a clean aesthetic. Emojis are strictly forbidden.`,
 };
 
+const MCQ_GENERATION_PROTOCOL = `\n\n## MCQ QUIZ GENERATION PROTOCOL:
+When the user asks for a quiz, exam, test, multiple-choice questions, or MCQ content, you MUST output the quiz inside a single fenced code block labeled \`\`\`mcq-quiz.
+
+Rules:
+1. Output valid JSON only inside the mcq-quiz block. No comments, no trailing commas, no prose before or after the block unless the user explicitly asks for explanation outside the quiz.
+2. The JSON schema must be:
+{
+  "title": "Quiz title",
+  "description": "Short description",
+  "mode": "practice" or "exam",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Question text",
+      "options": {
+        "a": "Option A",
+        "b": "Option B",
+        "c": "Option C",
+        "d": "Option D"
+      },
+      "correctAnswer": "a",
+      "explanation": "A clear explanation of why the correct answer is correct."
+    }
+  ]
+}
+3. Each quiz must contain at least 3 questions unless the user requests a different number.
+4. Use exactly 4 options per question unless the user explicitly requests otherwise.
+5. Match the user's language exactly. If the user writes in Arabic, all quiz fields and explanations must be in Arabic.
+6. Default to "practice" mode unless the user explicitly asks for an exam/final-test style flow.`;
+
+const PDF_GENERATION_PROTOCOL = `\n\n## PDF DOCUMENT GENERATION PROTOCOL:
+When the user asks for a PDF, report, document, exported document, or professional file, you MUST output the result inside a single fenced code block labeled \`\`\`pdf-document.
+
+Rules:
+1. Output valid JSON only inside the pdf-document block. No comments, no trailing commas, and no prose before or after the block.
+2. The JSON schema must include:
+{
+  "title": "Document title",
+  "subtitle": "Optional subtitle",
+  "language": "ar" or "en" or "mixed",
+  "theme": "dark" or "light" or "auto",
+  "pageSize": "a4" or "letter",
+  "coverPage": true,
+  "tableOfContents": true,
+  "sections": [
+    {
+      "id": "section-1",
+      "type": "heading" or "paragraph" or "code" or "math" or "table" or "list" or "image" or "divider" or "quote" or "callout",
+      "content": "Section content",
+      "direction": "rtl" or "ltr"
+    }
+  ]
+}
+3. Use "code" sections for source code and include a "language" field.
+4. Use "math" sections for LaTeX equations.
+5. Use "table" sections with "headers" and "rows".
+6. Match the user's language exactly, and use RTL direction for Arabic text.
+7. Return only one valid \`\`\`pdf-document fenced block.`;
+
 // Build specific model system prompt/identity
 function buildModelSystemPrompt(model: AIModel): string {
   switch (model) {
@@ -623,6 +852,8 @@ function buildCerebrasSystemPrompt(
   clientLocalTime?: string
 ): string {
   let prompt = modeSystemPrompts[mode];
+  prompt += MCQ_GENERATION_PROTOCOL;
+  prompt += PDF_GENERATION_PROTOCOL;
   prompt += buildModelSystemPrompt(model);
 
   // Dynamic Date Injection
@@ -900,16 +1131,8 @@ async function runMultiAgentWebGen(
     baseURL: "https://api.deepseek.com/v1",
   });
 
-  let actualModel = "deepseek-chat";
-  if (request.model === "apex-omni" || request.model === "apex-unbound") {
-    actualModel = "deepseek-reasoner";
-  }
-
-  const isReasoner = actualModel === "deepseek-reasoner";
-  const extraParams: any = {};
-  if (!isReasoner) {
-    extraParams.temperature = 0.5;
-  }
+  const actualModel = mapDeepSeekModelForTask(request.model, "reasoning");
+  const extraParams = getDeepSeekRequestParams(actualModel, 0.5);
 
   let cumulativeContent = "";
 
@@ -1217,6 +1440,40 @@ export async function processMessage(
     throw new Error("God Mode is exclusive to Elite or Omni subscription.");
   }
 
+  if (detectStructuredPdfIntent(request.message)) {
+    const OpenAI = (await import("openai")).default;
+    const deepseekKey = process.env.DEEPSEEK_API_KEY;
+    if (!deepseekKey) {
+      throw new Error("DEEPSEEK_API_KEY is not configured. Please add it to .env.local");
+    }
+
+    const pdfClient = new OpenAI({
+      apiKey: deepseekKey,
+      baseURL: "https://api.deepseek.com/v1",
+    });
+
+    const pdfTask = request.model === "apex-flash" ? "generation" : "reasoning";
+    const pdfModel = mapDeepSeekModelForTask(request.model, pdfTask);
+    return await generateDedicatedPdfResponse(pdfClient, pdfModel, request, onChunk);
+  }
+
+  if (detectStructuredQuizIntent(request.message)) {
+    const OpenAI = (await import("openai")).default;
+    const deepseekKey = process.env.DEEPSEEK_API_KEY;
+    if (!deepseekKey) {
+      throw new Error("DEEPSEEK_API_KEY is not configured. Please add it to .env.local");
+    }
+
+    const quizClient = new OpenAI({
+      apiKey: deepseekKey,
+      baseURL: "https://api.deepseek.com/v1",
+    });
+
+    const quizTask = request.model === "apex-flash" ? "generation" : "reasoning";
+    const quizModel = mapDeepSeekModelForTask(request.model, quizTask);
+    return await generateDedicatedQuizResponse(quizClient, quizModel, request, onChunk);
+  }
+
   // ── APEX OMNI: Route through full AI pipeline ──────────────────────────────
   if (model === "apex-omni") {
     const OpenAI = (await import("openai")).default;
@@ -1224,7 +1481,7 @@ export async function processMessage(
     if (!deepseekKey) throw new Error("DEEPSEEK_API_KEY is not configured.");
 
     const omniClient = new OpenAI({ apiKey: deepseekKey, baseURL: "https://api.deepseek.com/v1" });
-    const omniActualModel = "deepseek-reasoner"; // Apex Omni always uses the reasoner
+    const omniActualModel = mapDeepSeekModelForTask("apex-omni", "reasoning");
 
     // Build the base system prompt (used as context inside the pipeline)
     const omniSystemBase = buildCerebrasSystemPrompt(model, mode, features, request.clientLocalTime);
@@ -1317,21 +1574,34 @@ async function callCerebras(
   request.features.thinking = false;
 
   const isSearchActive = request.model === "apex-elite" || request.features.deepResearch;
+  const quizIntent = isQuizIntent(request.message);
+  const inferredQuizTopic = quizIntent ? extractQuizTopic(request.message) : "";
   let searchContext = "";
   let foundImage: SerperImageResult | undefined = undefined;
+  let footballContext = "";
 
   if (isSearchActive) {
     try {
-      const searchData = await performSerperSearch(request.message);
-      if (searchData.organic && searchData.organic.length > 0) {
-        searchContext = `\n\n=== GOOGLE SEARCH RESULTS ===\n`;
-        searchData.organic.forEach((item, index) => {
-          searchContext += `[${index + 1}] Title: ${item.title}\nURL: ${item.link}\nSnippet: ${item.snippet}\n\n`;
-        });
-      }
-      if (searchData.image) {
-        foundImage = searchData.image;
-        console.log(`[Serper API] Found highly matching image to embed: title="${foundImage.title}", url="${foundImage.imageUrl}"`);
+      const footballData = await buildApexFootballContext(request.message, request.clientLocalTime);
+      if (footballData.used) {
+        footballContext = footballData.context;
+        console.log(`[Apex Search] API-Football context selected (${footballData.sourceCount} compact sources).`);
+        if (footballData.answer) {
+          onChunk?.({ content: footballData.answer });
+          return { content: footballData.answer };
+        }
+      } else {
+        const searchData = await performSerperSearch(request.message);
+        if (searchData.organic && searchData.organic.length > 0) {
+          searchContext = `\n\n=== GOOGLE SEARCH RESULTS ===\n`;
+          searchData.organic.forEach((item, index) => {
+            searchContext += `[${index + 1}] Title: ${item.title}\nURL: ${item.link}\nSnippet: ${item.snippet}\n\n`;
+          });
+        }
+        if (searchData.image) {
+          foundImage = searchData.image;
+          console.log(`[Apex Search] Found highly matching image to embed: title="${foundImage.title}", url="${foundImage.imageUrl}"`);
+        }
       }
     } catch (searchErr) {
       console.error("Search fetch failed, continuing without search results:", searchErr);
@@ -1339,23 +1609,33 @@ async function callCerebras(
   }
 
   let systemPrompt = buildCerebrasSystemPrompt(request.model, request.mode, request.features, request.clientLocalTime);
+  systemPrompt += `\n\n=== ANTI-HALLUCINATION AND CONTEXT PRIORITY ===
+Context priority order:
+1. The user's current message and any ATTACHMENT_EVIDENCE block.
+2. Structured tool/API data supplied by Apex Search.
+3. Recent conversation history.
+4. Relevance-ranked memory from past chats.
+
+If the answer is not supported by the current prompt, attachment evidence, tool data, or recent history, say that the information is not available instead of guessing.
+When ATTACHMENT_EVIDENCE is present, quote or summarize only what was extracted. Clearly say "not found in the attachment" for missing details.`;
 
   // Inject User Memory Context
   if (request.userMemoryContext && request.userMemoryContext.length > 0) {
     const memoryStr = request.userMemoryContext
-      .map((c, idx) => `[Chat ${idx + 1}] Topic Title: "${c.title}" | Last user query: "${c.lastQuery}"`)
+      .map((c, idx) => `[Memory ${idx + 1}] Title: "${c.title}" | Relevance: ${typeof c.relevance === "number" ? c.relevance.toFixed(2) : "n/a"} | Last user query: "${c.lastQuery}"${c.summary ? `\nSummary:\n${c.summary}` : ""}`)
       .join("\n");
     systemPrompt += `\n\n=== USER PROFILE & PAST CHATS MEMORY ===
-You have access to a unified memory system of the user's past conversations. Here are their recent topics of interest and questions:
+You have access to compact, relevance-ranked memory from the user's past conversations. Treat this as contextual memory, not as verified evidence.
 ${memoryStr}
 
 IMPORTANT MEMORY PROTOCOL:
-1. You MUST maintain continuity across chats. If the user's current prompt is conceptually related to any of their past interests listed above, intelligently connect the two.
-2. Show that you remember them and their interests by making smart references, e.g. "كما ذكرنا سابقاً بخصوص موضوع [س]..." (As we mentioned earlier regarding topic X...) or "بما أنك قمت بالبحث عن [س] سابقاً..." (Since you searched for X previously...).
-3. Keep the connections natural, smart, and highly interactive. Never make them feel intrusive, but let the user feel you possess a continuous, intelligent memory of their interactions.`;
+1. Use memory only when it is directly relevant to the current request.
+2. Never invent facts from memory. If the current prompt or attached files conflict with memory, prioritize the current prompt and attachments.
+3. Do not mention memory unless it materially improves the answer.
+4. For file/PDF/image questions, attachment evidence is stronger than memory.`;
   }
 
-  if (isSearchActive && searchContext) {
+  if (isSearchActive && (searchContext || footballContext)) {
     let dateToUse = new Date();
     let clientTimeZone: string | undefined = undefined;
 
@@ -1387,19 +1667,21 @@ IMPORTANT MEMORY PROTOCOL:
     }
     const formattedYesterdayDate = yesterday.toLocaleDateString("en-US", yesterdayOptions);
 
-    systemPrompt += `\n\n=== WEB SEARCH CAPABILITY ===
-You are executing in Web Search Mode powered by Serper.dev. You have access to real-time search results covering 100+ trusted websites.
-Use the Google Search Results below to provide a highly accurate, up-to-date answer.
+    systemPrompt += `\n\n=== APEX SEARCH DATA LAYER ===
+You are executing in Apex Search mode. You may receive structured API-Football data and/or Google Search Results.
+If an "API-FOOTBALL LIVE DATA" section exists, treat it as the primary authority for football fixtures, match status, score, live state, postponement, recent form, and upcoming fixtures. Do not override it with generic web snippets.
+Use the available data below to provide a highly accurate, up-to-date answer.
  
 ## Search Result Logical Verification Protocol:
-1. Always analyze search results carefully to determine if an event (like a football/soccer match) is finished, in progress, or postponed.
-2. If the search results mention a final score or result (e.g. 3-0, won, lost, goals scored), the match HAS taken place and was completed. Do NOT claim the match "has not taken place yet" (لم تقم بعد) or is "postponed" just because you see reports of weather delays or stoppages.
-3. Be logical: if a match was stopped/delayed but there is a final score, it means the match resumed and finished. Report the final score and results accurately.
+1. For football, use API-Football status first: LIVE means currently playing, Finished means already played, Not started means future, and postponed/cancelled/suspended must be stated exactly.
+2. If structured fixture data includes a final score or result, the match HAS taken place and was completed. Do NOT claim the match "has not taken place yet" (لم تقم بعد).
+3. If API-Football data directly answers the question, answer concisely from it and avoid dumping unrelated search references.
 4. With today's date being ${formattedTodayDate}, any match on ${formattedYesterdayDate} occurred YESTERDAY. Never refer to yesterday's matches as "future", "postponed" or "not played".
 
 ## Deep & Precise Information Protocol:
-1. Always provide extremely detailed, precise, and minute-by-minute details (e.g. goal scorers, exact goal minutes, lineups, substitutions, delays) when present in the search results.
-2. Prioritize and quote details from these key sports resources if relevant:
+1. Provide precise match state, score, competition, venue, date, and event details only when present in the supplied data.
+2. For football questions with API-Football data, cite "API-Football v3 structured data" as the source; do not force 10 web links.
+3. For non-football Google-only answers, prioritize and quote details from these key sports resources if relevant:
    - FilGoal (filgoal.com): Expert on Egyptian/Arab football, transfers context.
    - Yallakora (yallakora.com): Instant updates, match schedules, live quotes.
    - Kooora (kooora.com): Saudi, Emirati, Moroccan, and overall Arab league matches.
@@ -1408,7 +1690,9 @@ Use the Google Search Results below to provide a highly accurate, up-to-date ans
    - Bein Sports (beinsports.com): Summaries and broadcasting rights.
    - Goal Arabic (goal.com/ar): Global analytical reports.
 
-At the end of your response, you MUST list at least 10 distinct, trusted references/sources you used from the search results below. List them in the following exact format:
+At the end of your response:
+- If API-Football data was used, list one source line: "API-Football v3 structured data".
+- If only Google Search Results were used, list the trusted URLs actually present in the Search Results. Do not invent links.
 
 ### المصادر:
 - [Source Title](URL)
@@ -1416,6 +1700,7 @@ At the end of your response, you MUST list at least 10 distinct, trusted referen
 
 Only list URLs that are actually present in the Search Results. Do not invent links.
 
+${footballContext}
 ${searchContext}`;
 
     if (foundImage) {
@@ -1431,30 +1716,60 @@ Do not repeat or generate another markdown image for this URL in your response c
 
   const modelParams = getModelParameters(request.model);
 
+  const effectiveUserMessage = quizIntent ? buildQuizFocusedMessage(request.message) : request.message;
+
   const messages = [
     { role: "system" as const, content: systemPrompt },
     ...(request.conversationHistory || []).map(m => ({
       role: m.role as "user" | "assistant",
       content: m.content,
     })),
-    { role: "user" as const, content: request.message },
+    { role: "user" as const, content: effectiveUserMessage },
   ];
 
-  // Map virtual model to actual DeepSeek model
-  let actualModel = "deepseek-chat";
-  if (request.model === "apex-omni" || request.model === "apex-unbound") {
-    actualModel = "deepseek-reasoner";
-  }
-
-  const isReasoner = actualModel === "deepseek-reasoner";
-  const extraParams: any = {};
-  if (!isReasoner) {
-    extraParams.temperature = 0.7;
-  }
+  const task = request.model === "apex-unbound" || request.model === "apex-omni" ? "reasoning" : "generation";
+  const actualModel = mapDeepSeekModelForTask(request.model, task);
+  const extraParams = getDeepSeekRequestParams(actualModel, 0.7);
 
   try {
     console.log(`🚀 Attempting DeepSeek with model ${actualModel}... (stream: ${!!onChunk})`);
-    
+
+    if (quizIntent && onChunk) {
+      const response = await client.chat.completions.create({
+        model: actualModel,
+        messages,
+        max_tokens: request.model === "apex-unbound" ? Math.min(modelParams.maxTokens, 16384) : Math.min(modelParams.maxTokens, 4096),
+        stream: false,
+        ...extraParams,
+      });
+
+      let content = response.choices[0]?.message?.content || "";
+      const reasoningContent = (response.choices[0]?.message as any)?.reasoning_content || "";
+
+      if (!hasMCQQuizBlock(content) || !quizMentionsTopic(content, inferredQuizTopic)) {
+        content = await forceQuizBlockResponse(
+          client as any,
+          actualModel,
+          request.message,
+          content,
+          request.conversationHistory || [],
+          systemPrompt
+        );
+      }
+
+      if (foundImage && !content.includes(foundImage.imageUrl)) {
+        content = `![${foundImage.title}](${foundImage.imageUrl})\n\n` + content;
+      }
+
+      if (reasoningContent) {
+        onChunk({ reasoningContent });
+      }
+      streamTextChunks(content, onChunk);
+
+      console.log(`✅ DeepSeek quiz response normalized and streamed.`);
+      return { content, reasoningContent };
+    }
+
     if (onChunk) {
       const responseStream = await client.chat.completions.create({
         model: actualModel,
@@ -1499,6 +1814,17 @@ Do not repeat or generate another markdown image for this URL in your response c
       const reasoningContent = (response.choices[0]?.message as any)?.reasoning_content || "";
       
       console.log(`✅ DeepSeek succeeded!`);
+
+      if (quizIntent && (!hasMCQQuizBlock(content) || !quizMentionsTopic(content, inferredQuizTopic))) {
+        content = await forceQuizBlockResponse(
+          client as any,
+          actualModel,
+          request.message,
+          content,
+          request.conversationHistory || [],
+          systemPrompt
+        );
+      }
 
       if (foundImage && !content.includes(foundImage.imageUrl)) {
         content = `![${foundImage.title}](${foundImage.imageUrl})\n\n` + content;

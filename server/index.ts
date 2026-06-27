@@ -16,6 +16,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { closeBrowser } from "./pdf-engine.js";
 
 const app = express();
 const httpServer = createServer(app);
@@ -109,3 +110,22 @@ app.use((req, res, next) => {
     },
   );
 })();
+
+async function shutdown(signal: string) {
+  log(`received ${signal}, shutting down`, "server");
+  try {
+    await closeBrowser();
+  } catch (error) {
+    console.error("Failed to close PDF browser cleanly:", error);
+  } finally {
+    process.exit(0);
+  }
+}
+
+process.on("SIGINT", () => {
+  void shutdown("SIGINT");
+});
+
+process.on("SIGTERM", () => {
+  void shutdown("SIGTERM");
+});

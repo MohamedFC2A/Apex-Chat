@@ -1,0 +1,36 @@
+- generic [ref=e2]:
+  - main [ref=e5]:
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - generic [ref=e9]:
+          - img [ref=e12]
+          - heading "Welcome Back" [level=1] [ref=e14]
+          - paragraph [ref=e15]: Sign in to continue to APEX Chat
+        - button "Continue with Google" [ref=e17] [cursor=pointer]:
+          - img
+          - text: Continue with Google
+        - generic [ref=e22]: or
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - text: Email
+            - generic [ref=e25]:
+              - img [ref=e26]
+              - textbox "Email" [ref=e29]:
+                - /placeholder: you@example.com
+          - generic [ref=e30]:
+            - text: Password
+            - generic [ref=e31]:
+              - img [ref=e32]
+              - textbox "Password" [ref=e35]:
+                - /placeholder: ••••••••
+          - button "Sign In" [ref=e37] [cursor=pointer]:
+            - text: Sign In
+            - img
+        - generic [ref=e38]:
+          - button "Forgot password?" [ref=e39] [cursor=pointer]
+          - generic [ref=e40]:
+            - text: Don't have an account?
+            - button "Sign up" [ref=e41] [cursor=pointer]
+      - paragraph [ref=e42]: By continuing, you agree to APEX's Terms of Service and Privacy Policy
+  - region "Notifications (F8)":
+    - list

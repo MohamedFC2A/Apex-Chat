@@ -1,22 +1,54 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { chatRequestSchema } from "@shared/schema";
+import type { PDFDocument } from "@shared/pdf";
 import { processMessage, validateModelAccess } from "./ai-orchestrator";
 import { randomUUID } from "crypto";
 import { runUnboundPipeline } from "./apex-unbound/pipeline.js";
 import OpenAI from "openai";
 import DOMPurify from "isomorphic-dompurify";
+import { cleanJsonString } from "./apex-unbound/architect-agent.js";
+import { generatePdf } from "./pdf-engine.js";
+import { conversationToPdfDocument, markdownToPdfDocument } from "./markdown-to-pdf.js";
 
 const previewStore = new Map<string, { html: string; createdAt: number }>();
+
+function sanitizeFilename(value: string): string {
+  return value
+    .trim()
+    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "")
+    .replace(/\s+/g, "-")
+    .slice(0, 80) || "apex-document";
+}
+
+function normalizeStructuredPdfDocument(raw: unknown): PDFDocument {
+  if (!raw || typeof raw !== "object") {
+    throw new Error("Invalid structured PDF document");
+  }
+
+  const doc = raw as PDFDocument;
+  if (!doc.title || !Array.isArray(doc.sections) || doc.sections.length === 0) {
+    throw new Error("Structured PDF document is missing required fields");
+  }
+
+  return {
+    ...doc,
+    theme: doc.theme || "dark",
+    pageSize: doc.pageSize || "a4",
+    coverPage: typeof doc.coverPage === "boolean" ? doc.coverPage : true,
+    tableOfContents: typeof doc.tableOfContents === "boolean" ? doc.tableOfContents : true,
+    language: doc.language || "en",
+  };
+}
 
 // Clean up previews older than 1 hour to prevent memory leaks
 setInterval(() => {
   const now = Date.now();
-  for (const [id, data] of previewStore.entries()) {
+  previewStore.forEach((data, id) => {
     if (now - data.createdAt > 60 * 60 * 1000) {
       previewStore.delete(id);
     }
-  }
+  });
 }, 15 * 60 * 1000); // Check every 15 mins
 
 export async function registerRoutes(
@@ -154,93 +186,71 @@ export async function registerRoutes(
     return res.json({ hasAccess });
   });
 
-  // Suggestions endpoint
-  app.post("/api/suggestions", async (req, res) => {
-    const { userMemoryContext } = req.body;
-
-    const deepseekKey = process.env.DEEPSEEK_API_KEY;
-    if (!deepseekKey) {
-      return res.status(500).json({ error: "DEEPSEEK_API_KEY is not configured" });
-    }
-
+  app.post("/api/export/pdf", async (req, res) => {
     try {
-      const OpenAI = (await import("openai")).default;
-      const client = new OpenAI({
-        apiKey: deepseekKey,
-        baseURL: "https://api.deepseek.com/v1",
-      });
+      const { document, content, messages, exportType, options } = req.body || {};
 
-      let prompt = "";
-      if (userMemoryContext && Array.isArray(userMemoryContext) && userMemoryContext.length > 0) {
-        const historyStr = userMemoryContext
-          .map((c: any) => `- Conversation Title: "${c.title}", Last Query: "${c.lastQuery}"`)
-          .join("\n");
-        prompt = `The user has the following past conversation history and recent queries:\n${historyStr}\n\nBased on these previous interests, generate 4 highly personalized, curious, and specific suggestion questions in Arabic. Each question must provoke high interest and curiosity (فضول) for the user to explore further. Make them logical next steps or interesting related topics rather than repeating their past questions.`;
+      let pdfDocument: PDFDocument;
+
+      if (exportType === "structured" && document) {
+        pdfDocument = normalizeStructuredPdfDocument(document);
+      } else if (exportType === "conversation") {
+        pdfDocument = conversationToPdfDocument(Array.isArray(messages) ? messages : content);
+      } else if (exportType === "message" && typeof content === "string") {
+        pdfDocument = markdownToPdfDocument(content);
       } else {
-        prompt = `Generate 4 general, highly intriguing, and curious suggestion questions in Arabic. They should cover exciting and mind-bending topics like advanced science, future AI, philosophy, creative writing, or high-tech concepts, making the user extremely curious to click and read the answers.`;
+        return res.status(400).json({ error: "Invalid export request" });
       }
 
-      const response = await client.chat.completions.create({
-        model: "deepseek-chat",
-        messages: [
-          {
-            role: "system",
-            content: `You are an expert conversational AI agent. You must generate 4 intriguing, high-curiosity suggestion prompts in Arabic for the chat welcome screen.
-Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) in this format:
-[
-  {
-    "title": "Short title in Arabic (2-3 words)",
-    "desc": "Intriguing description in Arabic (4-6 words)",
-    "prompt": "The actual full question/prompt in Arabic to send to the AI"
-  }
-]`
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        max_tokens: 600,
-        temperature: 0.8,
+      const pdfBuffer = await generatePdf(pdfDocument, {
+        theme: options?.theme === "light" ? "light" : options?.theme === "dark" ? "dark" : pdfDocument.theme,
+        pageSize: options?.pageSize === "letter" ? "letter" : "a4",
       });
 
-      const content = response.choices[0]?.message?.content || "";
-      const cleanJson = content.replace(/```json|```/g, "").trim();
-      const suggestions = JSON.parse(cleanJson);
-      return res.json(suggestions);
+      const filename = `${sanitizeFilename(pdfDocument.title)}.pdf`;
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.setHeader("Content-Length", pdfBuffer.length);
+      res.send(pdfBuffer);
     } catch (error) {
-      console.error("Suggestions API error:", error);
-      // Fallback suggestions
-      const fallbackSuggestions = [
-        {
-          title: "الكتابة وصناعة المحتوى",
-          desc: "مقالات، رسائل إيميل، أو نصوص إبداعية",
-          prompt: "اكتب لي مقالاً احترافياً عن فوائد الذكاء الاصطناعي في حياتنا اليومية",
-        },
-        {
-          title: "المقارنات والتحليل",
-          desc: "تحليل الأفكار ومقارنة البيانات المعقدة",
-          prompt: "قارن بين نموذج الذكاء الاصطناعي الهجين والنموذج السحابي من حيث الكفاءة والأمان",
-        },
-        {
-          title: "البرمجة وحل المشكلات",
-          desc: "كتابة وتعديل الأكواد البرمجية بكفاءة",
-          prompt: "اكتب كود React مخصص لصفحة لوحة تحكم (Dashboard) باستخدام TailwindCSS",
-        },
-        {
-          title: "التخطيط والتنظيم اليومي",
-          desc: "جداول رياضية، خطط عمل، وتنظيم المهام",
-          prompt: "صمم لي جدول تمارين رياضية منزلي لمدة أسبوع لزيادة اللياقة البدنية",
-        },
-      ];
-      return res.json(fallbackSuggestions);
+      console.error("PDF generation failed:", error);
+      res.status(500).json({
+        error: "Failed to generate PDF",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
     }
+  });
+
+  // Suggestions endpoint
+  app.post("/api/suggestions", (req, res) => {
+    return res.json([
+      {
+        title: "متجر عطور فاخر",
+        desc: "تصميم متجر إلكتروني جذاب وتفاعلي للمنتجات الراقية",
+        prompt: "صمم لي متجر عطور فاخر بتأثيرات زجاجية (Glassmorphic) وسلة مشتريات تفاعلية وحركات دخول انسيابية",
+      },
+      {
+        title: "عيادة طبية متكاملة",
+        desc: "موقع طبي احترافي مع حجز مواعيد وتنسيق ذكي",
+        prompt: "صمم موقعاً لعيادة طبية حديثة يشمل واجهة حجز مواعيد تفاعلية، معرض لخدمات العيادة، وقائمة الأطباء بتصميم أنيق",
+      },
+      {
+        title: "لوحة تحكم SaaS",
+        desc: "تخطيط احترافي لعرض البيانات والرسوم البيانية",
+        prompt: "صمم لوحة تحكم سحابية (SaaS Dashboard) لعرض مبيعات شركة مع فلاتر فرز حية، ورسوم بيانية تفاعلية بلغة جافا سكريبت",
+      },
+      {
+        title: "معرض أعمال للمصممين",
+        desc: "موقع شخصي لعرض المشاريع بتأثيرات ثلاثية الأبعاد",
+        prompt: "صمم موقع معرض أعمال شخصي لمصمم واجهات مستخدم يشمل بطاقات مشاريع تفاعلية مع تأثير الـ 3D Tilt ونموذج تواصل مخصص",
+      },
+    ]);
   });
 
   // ── APEX UNBOUND: Dedicated multi-agent web generation endpoint ──────────────────
   // Streams phase-by-phase SSE events as each agent completes its work
   app.post("/api/unbound", async (req, res) => {
-    const { message, conversationHistory } = req.body;
+    const { message, conversationHistory, spec, searchResults, selectedChoices, isFollowUp } = req.body;
 
     if (!message || typeof message !== "string") {
       return res.status(400).json({ error: "message is required" });
@@ -275,6 +285,10 @@ Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) i
         {
           message,
           conversationHistory: conversationHistory || [],
+          spec,
+          searchResults,
+          selectedChoices,
+          isFollowUp,
         },
         (chunk) => {
           if (chunk.content) {
@@ -283,11 +297,23 @@ Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) i
           if (chunk.phase) {
             sendEvent({ type: "phase", phase: chunk.phase });
           }
+          if (chunk.questions) {
+            sendEvent({
+              type: "question",
+              questions: chunk.questions,
+              spec: chunk.spec,
+              searchResults: chunk.searchResults,
+            });
+          }
         }
       );
 
-      sendEvent({ type: "final", content: result.formattedOutput });
-      sendEvent({ type: "done" });
+      if (result.isPaused) {
+        console.log("[APEX Unbound] Pipeline paused for design questionnaire");
+      } else {
+        sendEvent({ type: "final", content: result.formattedOutput });
+        sendEvent({ type: "done" });
+      }
     } catch (err: any) {
       console.error("[APEX Unbound] Pipeline error:", err);
       sendEvent({ type: "error", error: err.message || "Pipeline failed" });
@@ -314,6 +340,83 @@ Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) i
       message: "This endpoint has been removed. Vouchers are now redeemed client-side via Firebase.",
       details: "Please ensure your client app is using the latest subscription-store.ts logic."
     });
+  });
+
+  // Generate 3 design concepts based on the user's prompt
+  app.post("/api/generate-concepts", async (req, res) => {
+    try {
+      const { prompt } = req.body;
+      if (!prompt || typeof prompt !== "string" || prompt.trim().length < 5) {
+        return res.status(400).json({ error: "Invalid prompt" });
+      }
+
+      const deepseekKey = process.env.DEEPSEEK_API_KEY;
+      if (!deepseekKey) {
+        return res.json(getFallbackConcepts(prompt));
+      }
+
+      const client = new OpenAI({
+        apiKey: deepseekKey,
+        baseURL: "https://api.deepseek.com/v1",
+      });
+
+      const systemPrompt = `You are a creative UI/UX web designer and product architect. Given a user's prompt (in Arabic or English) describing a website they want to build, generate a prompt-specific question and exactly 3 highly distinct choices/answers for the user to select from to configure their website design and features.
+The question must be in Arabic, tailored specifically to the user's website idea (e.g. if they ask for a perfume website, ask: "ما هو الطابع الإبداعي والوظيفة التي تفضلها لمتجر العطور الخاص بك؟").
+Each choice must represent a totally different design direction, layout, and feature set. Never repeat the same style.
+You must return the response as a JSON object containing "question" (string) and "choices" (array of exactly 3 objects).
+Return ONLY valid JSON. No markdown backticks, no markdown formatting, no other text.
+
+JSON structure:
+{
+  "question": "Arabic question tailored specifically to the website idea",
+  "choices": [
+    {
+      "title": "Short option title in Arabic (e.g. ✨ طابع ملكي زجاجي)",
+      "description": "Detailed option description in Arabic (e.g. واجهة مظلمة فاخرة مع حواف ذهبية نيون وتأثير زجاجي، وعرض دائري للمنتجات).",
+      "theme": "A theme keyword like 'glassmorphism', 'neobrutalism', 'minimalist-dark', 'cyberpunk', 'warm-organic', 'luxury-gold'"
+    }
+  ]
+}`;
+
+      const response = await client.chat.completions.create({
+        model: "deepseek-chat",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Generate a question and 3 choices for: "${prompt}"` },
+        ],
+        temperature: 0.7,
+        max_tokens: 800,
+      });
+
+      const content = response.choices[0]?.message?.content || "";
+      let concepts;
+      try {
+        const cleanContent = cleanJsonString(content);
+        const parsed = JSON.parse(cleanContent);
+        if (parsed.question && Array.isArray(parsed.choices)) {
+          concepts = parsed;
+        } else {
+          const choicesArray = Array.isArray(parsed) ? parsed : (parsed.choices || Object.values(parsed)[0]);
+          concepts = {
+            question: `ما هو التوجه والخصائص التي تفضلها لموقع ${prompt}؟`,
+            choices: choicesArray
+          };
+        }
+      } catch (e) {
+        console.error("Failed to parse AI concept response, using fallback. Raw content:", content);
+        concepts = getFallbackConcepts(prompt);
+      }
+
+      if (!concepts || !concepts.question || !Array.isArray(concepts.choices) || concepts.choices.length < 3) {
+        return res.json(getFallbackConcepts(prompt));
+      }
+
+      concepts.choices = concepts.choices.slice(0, 3);
+      return res.json(concepts);
+    } catch (error) {
+      console.error("Error generating concepts:", error);
+      return res.json(getFallbackConcepts(req.body.prompt || ""));
+    }
   });
 
   // Website preview creation endpoint
@@ -348,22 +451,124 @@ Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) i
     if (!data) {
       return res.status(404).send(`
         <!DOCTYPE html>
-        <html>
+        <html lang="ar" dir="rtl">
         <head>
-          <title>Preview Expired</title>
+          <title>رابط المعاينة منتهي الصلاحية · Preview Expired</title>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
           <style>
-            body { background: #09090b; color: #a1a1aa; font-family: system-ui, -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; padding: 1rem; box-sizing: border-box; }
-            .card { text-align: center; border: 1px solid #27272a; padding: 2.5rem; border-radius: 16px; background: #18181b; max-w: 400px; width: 100%; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
-            h1 { color: #f43f5e; margin-bottom: 0.75rem; font-size: 1.5rem; }
-            p { font-size: 0.875rem; color: #71717a; line-height: 1.5; }
+            body {
+              background: radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+                          radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.06) 0%, transparent 40%),
+                          #030303;
+              color: #f4f4f5;
+              font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              margin: 0;
+              padding: 1.5rem;
+              box-sizing: border-box;
+              overflow: hidden;
+            }
+            .card {
+              text-align: center;
+              border: 1px solid rgba(139, 92, 246, 0.15);
+              padding: 3rem 2rem;
+              border-radius: 28px;
+              background: rgba(15, 15, 18, 0.65);
+              backdrop-filter: blur(24px);
+              -webkit-backdrop-filter: blur(24px);
+              max-width: 450px;
+              width: 100%;
+              box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8),
+                          inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                          0 0 40px rgba(139, 92, 246, 0.03);
+              position: relative;
+              overflow: hidden;
+              animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+            .card::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              height: 3px;
+              background: linear-gradient(90deg, #8b5cf6, #ec4899, #3b82f6);
+            }
+            .icon-wrapper {
+              width: 64px;
+              height: 64px;
+              border-radius: 20px;
+              background: rgba(239, 68, 68, 0.1);
+              border: 1px solid rgba(239, 68, 68, 0.2);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin: 0 auto 1.5rem;
+              color: #ef4444;
+              font-size: 1.75rem;
+              font-weight: bold;
+              animation: pulseError 2s infinite ease-in-out;
+            }
+            h1 {
+              color: #f4f4f5;
+              margin: 0 0 1rem;
+              font-size: 1.6rem;
+              font-weight: 700;
+              letter-spacing: -0.02em;
+            }
+            p {
+              font-size: 0.95rem;
+              color: #a1a1aa;
+              line-height: 1.6;
+              margin: 0;
+            }
+            .btn-back {
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              margin-top: 2rem;
+              padding: 0.75rem 1.75rem;
+              background: linear-gradient(90deg, #8b5cf6, #6366f1);
+              color: white;
+              text-decoration: none;
+              border-radius: 14px;
+              font-size: 0.9rem;
+              font-weight: 600;
+              box-shadow: 0 10px 20px rgba(139, 92, 246, 0.2);
+              transition: all 0.2s ease;
+            }
+            .btn-back:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 15px 25px rgba(139, 92, 246, 0.3);
+              background: linear-gradient(90deg, #9b6bf7, #7376f2);
+            }
+            .btn-back:active {
+              transform: translateY(0);
+            }
+            @keyframes slideUp {
+              from { opacity: 0; transform: translateY(20px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes pulseError {
+              0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.2); }
+              50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            }
           </style>
         </head>
         <body>
           <div class="card">
+            <div class="icon-wrapper">⚠️</div>
             <h1>رابط المعاينة منتهي الصلاحية</h1>
-            <p>Preview expired or not found. Please regenerate it again from the chat.</p>
+            <p>انتهت صلاحية هذه المعاينة أو لم يتم العثور عليها. يرجى إعادة تشغيل المعاينة من المحادثة مجدداً.</p>
+            <p style="font-size: 0.8rem; color: #71717a; margin-top: 0.5rem; font-family: system-ui, sans-serif;" dir="ltr">
+              Preview expired or not found. Please regenerate it again from the chat.
+            </p>
+            <a href="javascript:window.close()" class="btn-back">إغلاق الصفحة</a>
           </div>
         </body>
         </html>
@@ -388,4 +593,106 @@ Output ONLY a raw JSON array of 4 objects (no markdown, no backticks, no wrap) i
   });
 
   return httpServer;
+}
+
+function getFallbackConcepts(prompt: string) {
+  const p = (prompt || "").toLowerCase();
+  let question = "ما هو التوجه والأسلوب الذي تفضله لتصميم موقعك؟";
+  let choices = [
+    {
+      title: "✨ زجاجي عصري (Glassmorphism)",
+      description: "تصميم عصري جذاب بخلفيات ضبابية شفافة وتدرجات نيون ناعمة، يمنح شعوراً بالحداثة والعمق البصري.",
+      theme: "glassmorphism"
+    },
+    {
+      title: "🎨 نيوبروتالزم تفاعلي (Neobrutalism)",
+      description: "تصميم شبابي جريء بتباين عالٍ، حدود سوداء سميكة، وألوان حيوية نابضة بالحياة تتفاعل فوراً مع نقرات المستخدم.",
+      theme: "neobrutalism"
+    },
+    {
+      title: "🖤 ملكي فاخر (Luxury Royal)",
+      description: "مظهر كلاسيكي فاخر بألوان كحلي داكن وذهبي ملكي مع خطوط عربية أنيقة ومؤثرات ظهور تدريجي تعكس الفخامة والأناقة.",
+      theme: "luxury-gold"
+    }
+  ];
+
+  if (p.includes("مطعم") || p.includes("أكل") || p.includes("طعام") || p.includes("burger") || p.includes("food") || p.includes("restaurant") || p.includes("cafe") || p.includes("قهوة") || p.includes("كافيه")) {
+    question = "ما هو الطابع البصري وتجربة المستخدم المفضلة لموقع مطعمك؟";
+    choices = [
+      {
+        title: "🍔 مودرن داكن وجريء",
+        description: "تصميم داكن غامر مع تدرجات لونية برتقالية وحمراء متوهجة، ومؤثرات حركية جذابة لبطاقات الطعام وقائمة تفاعلية.",
+        theme: "cyberpunk"
+      },
+      {
+        title: "✨ كلاسيكي دافئ وراقي",
+        description: "طابع ملكي أنيق بألوان كحلي وذهبي، يركز على حجز الطاولات، التقييمات، وقصة المطعم مع خطوط كلاسيكية فاخرة.",
+        theme: "luxury-gold"
+      },
+      {
+        title: "🌱 نظيف وصديق للبيئة",
+        description: "ألوان خضراء هادئة وخلفية بيج مريحة، يعرض المكونات الطازجة بشكل تفاعلي مع واجهة تصفح فائقة الخفة.",
+        theme: "warm-organic"
+      }
+    ];
+  } else if (p.includes("متجر") || p.includes("بيع") || p.includes("شراء") || p.includes("shop") || p.includes("store") || p.includes("e-commerce") || p.includes("سلة")) {
+    question = "ما هي واجهة العرض وسلة المشتريات التي تفضلها لمتجرك الإلكتروني؟";
+    choices = [
+      {
+        title: "🛍️ متجر زجاجي نيون تفاعلي",
+        description: "تصميم زجاجي (Glassmorphism) مع ألوان نيون متدرجة، سلة مشتريات منبثقة، وتأثيرات حركية عند تمرير الماوس على المنتجات.",
+        theme: "glassmorphism"
+      },
+      {
+        title: "🖤 مينيومالست كلاسيكي صامت",
+        description: "مظهر أحادي اللون (أبيض وأسود) فاخر، خطوط رفيعة وأنيقة، تركيز كامل على صور المنتجات وتكبير سلس عند التمرير.",
+        theme: "minimalist-dark"
+      },
+      {
+        title: "🎨 نيوبروتالزم جريء وعصري",
+        description: "حدود سوداء عريضة، ألوان باستيل زاهية، وتفاعلات بصرية فورية ومرحة تعطي انطباعاً شبابياً وحيوياً.",
+        theme: "neobrutalism"
+      }
+    ];
+  } else if (p.includes("لعبة") || p.includes("العاب") || p.includes("game") || p.includes("play")) {
+    question = "ما هو أسلوب التفاعل والواجهة المفضلة لموقع الألعاب الخاص بك؟";
+    choices = [
+      {
+        title: "🎮 سايبربانك غامر (Cyberpunk)",
+        description: "خلفية داكنة جداً مع خطوط نيون وردية وزرقاء متوهجة، مؤثرات صوتية بصرية تفاعلية، ولوحة تحكم عصرية بالكامل.",
+        theme: "cyberpunk"
+      },
+      {
+        title: "⚡ واجهة أركيد حيوية (Arcade)",
+        description: "ألوان صفراء وحمراء ساطعة، خطوط بيكسل كلاسيكية، تفاعل بملء الشاشة مع بطاقات نتائج متحركة وممتعة.",
+        theme: "neobrutalism"
+      },
+      {
+        title: "✨ غامض ومظلم (Mystic Dark)",
+        description: "تدرجات بنفسجية ورمادية عميقة، مؤثرات ضبابية زجاجية، وظلال ناعمة تعطي طابعاً غامضاً ومثيراً للاهتمام.",
+        theme: "glassmorphism"
+      }
+    ];
+  } else if (p.includes("طب") || p.includes("عيادة") || p.includes("دكتور") || p.includes("مستشفى") || p.includes("clinic") || p.includes("doctor") || p.includes("medical")) {
+    question = "ما هو أسلوب حجز المواعيد والعرض الأنسب لعيادتك الطبية؟";
+    choices = [
+      {
+        title: "🏥 زجاجي ناعم مع حجز مباشر",
+        description: "تصميم مريح مع خلفيات شبه شفافة بلون سماوي مهدئ، ونظام حجز مواعيد فوري تفاعلي.",
+        theme: "glassmorphism"
+      },
+      {
+        title: "💼 رسمي وعملي مبسط",
+        description: "ألوان زرقاء وبيضاء كلاسيكية، تركيز كامل على عرض الأقسام الطبية، أوقات العمل، والاتصال الفوري.",
+        theme: "minimalist-dark"
+      },
+      {
+        title: "✨ حديث وبطاقات تفاعلية",
+        description: "عرض الخدمات والأطباء في بطاقات عائمة وتأثيرات حركية سلسة لجذب ثقة المرضى.",
+        theme: "luxury-gold"
+      }
+    ];
+  }
+
+  return { question, choices };
 }

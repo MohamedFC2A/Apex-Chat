@@ -1,0 +1,98 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - img [ref=e57]
+          - generic [ref=e59]:
+            - heading "ApexChat" [level=2] [ref=e60]
+            - paragraph [ref=e61]: AI Studio
+        - button [ref=e63] [cursor=pointer]:
+          - img
+      - button "محادثة جديدة" [active] [ref=e66] [cursor=pointer]:
+        - img
+        - generic [ref=e67]: محادثة جديدة
+      - paragraph [ref=e69]: Recent
+      - generic [ref=e73]:
+        - generic [ref=e299] [cursor=pointer]:
+          - img [ref=e301]
+          - generic [ref=e303]:
+            - paragraph [ref=e304]: New Chat
+            - paragraph [ref=e305]: less than a minute ago
+          - button [ref=e306]:
+            - img
+        - generic [ref=e209] [cursor=pointer]:
+          - img [ref=e211]
+          - generic [ref=e213]:
+            - paragraph [ref=e214]: اعملي اختبار MSQ نحو
+            - paragraph [ref=e215]: less than a minute ago
+          - button [ref=e216]:
+            - img
+      - generic [ref=e81]:
+        - generic [ref=e82]:
+          - img [ref=e83]
+          - text: Apex Omni
+        - button "M MCQ Test mcqtest1782535527@example.com" [ref=e177] [cursor=pointer]:
+          - generic [ref=e87]: M
+          - generic [ref=e88]:
+            - paragraph [ref=e89]: MCQ Test
+            - paragraph [ref=e90]: mcqtest1782535527@example.com
+          - img [ref=e91]
+    - main [ref=e5]:
+      - generic [ref=e95]:
+        - generic [ref=e98]:
+          - generic [ref=e99]:
+            - img [ref=e102]
+            - button "APEX Flash" [ref=e105] [cursor=pointer]:
+              - img
+              - generic [ref=e106]: APEX Flash
+              - img
+          - button "0.1%" [ref=e307] [cursor=pointer]:
+            - generic [ref=e110]:
+              - img
+              - generic [ref=e111]: 0.1%
+        - generic [ref=e114]:
+          - img [ref=e309]
+          - generic [ref=e118]:
+            - heading "بماذا يمكنني مساعدتك اليوم؟" [level=2] [ref=e311]
+            - paragraph [ref=e312]: اختر أحد الاقتراحات المخصصة بالأسفل للبدء فوراً، أو اكتب سؤالك الخاص في صندوق الإدخال.
+          - generic [ref=e313]:
+            - button "متجر عطور فاخر تصميم متجر إلكتروني جذاب وتفاعلي للمنتجات الراقية" [ref=e314] [cursor=pointer]:
+              - generic [ref=e315]:
+                - img [ref=e317]
+                - heading "متجر عطور فاخر" [level=4] [ref=e323]
+              - paragraph [ref=e324]: تصميم متجر إلكتروني جذاب وتفاعلي للمنتجات الراقية
+            - button "عيادة طبية متكاملة موقع طبي احترافي مع حجز مواعيد وتنسيق ذكي" [ref=e325] [cursor=pointer]:
+              - generic [ref=e326]:
+                - img [ref=e328]
+                - heading "عيادة طبية متكاملة" [level=4] [ref=e330]
+              - paragraph [ref=e331]: موقع طبي احترافي مع حجز مواعيد وتنسيق ذكي
+            - button "لوحة تحكم SaaS تخطيط احترافي لعرض البيانات والرسوم البيانية" [ref=e332] [cursor=pointer]:
+              - generic [ref=e333]:
+                - img [ref=e335]
+                - heading "لوحة تحكم SaaS" [level=4] [ref=e337]
+              - paragraph [ref=e338]: تخطيط احترافي لعرض البيانات والرسوم البيانية
+            - button "معرض أعمال للمصممين موقع شخصي لعرض المشاريع بتأثيرات ثلاثية الأبعاد" [ref=e339] [cursor=pointer]:
+              - generic [ref=e340]:
+                - img [ref=e342]
+                - heading "معرض أعمال للمصممين" [level=4] [ref=e345]
+              - paragraph [ref=e346]: موقع شخصي لعرض المشاريع بتأثيرات ثلاثية الأبعاد
+        - generic [ref=e158]:
+          - generic [ref=e159]:
+            - generic [ref=e161]:
+              - button [ref=e163] [cursor=pointer]:
+                - img
+              - button [ref=e165] [cursor=pointer]:
+                - img
+              - textbox "Message ApexChat..." [ref=e166]
+              - generic [ref=e167]:
+                - button [disabled]:
+                  - img
+            - generic [ref=e169]:
+              - button [ref=e172] [cursor=pointer]:
+                - img
+              - button [ref=e175] [cursor=pointer]:
+                - img
+          - paragraph [ref=e176]: ApexChat can make mistakes. Verify important information.
+  - region "Notifications (F8)":
+    - list

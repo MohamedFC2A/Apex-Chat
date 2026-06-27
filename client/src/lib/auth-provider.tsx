@@ -52,7 +52,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!firebaseUser) {
       authStore.setUser(null);
       subscriptionStore.setTier("omni");
+      useChatStore.getState().clearStore();
       return;
+    }
+
+    const currentUser = authStore.user;
+    if (currentUser && currentUser.uid !== firebaseUser.uid) {
+      console.log("[AuthProvider] User switched, clearing chat store");
+      useChatStore.getState().clearStore();
     }
 
     try {
@@ -227,6 +234,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await signOut(auth);
       authStore.logout();
       subscriptionStore.setTier("starter");
+      useChatStore.getState().clearStore();
     } catch (error) {
       throw error;
     }

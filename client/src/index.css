@@ -65,6 +65,7 @@
   --elevate-1: rgba(0, 0, 0, .03);
   --elevate-2: rgba(0, 0, 0, .08);
   --button-outline: rgba(0, 0, 0, .10);
+  --app-viewport-height: 100dvh;
 }
 
 /* ─── DARK MODE — Deep Space Palette ─── */
@@ -118,6 +119,11 @@
   --apex-glow-rose: 0 0 4px hsl(345 85% 60% / 0.05);
 }
 
+.app-viewport {
+  height: var(--app-viewport-height, 100dvh);
+  min-height: 100svh;
+}
+
 /* ═══════════════════════════════════════════════════════════════════
    BASE LAYER
 ════════════════════════════════════════════════════════════════════ */
@@ -131,6 +137,7 @@
   html, body {
     overflow-x: hidden;
     height: 100%;
+    width: 100%;
   }
 
   body {
@@ -146,6 +153,7 @@
 
   #root {
     height: 100dvh;
+    min-height: 100svh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -176,6 +184,50 @@
   @media (max-width: 767px) {
     * { scrollbar-width: none; }
     *::-webkit-scrollbar { display: none; }
+  }
+}
+
+/* Chat mobile viewport and keyboard stability */
+.chat-shell {
+  height: 100%;
+  min-height: 0;
+}
+
+.chat-scroll-container {
+  scroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+.chat-input-dock {
+  padding-bottom: max(0.875rem, env(safe-area-inset-bottom));
+}
+
+@media (max-width: 767px) {
+  html,
+  body,
+  #root {
+    height: 100svh;
+    min-height: 100svh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .chat-shell {
+    height: 100svh;
+    max-height: 100dvh;
+  }
+
+  .chat-scroll-container {
+    touch-action: pan-y;
+    padding-bottom: 0.75rem;
+  }
+
+  .chat-input-dock {
+    padding-top: 0.5rem;
+    padding-bottom: max(0.65rem, env(safe-area-inset-bottom));
   }
 }
 
@@ -520,8 +572,8 @@ body.god-mode .border {
 
 /* Active conversation in sidebar */
 .conv-active {
-  background: hsl(0 0% 100% / 0.05);
-  border: 1px solid hsl(0 0% 100% / 0.15);
+  background: hsl(0 0% 100% / 0.07);
+  border: 1px solid hsl(0 0% 100% / 0.1);
 }
 
 /* New chat button - Premium Monochrome */
@@ -537,6 +589,59 @@ body.god-mode .border {
   transform: translateY(-1px);
 }
 .btn-new-chat:active { transform: translateY(0); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   SIDEBAR ENHANCEMENTS v2
+════════════════════════════════════════════════════════════════════ */
+
+/* Sidebar smooth drag interaction */
+.sidebar-panel {
+  will-change: transform;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Search input font */
+.sidebar-search input {
+  font-family: var(--font-arabic);
+}
+
+/* Sidebar conversation item hover */
+.conv-item {
+  position: relative;
+  transition: background-color 0.12s ease;
+}
+
+/* Sidebar swipe indicator (mobile) */
+@keyframes swipe-hint {
+  0%, 100% { transform: translateX(0); }
+  30% { transform: translateX(-6px); }
+  60% { transform: translateX(-2px); }
+}
+
+/* Prevent text selection during swipe gestures */
+.conv-item * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Mobile sidebar width clamp */
+@media (max-width: 767px) {
+  .sidebar-panel {
+    max-width: min(280px, 85vw);
+    box-shadow: 4px 0 40px rgba(0, 0, 0, 0.6), 12px 0 60px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Group label */
+.conv-group-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.18);
+  padding: 0.5rem 0.75rem 0.35rem;
+  font-family: var(--font-arabic);
+}
 
 /* Input focus ring */
 .apex-input-focus:focus-within {
@@ -663,4 +768,15 @@ body.god-mode .border {
 .avatar-unbound {
   --avatar-start: #8b5cf6; /* violet-500 */
   --avatar-end: #4c1d95;   /* violet-900 */
+}
+
+/* Search laser scanning animation */
+@keyframes search-laser {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.animate-search-laser {
+  background: linear-gradient(90deg, transparent 0%, #14b8a6 25%, #06b6d4 50%, #14b8a6 75%, transparent 100%) !important;
+  background-size: 200% 100% !important;
+  animation: search-laser 1.5s linear infinite !important;
 }

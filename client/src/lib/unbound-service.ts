@@ -22,34 +22,71 @@ export interface UnboundState {
   error: string | null;
   currentPhase: number;
   completedAt?: number;
+  questions?: Array<{
+    id: string;
+    question: string;
+    choices: Array<{ title: string; description: string; theme: string; config?: Record<string, any> }>
+  }> | null;
+  spec?: any | null;
+  searchResults?: any | null;
+  selectedChoices?: Array<{ questionId: string; title: string; description: string; theme: string; config?: Record<string, any> }> | null;
 }
 
 export type UnboundStateCallback = (state: UnboundState) => void;
 
 const INITIAL_PHASES: UnboundPhase[] = [
-  { phase: 1, name: "Architect Agent — System Specification", status: "pending" },
-  { phase: 2, name: "HTML Agent — Semantic DOM Generation", status: "pending" },
-  { phase: 3, name: "Selector Sync Engine — Token Extraction", status: "pending" },
-  { phase: 4, name: "CSS + JS Agents — Parallel Compilation", status: "pending" },
-  { phase: 5, name: "Bundler Engine — Final Assembly", status: "pending" },
+  { phase: 1, name: "Requirements Architecture — Formal Specification", status: "pending" },
+  { phase: 2, name: "Requirements Confirmation — Configuration Brief", status: "pending" },
+  { phase: 3, name: "Markup Engineering — Semantic DOM", status: "pending" },
+  { phase: 4, name: "Interface Contract — Selector Registry", status: "pending" },
+  { phase: 5, name: "Presentation and Logic — Parallel Build", status: "pending" },
+  { phase: 6, name: "Quality Review — Integration Audit", status: "pending" },
+  { phase: 7, name: "Release Packaging — Single Bundle", status: "pending" },
 ];
+
+export interface UnboundServiceResult {
+  content: string;
+  hasQuestion: boolean;
+  questions?: Array<{
+    id: string;
+    question: string;
+    choices: Array<{ title: string; description: string; theme: string; config?: Record<string, any> }>
+  }>;
+  spec?: any;
+  searchResults?: any;
+}
 
 /**
  * Run the APEX Unbound pipeline via SSE streaming.
- * Returns the final accumulated content.
+ * Returns the final accumulated content or the questionnaire state.
  */
 export async function runUnboundService(
   message: string,
   conversationHistory: Array<{ role: "user" | "assistant"; content: string }>,
   onStateChange: UnboundStateCallback,
-  onContentChunk: (chunk: string, isReplace?: boolean) => void
-): Promise<string> {
+  onContentChunk: (chunk: string, isReplace?: boolean) => void,
+  spec?: any | null,
+  searchResults?: any | null,
+  selectedChoices?: any | null,
+  isFollowUp?: boolean
+): Promise<UnboundServiceResult> {
   const state: UnboundState = {
     isRunning: true,
-    phases: INITIAL_PHASES.map((p) => ({ ...p })),
+    phases: INITIAL_PHASES.map((p) => {
+      // If we are resuming (but not follow-up), mark Phase 1 and 2 as completed
+      if (spec && !isFollowUp) {
+        if (p.phase === 1) return { ...p, status: "done", detail: "System specification complete" };
+        if (p.phase === 2) return { ...p, status: "done", detail: selectedChoices ? `Selected ${selectedChoices.length} styles` : "done" };
+      }
+      return { ...p };
+    }),
     content: "",
     error: null,
-    currentPhase: 0,
+    currentPhase: (spec && !isFollowUp) ? 2 : 0,
+    questions: null,
+    spec: spec || null,
+    searchResults: searchResults || null,
+    selectedChoices: selectedChoices || null,
   };
 
   const emit = () => onStateChange({ ...state, phases: [...state.phases] });
@@ -59,11 +96,10 @@ export async function runUnboundService(
   let accumulatedContent = "";
 
   try {
-    // Try backend first
     const response = await fetch("/api/unbound", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, conversationHistory }),
+      body: JSON.stringify({ message, conversationHistory, spec, searchResults, selectedChoices, isFollowUp }),
     });
 
     if (!response.ok || !response.body) {
@@ -108,10 +144,32 @@ export async function runUnboundService(
               state.currentPhase = phaseData.phase;
             }
             emit();
+            state.selectedChoices = selectedChoices;
+          } else if (event.type === "question") {
+            state.questions = event.questions;
+            state.spec = event.spec;
+            state.searchResults = event.searchResults;
+            state.isRunning = false;
+            const idx = state.phases.findIndex((p) => p.phase === 2);
+            if (idx !== -1) {
+              state.phases[idx].status = "running";
+              state.phases[idx].detail = "waiting for input";
+              state.currentPhase = 2;
+            }
+            emit();
+            
+            // Clean close of connection
+            reader.cancel();
+            return {
+              content: accumulatedContent,
+              hasQuestion: true,
+              questions: event.questions,
+              spec: event.spec,
+              searchResults: event.searchResults,
+            };
           } else if (event.type === "done") {
             state.isRunning = false;
             state.completedAt = Date.now();
-            // Mark all phases as done if they're still pending (safety)
             state.phases = state.phases.map((p) =>
               p.status === "pending" ? { ...p, status: "done" } : p
             );
@@ -134,5 +192,8 @@ export async function runUnboundService(
 
   state.isRunning = false;
   emit();
-  return accumulatedContent;
+  return {
+    content: accumulatedContent,
+    hasQuestion: false,
+  };
 }

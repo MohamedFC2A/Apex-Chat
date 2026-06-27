@@ -1,0 +1,79 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - img [ref=e57]
+          - generic [ref=e59]:
+            - heading "ApexChat" [level=2] [ref=e60]
+            - paragraph [ref=e61]: AI Studio
+        - button [ref=e63] [cursor=pointer]:
+          - img
+      - generic [ref=e65]:
+        - button "محادثة جديدة" [disabled]:
+          - img
+          - generic: محادثة جديدة
+      - paragraph [ref=e69]: Recent
+      - generic [ref=e73]:
+        - generic:
+          - img
+          - generic:
+            - paragraph: اعمل لي اختبار 3 اسئلة عن React Hooks
+            - paragraph: less than a minute ago
+          - button:
+            - img
+        - generic:
+          - img
+          - generic:
+            - paragraph: اعملي اختبار MSQ نحو
+            - paragraph: less than a minute ago
+          - button:
+            - img
+      - generic [ref=e81]:
+        - generic [ref=e82]:
+          - img [ref=e83]
+          - text: Apex Omni
+        - button "M MCQ Test mcqtest1782535527@example.com" [ref=e177] [cursor=pointer]:
+          - generic [ref=e87]: M
+          - generic [ref=e88]:
+            - paragraph [ref=e89]: MCQ Test
+            - paragraph [ref=e90]: mcqtest1782535527@example.com
+          - img [ref=e91]
+    - main [ref=e5]:
+      - generic [ref=e95]:
+        - generic [ref=e98]:
+          - generic [ref=e99]:
+            - img [ref=e102]
+            - button "APEX Flash" [ref=e105] [cursor=pointer]:
+              - img
+              - generic [ref=e106]: APEX Flash
+              - img
+          - generic [ref=e107]:
+            - generic [ref=e349]: Live
+            - button "0.2%" [ref=e350] [cursor=pointer]:
+              - generic [ref=e110]:
+                - img
+                - generic [ref=e111]: 0.2%
+        - generic [ref=e352]:
+          - paragraph [ref=e355]: اعمل لي اختبار 3 اسئلة عن React Hooks
+          - img [ref=e358]
+        - generic [ref=e158]:
+          - generic [ref=e159]:
+            - generic [ref=e161]:
+              - generic [ref=e162]:
+                - button [disabled]:
+                  - img
+              - generic [ref=e164]:
+                - button [disabled]:
+                  - img
+              - textbox "Message ApexChat..." [disabled] [ref=e166]
+              - button [ref=e189] [cursor=pointer]:
+                - img
+            - generic [ref=e169]:
+              - button [ref=e172] [cursor=pointer]:
+                - img
+              - button [ref=e175] [cursor=pointer]:
+                - img
+          - paragraph [ref=e176]: ApexChat can make mistakes. Verify important information.
+  - region "Notifications (F8)":
+    - list

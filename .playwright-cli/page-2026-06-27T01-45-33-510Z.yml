@@ -1,0 +1,87 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - img [ref=e57]
+          - generic [ref=e59]:
+            - heading "ApexChat" [level=2] [ref=e60]
+            - paragraph [ref=e61]: AI Studio
+        - button [ref=e63] [cursor=pointer]:
+          - img
+      - button "محادثة جديدة" [ref=e66] [cursor=pointer]:
+        - img
+        - generic [ref=e67]: محادثة جديدة
+      - paragraph [ref=e69]: Recent
+      - generic [ref=e74]:
+        - img [ref=e76]
+        - paragraph [ref=e79]: No conversations yet
+        - paragraph [ref=e80]: Start a new chat above
+      - generic [ref=e81]:
+        - generic [ref=e82]:
+          - img [ref=e83]
+          - text: Apex Omni
+        - button "U User No email" [ref=e85] [cursor=pointer]:
+          - generic [ref=e87]: U
+          - generic [ref=e88]:
+            - paragraph [ref=e89]: User
+            - paragraph [ref=e90]: No email
+          - img [ref=e91]
+    - main [ref=e5]:
+      - generic [ref=e95]:
+        - generic [ref=e98]:
+          - generic [ref=e99]:
+            - img [ref=e102]
+            - button "APEX Flash" [ref=e105] [cursor=pointer]:
+              - img
+              - generic [ref=e106]: APEX Flash
+              - img
+          - button "0.1%" [ref=e109] [cursor=pointer]:
+            - generic [ref=e110]:
+              - img
+              - generic [ref=e111]: 0.1%
+        - generic [ref=e114]:
+          - img [ref=e116]
+          - generic [ref=e118]:
+            - heading "بماذا يمكنني مساعدتك اليوم؟" [level=2] [ref=e119]
+            - paragraph [ref=e120]: اختر أحد الاقتراحات المخصصة بالأسفل للبدء فوراً، أو اكتب سؤالك الخاص في صندوق الإدخال.
+          - generic [ref=e121]:
+            - button "متجر عطور فاخر تصميم متجر إلكتروني جذاب وتفاعلي للمنتجات الراقية" [ref=e122] [cursor=pointer]:
+              - generic [ref=e123]:
+                - img [ref=e125]
+                - heading "متجر عطور فاخر" [level=4] [ref=e131]
+              - paragraph [ref=e132]: تصميم متجر إلكتروني جذاب وتفاعلي للمنتجات الراقية
+            - button "عيادة طبية متكاملة موقع طبي احترافي مع حجز مواعيد وتنسيق ذكي" [ref=e133] [cursor=pointer]:
+              - generic [ref=e134]:
+                - img [ref=e136]
+                - heading "عيادة طبية متكاملة" [level=4] [ref=e138]
+              - paragraph [ref=e139]: موقع طبي احترافي مع حجز مواعيد وتنسيق ذكي
+            - button "لوحة تحكم SaaS تخطيط احترافي لعرض البيانات والرسوم البيانية" [ref=e140] [cursor=pointer]:
+              - generic [ref=e141]:
+                - img [ref=e143]
+                - heading "لوحة تحكم SaaS" [level=4] [ref=e145]
+              - paragraph [ref=e146]: تخطيط احترافي لعرض البيانات والرسوم البيانية
+            - button "معرض أعمال للمصممين موقع شخصي لعرض المشاريع بتأثيرات ثلاثية الأبعاد" [ref=e147] [cursor=pointer]:
+              - generic [ref=e148]:
+                - img [ref=e150]
+                - heading "معرض أعمال للمصممين" [level=4] [ref=e153]
+              - paragraph [ref=e154]: موقع شخصي لعرض المشاريع بتأثيرات ثلاثية الأبعاد
+        - generic [ref=e158]:
+          - generic [ref=e159]:
+            - generic [ref=e161]:
+              - button [ref=e163] [cursor=pointer]:
+                - img
+              - button [ref=e165] [cursor=pointer]:
+                - img
+              - textbox "Message ApexChat..." [ref=e166]
+              - generic [ref=e167]:
+                - button [disabled]:
+                  - img
+            - generic [ref=e169]:
+              - button [ref=e172] [cursor=pointer]:
+                - img
+              - button [ref=e175] [cursor=pointer]:
+                - img
+          - paragraph [ref=e176]: ApexChat can make mistakes. Verify important information.
+  - region "Notifications (F8)":
+    - list

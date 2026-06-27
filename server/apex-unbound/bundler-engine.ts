@@ -35,6 +35,8 @@ export function runBundlerEngine(
   userMessage: string
 ): BundleResult {
   let doc = html.trim();
+  const cssCode = (css || "").trim();
+  const jsCode = (js || "").trim();
 
   const isArabic = spec.isRTL || /[\u0600-\u06FF]/.test(userMessage + html);
   const dir = isArabic ? 'dir="rtl"' : 'dir="ltr"';
@@ -43,14 +45,18 @@ export function runBundlerEngine(
   const bodyFont = spec.typography.bodyFont || "Inter";
 
   // ── 1. Ensure we have a full HTML document ──────────────────────
-  const isFullDoc =
-    /<!DOCTYPE\s+html/i.test(doc) ||
-    /<html[^>]*>/i.test(doc) ||
-    /<head[^>]*>/i.test(doc);
+  const hasHtmlTag = /<html[^>]*>/i.test(doc);
+  const isFullDoc = hasHtmlTag;
 
   if (!isFullDoc) {
-    // Wrap snippet in full document shell
-    doc = `<!DOCTYPE html>
+    doc = doc.replace(/<!DOCTYPE\s+html>\s*/i, "");
+    const hasHeadOrBody = /<head[^>]*>/i.test(doc) || /<body[^>]*>/i.test(doc);
+    doc = hasHeadOrBody
+      ? `<!DOCTYPE html>
+<html lang="${lang}" ${dir}>
+${doc}
+</html>`
+      : `<!DOCTYPE html>
 <html lang="${lang}" ${dir}>
 <head>
   <meta charset="UTF-8">
@@ -61,13 +67,15 @@ export function runBundlerEngine(
 ${doc}
 </body>
 </html>`;
+  } else if (!/<!DOCTYPE\s+html/i.test(doc)) {
+    doc = `<!DOCTYPE html>\n${doc}`;
   }
 
   // ── 2. Ensure lang and dir on <html> tag ──────────────────────
   doc = doc.replace(/<html([^>]*)>/i, (match, attrs) => {
     let newAttrs = attrs;
-    if (!newAttrs.includes("lang=")) newAttrs += ` lang="${lang}"`;
-    if (!newAttrs.includes("dir=") && isArabic) newAttrs += ' dir="rtl"';
+    if (!/\slang\s*=/i.test(newAttrs)) newAttrs += ` lang="${lang}"`;
+    if (!/\sdir\s*=/i.test(newAttrs)) newAttrs += ` ${dir}`;
     return `<html${newAttrs}>`;
   });
 
@@ -105,34 +113,38 @@ ${doc}
     )}:wght@300;400;500;600;700&display=swap`;
 
     const fontLink = `  <link rel="preconnect" href="https://fonts.googleapis.com">\n  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n  <link href="${googleFontsUrl}" rel="stylesheet">`;
-    doc = doc.replace(/(<\/head>)/i, `${fontLink}\n$1`);
+    doc = doc.replace(/(<\/head>)/i, (match) => `${fontLink}\n${match}`);
   }
 
   // ── 7. Inject CSS ─────────────────────────────────────────────
-  if (css && css.trim().length > 10) {
-    // Remove any pre-existing style content from the HTML to avoid duplication
-    const existingStyleTagRegex = /<style[^>]*>[\s\S]*?<\/style>/gi;
-    const existingStyles = doc.match(existingStyleTagRegex) || [];
+  if (cssCode.length > 10) {
+    // The CSS agent output is authoritative; remove stale inline styles first.
+    doc = doc.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
 
-    const styleBlock = `  <style>\n${css}\n  </style>`;
+    const safeCss = cssCode.replace(/<\/style/gi, "<\\/style");
+    const styleBlock = `  <style>\n${safeCss}\n  </style>`;
 
     if (/<\/head>/i.test(doc)) {
-      doc = doc.replace(/(<\/head>)/i, `${styleBlock}\n$1`);
+      doc = doc.replace(/(<\/head>)/i, (match) => `${styleBlock}\n${match}`);
     } else if (/<head[^>]*>/i.test(doc)) {
-      doc = doc.replace(/(<head[^>]*>)/i, `$1\n${styleBlock}`);
+      doc = doc.replace(/(<head[^>]*>)/i, (match) => `${match}\n${styleBlock}`);
     } else {
       doc = `${styleBlock}\n${doc}`;
     }
   }
 
   // ── 8. Inject JavaScript ──────────────────────────────────────
-  if (js && js.trim().length > 10) {
-    const scriptBlock = `  <script>\n${js}\n  </script>`;
+  if (jsCode.length > 10) {
+    // The JS agent output is authoritative; remove stale inline scripts first.
+    doc = doc.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+
+    const safeJs = jsCode.replace(/<\/script/gi, "<\\/script");
+    const scriptBlock = `  <script>\n${safeJs}\n  </script>`;
 
     if (/<\/body>/i.test(doc)) {
-      doc = doc.replace(/(<\/body>)/i, `${scriptBlock}\n$1`);
+      doc = doc.replace(/(<\/body>)/i, (match) => `${scriptBlock}\n${match}`);
     } else if (/<body[^>]*>/i.test(doc)) {
-      doc = doc.replace(/(<body[^>]*>)/i, `$1\n${scriptBlock}`);
+      doc = doc.replace(/(<body[^>]*>)/i, (match) => `${match}\n${scriptBlock}`);
     } else {
       doc = `${doc}\n${scriptBlock}`;
     }

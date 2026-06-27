@@ -1,0 +1,1540 @@
+[     834ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:21550
+[    1060ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:5000/login:0
+[   36388ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx:94
+[   53108ms] [LOG] ☁️ Cloud AI: Routing to backend proxy for DeepSeek (apex-flash) (stream: true) @ http://localhost:5000/src/lib/ai-client.ts:1055
+[   55225ms] [WARNING] [CloudSync] Save failed (UNKNOWN): Function setDoc() called with invalid data. Unsupported field value: undefined (found in document users/6sbAFNQq0bWMlUx45FMAlHYlpzP2/chats/4cfd8687-e818-4ef1-a1d8-80ceb01899bc) @ http://localhost:5000/src/lib/cloud-sync.ts:109
+[   62468ms] [WARNING] [CloudSync] Save failed (UNKNOWN): Function setDoc() called with invalid data. Unsupported field value: undefined (found in document users/6sbAFNQq0bWMlUx45FMAlHYlpzP2/chats/4cfd8687-e818-4ef1-a1d8-80ceb01899bc) @ http://localhost:5000/src/lib/cloud-sync.ts:109
+[   86723ms] [LOG] ☁️ Cloud AI: Routing to backend proxy for DeepSeek (apex-flash) (stream: true) @ http://localhost:5000/src/lib/ai-client.ts:1055
+[   88741ms] [WARNING] [CloudSync] Save failed (UNKNOWN): Function setDoc() called with invalid data. Unsupported field value: undefined (found in document users/6sbAFNQq0bWMlUx45FMAlHYlpzP2/chats/559850fe-00ed-4a9a-b37e-1125a3a7e9ec) @ http://localhost:5000/src/lib/cloud-sync.ts:109
+[   94951ms] [WARNING] [CloudSync] Save failed (UNKNOWN): Function setDoc() called with invalid data. Unsupported field value: undefined (found in document users/6sbAFNQq0bWMlUx45FMAlHYlpzP2/chats/559850fe-00ed-4a9a-b37e-1125a3a7e9ec) @ http://localhost:5000/src/lib/cloud-sync.ts:109
+[  127537ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:5000/@vite/client:559
+[  129870ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  132467ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:21550
+[  132802ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx:94
+[  678356ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_RESET @ http://localhost:5000/src/components/mcq-quiz-widget.tsx?t=1782525374901:0
+[  678356ms] [ERROR] [hmr] Failed to reload /src/components/mcq-quiz-widget.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5000/@vite/client:175
+[  678358ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:5000/@vite/client:559
+[  678359ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_RESET @ http://localhost:5000/src/index.css?t=1782525374901&v=HklC6jHErGT9F1NoFfWuy:0
+[  678359ms] [ERROR] [hmr] Failed to reload /src/index.css?v=HklC6jHErGT9F1NoFfWuy. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5000/@vite/client:175
+[  680521ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  683907ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  687265ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  690634ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  694013ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  697371ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  700726ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  704075ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  707430ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  710784ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  714167ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  717530ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  720884ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  724252ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  727610ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  730973ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  734345ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  737718ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  741060ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  744412ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  747757ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  751107ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  754440ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  757818ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  761201ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  764583ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  767924ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  771266ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  774606ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  777941ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  781294ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  784659ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  788025ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  791391ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  794753ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  798107ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  801446ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[  803947ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:21550
+[  804888ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx:94
+[ 1235363ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx?t=1782525931834:94
+[ 1499410ms] Error: useAuth must be used within AuthProvider
+    at useAuth (http://localhost:5000/src/lib/auth-provider.tsx:38:11)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx:23:29)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+[ 1499430ms] Error: useAuth must be used within AuthProvider
+    at useAuth (http://localhost:5000/src/lib/auth-provider.tsx:38:11)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx:23:29)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+[ 1499445ms] [ERROR] The above error occurred in the <ProtectedRoute> component:
+
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526195925:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1499445ms] [ERROR] Uncaught error: Error: useAuth must be used within AuthProvider
+    at useAuth (http://localhost:5000/src/lib/auth-provider.tsx:38:11)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx:23:29)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28) {componentStack: 
+    at ProtectedRoute (http://localhost:5000/src/…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1499601ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx?t=1782526195925:94
+[ 1501806ms] Error: useAuth must be used within AuthProvider
+    at useAuth (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526195925:38:11)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526195925:23:29)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+[ 1501824ms] Error: useAuth must be used within AuthProvider
+    at useAuth (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526195925:38:11)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526195925:23:29)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+[ 1501835ms] [ERROR] The above error occurred in the <ProtectedRoute> component:
+
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526195925:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526195925&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526195925&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1501836ms] [ERROR] Uncaught error: Error: useAuth must be used within AuthProvider
+    at useAuth (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526195925:38:11)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526195925:23:29)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28) {componentStack: 
+    at ProtectedRoute (http://localhost:5000/src/…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526195925&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1501901ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx?t=1782526198639:94
+[ 1516369ms] Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+    at checkForNestedUpdates (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19659:19)
+    at scheduleUpdateOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18533:11)
+    at dispatchSetState (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:12403:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:69:66
+    at setRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:18:12)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:27:23
+    at Array.map (<anonymous>)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:26:27
+    at safelyDetachRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:16726:30)
+    at commitMutationEffectsOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:17741:19)
+[ 1516382ms] [ERROR] Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.%s 
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:520
+[ 1516389ms] [ERROR] The above error occurred in the <div> component:
+
+    at div
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-KREND35G.js?v=4d5c75e4:42:13
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:54:7
+    at _c (http://localhost:5000/src/components/ui/scroll-area.tsx:21:11)
+    at div
+    at MotionComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:945:40)
+    at PresenceChild (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:121:24)
+    at AnimatePresence (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:210:26)
+    at ChatSidebar (http://localhost:5000/src/components/chat-sidebar.tsx?t=1782526198639:61:7)
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1516389ms] [ERROR] Uncaught error: Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+    at checkForNestedUpdates (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19659:19)
+    at scheduleUpdateOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18533:11)
+    at dispatchSetState (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:12403:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:69:66
+    at setRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:18:12)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:27:23
+    at Array.map (<anonymous>)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:26:27
+    at safelyDetachRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:16726:30)
+    at commitMutationEffectsOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:17741:19) {componentStack: 
+    at div
+    at http://localhost:5000/@fs/C:/Us…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1525429ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx?t=1782526198639:94
+[ 1526481ms] Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+    at checkForNestedUpdates (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19659:19)
+    at scheduleUpdateOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18533:11)
+    at dispatchSetState (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:12403:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:69:66
+    at setRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:18:12)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:27:23
+    at Array.map (<anonymous>)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:26:27
+    at safelyDetachRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:16726:30)
+    at commitMutationEffectsOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:17741:19)
+[ 1526486ms] [ERROR] Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.%s 
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:520
+[ 1526495ms] [ERROR] The above error occurred in the <div> component:
+
+    at div
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-KREND35G.js?v=4d5c75e4:42:13
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:54:7
+    at _c (http://localhost:5000/src/components/ui/scroll-area.tsx:21:11)
+    at div
+    at MotionComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:945:40)
+    at PresenceChild (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:121:24)
+    at AnimatePresence (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:210:26)
+    at ChatSidebar (http://localhost:5000/src/components/chat-sidebar.tsx?t=1782526198639:61:7)
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1526495ms] [ERROR] Uncaught error: Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+    at checkForNestedUpdates (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19659:19)
+    at scheduleUpdateOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18533:11)
+    at dispatchSetState (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:12403:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:69:66
+    at setRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:18:12)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:27:23
+    at Array.map (<anonymous>)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:26:27
+    at safelyDetachRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:16726:30)
+    at commitMutationEffectsOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:17741:19) {componentStack: 
+    at div
+    at http://localhost:5000/@fs/C:/Us…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1540175ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx?t=1782526198639:94
+[ 1541292ms] Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+    at checkForNestedUpdates (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19659:19)
+    at scheduleUpdateOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18533:11)
+    at dispatchSetState (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:12403:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:69:66
+    at setRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:18:12)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:27:23
+    at Array.map (<anonymous>)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:26:27
+    at safelyDetachRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:16726:30)
+    at commitMutationEffectsOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:17741:19)
+[ 1541296ms] [ERROR] Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.%s 
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:520
+[ 1541303ms] [ERROR] The above error occurred in the <div> component:
+
+    at div
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-KREND35G.js?v=4d5c75e4:42:13
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:54:7
+    at _c (http://localhost:5000/src/components/ui/scroll-area.tsx:21:11)
+    at div
+    at MotionComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:945:40)
+    at PresenceChild (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:121:24)
+    at AnimatePresence (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:210:26)
+    at ChatSidebar (http://localhost:5000/src/components/chat-sidebar.tsx?t=1782526198639:61:7)
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1541304ms] [ERROR] Uncaught error: Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+    at checkForNestedUpdates (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19659:19)
+    at scheduleUpdateOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18533:11)
+    at dispatchSetState (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:12403:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:69:66
+    at setRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:18:12)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:27:23
+    at Array.map (<anonymous>)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:26:27
+    at safelyDetachRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:16726:30)
+    at commitMutationEffectsOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:17741:19) {componentStack: 
+    at div
+    at http://localhost:5000/@fs/C:/Us…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1551372ms] ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1551399ms] ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1551400ms] [ERROR] The above error occurred in the <ChatInput> component:
+
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:63:3)
+    at div
+    at div
+    at MotionComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:945:40)
+    at div
+    at ChatPage (http://localhost:5000/src/pages/chat.tsx?t=1782526198639:59:7)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526198639:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1551400ms] [ERROR] Uncaught error: ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28)
+    at performSyncWorkOnRoot (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18879:28) {componentStack: 
+    at ChatInput (http://localhost:5000/src/compo…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1554644ms] ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1554649ms] ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1554650ms] [ERROR] The above error occurred in the <ChatInput> component:
+
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:63:3)
+    at div
+    at div
+    at MotionComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:945:40)
+    at div
+    at ChatPage (http://localhost:5000/src/pages/chat.tsx?t=1782526198639:59:7)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526198639:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1554650ms] [ERROR] Uncaught error: ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28)
+    at performSyncWorkOnRoot (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18879:28) {componentStack: 
+    at ChatInput (http://localhost:5000/src/compo…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1566819ms] ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526263472:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1566819ms] ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1566829ms] ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526263472:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1566832ms] ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1566832ms] [ERROR] The above error occurred in the <ChatMessages> component:
+
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526263472:2572:3)
+    at div
+    at div
+    at ChatPage (http://localhost:5000/src/pages/chat.tsx?t=1782526198639:59:7)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526198639:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1566833ms] [ERROR] Uncaught error: ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526263472:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28)
+    at performSyncWorkOnRoot (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18879:28) {componentStack: 
+    at ChatMessages (http://localhost:5000/src/co…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1566834ms] [ERROR] The above error occurred in the <ChatInput> component:
+
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:63:3)
+    at div
+    at div
+    at MotionComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:945:40)
+    at div
+    at ChatPage (http://localhost:5000/src/pages/chat.tsx?t=1782526198639:59:7)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526198639:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1566834ms] [ERROR] Uncaught error: ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28)
+    at performSyncWorkOnRoot (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18879:28) {componentStack: 
+    at ChatInput (http://localhost:5000/src/compo…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1575322ms] ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526272135:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1575323ms] ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1575335ms] ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526272135:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1575336ms] ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1575337ms] [ERROR] The above error occurred in the <ChatMessages> component:
+
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526272135:2572:3)
+    at div
+    at div
+    at ChatPage (http://localhost:5000/src/pages/chat.tsx?t=1782526198639:59:7)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526198639:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1575338ms] [ERROR] Uncaught error: ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526272135:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28)
+    at performSyncWorkOnRoot (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18879:28) {componentStack: 
+    at ChatMessages (http://localhost:5000/src/co…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1575338ms] [ERROR] The above error occurred in the <ChatInput> component:
+
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:63:3)
+    at div
+    at div
+    at MotionComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:945:40)
+    at div
+    at ChatPage (http://localhost:5000/src/pages/chat.tsx?t=1782526198639:59:7)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526198639:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1575338ms] [ERROR] Uncaught error: ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28)
+    at performSyncWorkOnRoot (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18879:28) {componentStack: 
+    at ChatInput (http://localhost:5000/src/compo…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1584650ms] ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526272135:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1584651ms] ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1584667ms] ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526272135:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1584668ms] ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1584668ms] [ERROR] The above error occurred in the <ChatMessages> component:
+
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526272135:2572:3)
+    at div
+    at div
+    at ChatPage (http://localhost:5000/src/pages/chat.tsx?t=1782526198639:59:7)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526198639:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1584668ms] [ERROR] Uncaught error: ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526272135:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28)
+    at performSyncWorkOnRoot (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18879:28) {componentStack: 
+    at ChatMessages (http://localhost:5000/src/co…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1584669ms] [ERROR] The above error occurred in the <ChatInput> component:
+
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:63:3)
+    at div
+    at div
+    at MotionComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:945:40)
+    at div
+    at ChatPage (http://localhost:5000/src/pages/chat.tsx?t=1782526198639:59:7)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526198639:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1584670ms] [ERROR] Uncaught error: ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526247992:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28)
+    at performSyncWorkOnRoot (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18879:28) {componentStack: 
+    at ChatInput (http://localhost:5000/src/compo…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1599873ms] Error: useAuth must be used within AuthProvider
+    at useAuth (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:38:11)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526198639:23:29)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+[ 1599884ms] Error: useAuth must be used within AuthProvider
+    at useAuth (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:38:11)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526198639:23:29)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+[ 1599885ms] [ERROR] The above error occurred in the <ProtectedRoute> component:
+
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526198639:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526296722:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1599885ms] [ERROR] Uncaught error: Error: useAuth must be used within AuthProvider
+    at useAuth (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526198639:38:11)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526198639:23:29)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28) {componentStack: 
+    at ProtectedRoute (http://localhost:5000/src/…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526198639&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1599957ms] ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526296722:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1599969ms] ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526296722:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1599982ms] ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526296722:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1599983ms] ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526296722:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1599984ms] [ERROR] The above error occurred in the <ChatMessages> component:
+
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526296722:2572:3)
+    at div
+    at div
+    at ChatPage (http://localhost:5000/src/pages/chat.tsx?t=1782526296722:59:7)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526296722:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526296722:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1599985ms] [ERROR] Uncaught error: ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526296722:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28)
+    at performSyncWorkOnRoot (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18879:28) {componentStack: 
+    at ChatMessages (http://localhost:5000/src/co…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1599986ms] [ERROR] The above error occurred in the <ChatInput> component:
+
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526296722:63:3)
+    at div
+    at div
+    at MotionComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:945:40)
+    at div
+    at ChatPage (http://localhost:5000/src/pages/chat.tsx?t=1782526296722:59:7)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526296722:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526296722:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1599986ms] [ERROR] Uncaught error: ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526296722:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28)
+    at performSyncWorkOnRoot (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18879:28) {componentStack: 
+    at ChatInput (http://localhost:5000/src/compo…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1601778ms] ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526296722:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1601779ms] ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526296722:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1601794ms] ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526296722:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1601796ms] ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526296722:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1601797ms] [ERROR] The above error occurred in the <ChatMessages> component:
+
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526296722:2572:3)
+    at div
+    at div
+    at ChatPage (http://localhost:5000/src/pages/chat.tsx?t=1782526296722:59:7)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526296722:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526296722:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1601798ms] [ERROR] Uncaught error: ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526296722:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28)
+    at performSyncWorkOnRoot (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18879:28) {componentStack: 
+    at ChatMessages (http://localhost:5000/src/co…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1601798ms] [ERROR] The above error occurred in the <ChatInput> component:
+
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526296722:63:3)
+    at div
+    at div
+    at MotionComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:945:40)
+    at div
+    at ChatPage (http://localhost:5000/src/pages/chat.tsx?t=1782526296722:59:7)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526296722:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526296722:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1601798ms] [ERROR] Uncaught error: ReferenceError: cn is not defined
+    at ChatInput (http://localhost:5000/src/components/chat-input.tsx?t=1782526296722:499:58)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28)
+    at performSyncWorkOnRoot (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18879:28) {componentStack: 
+    at ChatInput (http://localhost:5000/src/compo…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1603811ms] ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526296722:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1603832ms] ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526296722:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 1603837ms] [ERROR] The above error occurred in the <ChatMessages> component:
+
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526296722:2572:3)
+    at div
+    at div
+    at ChatPage (http://localhost:5000/src/pages/chat.tsx?t=1782526296722:59:7)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526296722:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526296722:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1603837ms] [ERROR] Uncaught error: ReferenceError: useMemo is not defined
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526296722:2591:27)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28)
+    at performSyncWorkOnRoot (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18879:28) {componentStack: 
+    at ChatMessages (http://localhost:5000/src/co…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1607630ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx?t=1782526296722:94
+[ 1608797ms] Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+    at checkForNestedUpdates (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19659:19)
+    at scheduleUpdateOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18533:11)
+    at dispatchSetState (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:12403:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:69:66
+    at setRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:18:12)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:27:23
+    at Array.map (<anonymous>)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:26:27
+    at safelyDetachRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:16726:30)
+    at commitMutationEffectsOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:17741:19)
+[ 1608805ms] [ERROR] Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.%s 
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526296722:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:520
+[ 1608813ms] [ERROR] The above error occurred in the <div> component:
+
+    at div
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-KREND35G.js?v=4d5c75e4:42:13
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:54:7
+    at _c (http://localhost:5000/src/components/ui/scroll-area.tsx:21:11)
+    at div
+    at MotionComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:945:40)
+    at PresenceChild (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:121:24)
+    at AnimatePresence (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:210:26)
+    at ChatSidebar (http://localhost:5000/src/components/chat-sidebar.tsx?t=1782526296722:61:7)
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526296722:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1608814ms] [ERROR] Uncaught error: Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+    at checkForNestedUpdates (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19659:19)
+    at scheduleUpdateOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18533:11)
+    at dispatchSetState (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:12403:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:69:66
+    at setRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:18:12)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:27:23
+    at Array.map (<anonymous>)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:26:27
+    at safelyDetachRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:16726:30)
+    at commitMutationEffectsOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:17741:19) {componentStack: 
+    at div
+    at http://localhost:5000/@fs/C:/Us…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1829348ms] Error: useAuth must be used within AuthProvider
+    at useAuth (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526296722:38:11)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526296722:23:29)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+[ 1829359ms] Error: useAuth must be used within AuthProvider
+    at useAuth (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526296722:38:11)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526296722:23:29)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+[ 1829360ms] [ERROR] The above error occurred in the <ProtectedRoute> component:
+
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526296722:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526525887:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1829360ms] [ERROR] Uncaught error: Error: useAuth must be used within AuthProvider
+    at useAuth (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526296722:38:11)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526296722:23:29)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28) {componentStack: 
+    at ProtectedRoute (http://localhost:5000/src/…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526296722&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1829540ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx?t=1782526525887:94
+[ 1830783ms] Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+    at checkForNestedUpdates (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19659:19)
+    at scheduleUpdateOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18533:11)
+    at dispatchSetState (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:12403:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:69:66
+    at setRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:18:12)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:27:23
+    at Array.map (<anonymous>)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:26:27
+    at safelyDetachRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:16726:30)
+    at commitMutationEffectsOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:17741:19)
+[ 1830790ms] [ERROR] Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.%s 
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526525887&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526525887:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:520
+[ 1830798ms] [ERROR] The above error occurred in the <div> component:
+
+    at div
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-KREND35G.js?v=4d5c75e4:42:13
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:54:7
+    at _c (http://localhost:5000/src/components/ui/scroll-area.tsx:21:11)
+    at div
+    at MotionComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:945:40)
+    at PresenceChild (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:121:24)
+    at AnimatePresence (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:210:26)
+    at ChatSidebar (http://localhost:5000/src/components/chat-sidebar.tsx?t=1782526525887:61:7)
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526525887&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526525887&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526525887:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1830798ms] [ERROR] Uncaught error: Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+    at checkForNestedUpdates (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19659:19)
+    at scheduleUpdateOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18533:11)
+    at dispatchSetState (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:12403:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:69:66
+    at setRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:18:12)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:27:23
+    at Array.map (<anonymous>)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:26:27
+    at safelyDetachRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:16726:30)
+    at commitMutationEffectsOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:17741:19) {componentStack: 
+    at div
+    at http://localhost:5000/@fs/C:/Us…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526525887&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1836573ms] Error: useAuth must be used within AuthProvider
+    at useAuth (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526525887:38:11)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526525887:23:29)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+[ 1836584ms] Error: useAuth must be used within AuthProvider
+    at useAuth (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526525887:38:11)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526525887:23:29)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+[ 1836584ms] [ERROR] The above error occurred in the <ProtectedRoute> component:
+
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526525887:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526525887&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526525887&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526533133:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1836584ms] [ERROR] Uncaught error: Error: useAuth must be used within AuthProvider
+    at useAuth (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526525887:38:11)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526525887:23:29)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28) {componentStack: 
+    at ProtectedRoute (http://localhost:5000/src/…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526525887&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1836710ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx?t=1782526533133:94
+[ 1837840ms] Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+    at checkForNestedUpdates (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19659:19)
+    at scheduleUpdateOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18533:11)
+    at dispatchSetState (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:12403:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:69:66
+    at setRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:18:12)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:27:23
+    at Array.map (<anonymous>)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:26:27
+    at safelyDetachRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:16726:30)
+    at commitMutationEffectsOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:17741:19)
+[ 1837848ms] [ERROR] Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.%s 
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526533133&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526533133:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:520
+[ 1837855ms] [ERROR] The above error occurred in the <div> component:
+
+    at div
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-KREND35G.js?v=4d5c75e4:42:13
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:54:7
+    at _c (http://localhost:5000/src/components/ui/scroll-area.tsx:21:11)
+    at div
+    at MotionComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:945:40)
+    at PresenceChild (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:121:24)
+    at AnimatePresence (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:210:26)
+    at ChatSidebar (http://localhost:5000/src/components/chat-sidebar.tsx?t=1782526533133:61:7)
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526533133&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526533133&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526533133:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 1837856ms] [ERROR] Uncaught error: Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+    at checkForNestedUpdates (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19659:19)
+    at scheduleUpdateOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18533:11)
+    at dispatchSetState (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:12403:15)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-scroll-area.js?v=4d5c75e4:69:66
+    at setRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:18:12)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:27:23
+    at Array.map (<anonymous>)
+    at http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=4d5c75e4:26:27
+    at safelyDetachRef (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:16726:30)
+    at commitMutationEffectsOnFiber (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:17741:19) {componentStack: 
+    at div
+    at http://localhost:5000/@fs/C:/Us…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526533133&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 1842090ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx?t=1782526533133:94
+[ 2002884ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx?t=1782526699414:94
+[ 2049749ms] ReferenceError: glowColor is not defined
+    at AssistantMessage (http://localhost:5000/src/components/chat-messages.tsx?t=1782526746506:3432:11)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 2049758ms] ReferenceError: glowColor is not defined
+    at AssistantMessage (http://localhost:5000/src/components/chat-messages.tsx?t=1782526746506:3432:11)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3699:24)
+    at invokeGuardedCallback (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:3733:39)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19765:15)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+[ 2049765ms] [ERROR] The above error occurred in the <AssistantMessage> component:
+
+    at AssistantMessage (http://localhost:5000/src/components/chat-messages.tsx?t=1782526746506:3129:3)
+    at div
+    at MotionComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:945:40)
+    at PopChildMeasure (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:62:23)
+    at PopChild (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:83:21)
+    at PresenceChild (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:121:24)
+    at AnimatePresence (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/framer-motion.js?v=4d5c75e4:210:26)
+    at div
+    at ChatMessages (http://localhost:5000/src/components/chat-messages.tsx?t=1782526746506:2572:3)
+    at div
+    at div
+    at ChatPage (http://localhost:5000/src/pages/chat.tsx?t=1782526699414:59:7)
+    at ProtectedRoute (http://localhost:5000/src/components/protected-route.tsx?t=1782526533133:21:34)
+    at Route (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:323:16)
+    at Switch (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/wouter.js?v=4d5c75e4:379:17)
+    at Router
+    at main
+    at div
+    at div
+    at AppLayout (http://localhost:5000/src/App.tsx?t=1782526533133&v=SX_vVzOVP_nDtEhvMBCzE:243:22)
+    at ErrorBoundary (http://localhost:5000/src/App.tsx?t=1782526533133&v=SX_vVzOVP_nDtEhvMBCzE:35:5)
+    at Provider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-SMG2J5QA.js?v=4d5c75e4:38:15)
+    at TooltipProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4d5c75e4:58:5)
+    at AuthProvider (http://localhost:5000/src/lib/auth-provider.tsx?t=1782526533133:43:32)
+    at ThemeProvider (http://localhost:5000/src/components/theme-provider.tsx:20:33)
+    at QueryClientProvider (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/@tanstack_react-query.js?v=4d5c75e4:2805:3)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary. @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14031
+[ 2049766ms] [ERROR] Uncaught error: ReferenceError: glowColor is not defined
+    at AssistantMessage (http://localhost:5000/src/components/chat-messages.tsx?t=1782526746506:3432:11)
+    at renderWithHooks (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:11548:26)
+    at mountIndeterminateComponent (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:14926:21)
+    at beginWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:15914:22)
+    at beginWork$1 (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19753:22)
+    at performUnitOfWork (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19198:20)
+    at workLoopSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19137:13)
+    at renderRootSync (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:19116:15)
+    at recoverFromConcurrentError (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18736:28)
+    at performSyncWorkOnRoot (http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:18879:28) {componentStack: 
+    at AssistantMessage (http://localhost:5000/sr…tack_react-query.js?v=4d5c75e4:2805:3)
+    at App} @ http://localhost:5000/src/App.tsx?t=1782526533133&v=SX_vVzOVP_nDtEhvMBCzE:41
+[ 2057463ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:5000/@vite/client:559
+[ 2059759ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/src/index.css?t=1782526754427&v=SX_vVzOVP_nDtEhvMBCzE:0
+[ 2059760ms] [ERROR] [hmr] Failed to reload /src/index.css?v=SX_vVzOVP_nDtEhvMBCzE. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5000/@vite/client:175
+[ 2059839ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/src/components/chat-messages.tsx?t=1782526754427:0
+[ 2059839ms] [ERROR] [hmr] Failed to reload /src/components/chat-messages.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5000/@vite/client:175
+[ 2059840ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2063201ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2066552ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2069906ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2073276ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2076639ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2079985ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2083349ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2086722ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2090063ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2093427ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2096799ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2100163ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2103511ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2106855ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2110200ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2113546ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2116902ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:5000/vite-hmr:0
+[ 2119690ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=4d5c75e4:21550
+[ 2120325ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx:94
+[ 2393957ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx?t=1782527090371:94
+[ 3392159ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx?t=1782528088462:94
+[ 3403443ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx?t=1782528100109:94
+[ 3409240ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx?t=1782528105925:94
+[ 3579684ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:5000/@fs/C:/Users/Mo_Matany/Downloads/Apex-Chat/Apex-Chat/node_modules/.vite/deps/chunk-XQLYTHWV.js?v=16a69dbb:21550
+[ 3580509ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx?t=1782528272352:94
+[ 3639030ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx?t=1782528335353:95
+[ 3890912ms] [LOG] AI Client Status: {environment: CLOUD, deepseekConfigured: true, expectedProvider: DeepSeek Cloud} @ http://localhost:5000/src/pages/chat.tsx?t=1782528587402:95

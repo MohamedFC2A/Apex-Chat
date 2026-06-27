@@ -1,0 +1,19 @@
+
+> rest-express@1.0.0 dev
+> cross-env NODE_ENV=development tsx server/index.ts
+
+[dotenv@17.2.3] injecting env (7) from .env.local -- tip: ⚙️  suppress all logs with { quiet: true }
+🚀 Server starting...
+📂 Environment file: .env.local
+🔑 CEREBRAS_API_KEY Status: ✅ Loaded
+   Length: 52
+   Starts with: csk-jdd24vhn8e2...
+--------------------
+4:47:07 AM [express] serving on port 5000
+4:48:05 AM [express] POST /api/chat 200 in 8488ms
+[2m4:50:51 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/chat-messages.tsx, /src/index.css?v=HklC6jHErGT9F1NoFfWuy[22m
+[2m4:51:03 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/mcq-quiz-widget.tsx, /src/index.css?v=HklC6jHErGT9F1NoFfWuy[22m
+[2m4:53:33 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/mcq-quiz-widget.tsx, /src/index.css?v=HklC6jHErGT9F1NoFfWuy[22m
+[2m4:53:51 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/mcq-quiz-widget.tsx, /src/index.css?v=HklC6jHErGT9F1NoFfWuy[22m
+[2m4:53:59 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/chat-messages.tsx, /src/index.css?v=HklC6jHErGT9F1NoFfWuy[22m
+[2m4:56:14 AM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/mcq-quiz-widget.tsx, /src/index.css?v=HklC6jHErGT9F1NoFfWuy[22m

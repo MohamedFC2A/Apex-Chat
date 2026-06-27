@@ -22,12 +22,15 @@ interface ChatState {
   isSyncing: boolean;
   lastSyncAt: string | null;
 
+  activeQuizProgress: { current: number; total: number } | null;
+
   // Actions
   setSelectedModel: (model: AIModel) => void;
   setServiceMode: (mode: ServiceMode) => void;
   setReasoningLevel: (level: ReasoningLevel) => void;
   setSidebarOpen: (open: boolean) => void;
   setIsGenerating: (generating: boolean) => void;
+  setActiveQuizProgress: (progress: { current: number; total: number } | null) => void;
 
   // Conversation actions
   createConversation: () => string;
@@ -42,6 +45,7 @@ interface ChatState {
   loadFromCloud: (userId: string) => Promise<void>;
   syncToCloud: (userId: string, conversation: Conversation) => void;
   setConversations: (conversations: Conversation[]) => void;
+  clearStore: () => void;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -55,6 +59,7 @@ export const useChatStore = create<ChatState>()(
       messages: [], // Add this line
       sidebarOpen: true,
       isGenerating: false,
+      activeQuizProgress: null,
       
       // Cloud Sync State
       isSyncing: false,
@@ -65,6 +70,12 @@ export const useChatStore = create<ChatState>()(
       setReasoningLevel: (level) => set({ reasoningLevel: level }),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
       setIsGenerating: (generating) => set({ isGenerating: generating }),
+      setActiveQuizProgress: (progress) => {
+        const current = get().activeQuizProgress;
+        if (!current && !progress) return;
+        if (current && progress && current.current === progress.current && current.total === progress.total) return;
+        set({ activeQuizProgress: progress });
+      },
 
       createConversation: () => {
         const id = crypto.randomUUID();
@@ -84,7 +95,7 @@ export const useChatStore = create<ChatState>()(
         return id;
       },
 
-      setActiveConversation: (id) => set({ activeConversationId: id }),
+      setActiveConversation: (id) => set({ activeConversationId: id, activeQuizProgress: null }),
 
       addMessage: (conversationId, message) => {
         set((state) => {
@@ -189,6 +200,9 @@ export const useChatStore = create<ChatState>()(
       
       setConversations: (conversations) => {
         set({ conversations });
+      },
+      clearStore: () => {
+        set({ conversations: [], activeConversationId: null, messages: [] });
       },
     }),
     {
