@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { FileText, Search, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FileText, Search, Sparkles, FileQuestion } from "lucide-react";
 
 interface TypewriterProps {
   text: string;
@@ -10,27 +10,81 @@ interface TypewriterProps {
 
 // The "Pulse" - Thinking Bubble Component
 export function ThinkingBubble({ isSearch, isQuiz, isPdf }: { isSearch?: boolean; isQuiz?: boolean; isPdf?: boolean }) {
+  const [shouldRender, setShouldRender] = useState(!(isPdf || isQuiz));
+  const [step, setStep] = useState(0);
+
+  const pdfSteps = [
+    { title: "جاري تحليل هيكل المستند...", subtitle: "استخراج الأقسام والعناوين الرئيسية" },
+    { title: "جاري تنظيم المحتوى وتنسيقه...", subtitle: "ترتيب الشيفرات البرمجية والمعادلات الرياضية" },
+    { title: "جاري تنسيق المظهر البصري للملف...", subtitle: "تطبيق الهوامش، الخطوط، وتوزيع الصفحات" },
+    { title: "جاري إنشاء مستند PDF النهائي...", subtitle: "تصدير الملف وتجهيزه للتحميل المباشر" }
+  ];
+
+  const quizSteps = [
+    { title: "جاري تحليل المحتوى العلمي...", subtitle: "استخلاص أهم المفاهيم والنقاط الرئيسية" },
+    { title: "جاري صياغة الأسئلة الذكية...", subtitle: "توليد أسئلة MSQ متدرجة الصعوبة" },
+    { title: "جاري إنشاء الخيارات والإجابات...", subtitle: "تحديد مفاتيح الحل وتنسيق المحتوى" },
+    { title: "جاري تجميع الاختبار النهائي...", subtitle: "تجهيز خيارات اللعبة والتحقق من جودة الأسئلة" }
+  ];
+
+  const steps = isPdf ? pdfSteps : isQuiz ? quizSteps : [];
+
+  useEffect(() => {
+    if (isPdf || isQuiz) {
+      const timer = setTimeout(() => {
+        setShouldRender(true);
+      }, 1500); // 1.5 second delay to make it feel like AI reasoning rather than keyword matching
+      return () => clearTimeout(timer);
+    }
+  }, [isPdf, isQuiz]);
+
+  useEffect(() => {
+    if ((isPdf || isQuiz) && shouldRender && steps.length > 0) {
+      const interval = setInterval(() => {
+        setStep((prev) => (prev + 1) % steps.length);
+      }, 2200);
+      return () => clearInterval(interval);
+    }
+  }, [isPdf, isQuiz, shouldRender, steps.length]);
+
+  if (!shouldRender) return null;
+
   if (isPdf) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.8 }}
-        transition={{ type: "spring", stiffness: 300, damping: 25 }}
-        className="inline-flex items-center gap-3 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl px-4 py-2.5 backdrop-blur-sm shadow-[0_0_20px_rgba(6,182,212,0.15)] text-cyan-300 font-sans"
+        initial={{ opacity: 0, y: 12, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9, y: 5 }}
+        transition={{ type: "spring", stiffness: 260, damping: 22 }}
+        className="inline-flex items-center gap-4 bg-zinc-900/60 dark:bg-black/40 border border-zinc-800/80 dark:border-zinc-900/80 rounded-2xl px-5 py-3.5 backdrop-blur-md shadow-md text-foreground font-sans"
         dir="rtl"
       >
-        <div className="relative flex items-center justify-center w-5 h-5">
+        <div className="relative flex items-center justify-center w-8 h-8 bg-violet-500/10 rounded-xl border border-violet-500/20 shrink-0">
           <motion.div
-            className="absolute inset-0 rounded-full border border-cyan-500/30"
-            animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-0 rounded-xl border border-dashed border-violet-400/40"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
           />
-          <FileText className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+          <FileText className="w-4.5 h-4.5 text-violet-400" />
         </div>
-        <div className="flex flex-col text-right">
-          <span className="text-xs font-semibold text-zinc-100 font-arabic">جاري تجهيز هيكل PDF الاحترافي...</span>
-          <span className="text-[10px] text-zinc-400 font-arabic">تنظيم الأقسام والعناوين والكود</span>
+        <div className="flex flex-col text-right min-w-[200px]">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col"
+            >
+              <span className="text-xs font-bold text-zinc-100 font-arabic tracking-wide">
+                {steps[step]?.title}
+              </span>
+              <span className="text-[10px] text-zinc-400 font-arabic mt-0.5">
+                {steps[step]?.subtitle}
+              </span>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </motion.div>
     );
@@ -39,24 +93,39 @@ export function ThinkingBubble({ isSearch, isQuiz, isPdf }: { isSearch?: boolean
   if (isQuiz) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.8 }}
-        transition={{ type: "spring", stiffness: 300, damping: 25 }}
-        className="inline-flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-4 py-2.5 backdrop-blur-sm shadow-[0_0_20px_rgba(16,185,129,0.15)] text-emerald-300 font-sans"
+        initial={{ opacity: 0, y: 12, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9, y: 5 }}
+        transition={{ type: "spring", stiffness: 260, damping: 22 }}
+        className="inline-flex items-center gap-4 bg-zinc-900/60 dark:bg-black/40 border border-zinc-800/80 dark:border-zinc-900/80 rounded-2xl px-5 py-3.5 backdrop-blur-md shadow-md text-foreground font-sans"
         dir="rtl"
       >
-        <div className="relative flex items-center justify-center w-5 h-5">
+        <div className="relative flex items-center justify-center w-8 h-8 bg-emerald-500/10 rounded-xl border border-emerald-500/20 shrink-0">
           <motion.div
-            className="absolute inset-0 rounded-full border border-emerald-500/30"
-            animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-0 rounded-xl border border-dashed border-emerald-400/40"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
           />
-          <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+          <FileQuestion className="w-4.5 h-4.5 text-emerald-400" />
         </div>
-        <div className="flex flex-col text-right">
-          <span className="text-xs font-semibold text-zinc-100 font-arabic">جاري صياغة اختبار MSQ متدرج الصعوبة...</span>
-          <span className="text-[10px] text-zinc-400 font-arabic">توليد الأسئلة والخيارات الذكية</span>
+        <div className="flex flex-col text-right min-w-[200px]">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col"
+            >
+              <span className="text-xs font-bold text-zinc-100 font-arabic tracking-wide">
+                {steps[step]?.title}
+              </span>
+              <span className="text-[10px] text-zinc-400 font-arabic mt-0.5">
+                {steps[step]?.subtitle}
+              </span>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </motion.div>
     );

@@ -11,6 +11,7 @@ import {
   formatQuizAsCodeBlock,
   parseQuizRequest,
   tryParseQuizFromText,
+  extractQuizTopic,
 } from "@shared/mcq";
 import {
   buildPdfGenerationInstructions,
@@ -224,27 +225,8 @@ function quizMentionsTopic(content: string, topic: string): boolean {
   return content.toLowerCase().includes(normalizedTopic);
 }
 
-function extractQuizTopic(message: string): string {
-  const stopWords = new Set([
-    "mcq", "msq", "quiz", "exam", "test",
-    "اختبار", "امتحان", "اعملي", "اعمل", "سوي", "سويلي", "انشئ", "أنشئ",
-    "كون", "كوّن", "اسئلة", "أسئلة", "اسئله", "سؤال", "سؤالات", "سوال",
-    "لي", "عن", "في", "من", "على", "اختيار", "متعدد", "اختيارمن", "اختيارمنمتعدد"
-  ]);
-
-  const tokens = message
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/[^A-Za-z0-9\u0600-\u06FF\s-]/g, " ")
-    .split(/\s+/)
-    .map((token) => token.trim())
-    .filter(Boolean)
-    .filter((token) => !stopWords.has(token.toLowerCase()));
-
-  return tokens.join(" ").trim() || "موضوع عام";
-}
-
-function buildQuizFocusedMessage(message: string): string {
-  const topic = extractQuizTopic(message);
+function buildQuizFocusedMessage(message: string, conversationHistory?: LightweightMessage[]): string {
+  const topic = extractQuizTopic(message, conversationHistory);
   return `The user is explicitly asking for a multiple-choice quiz.
 Original user message: ${message}
 Required topic: ${topic}
@@ -265,7 +247,7 @@ async function forceQuizBlockResponseClient(
   conversationHistory: LightweightMessage[] = [],
   systemPrompt?: string
 ): Promise<string> {
-  const inferredTopic = extractQuizTopic(userMessage);
+  const inferredTopic = extractQuizTopic(userMessage, conversationHistory);
   const response = await fetch(DEEPSEEK_URL, {
     method: "POST",
     headers: {
@@ -318,9 +300,10 @@ async function generateDedicatedQuizDirect(
   actualModel: string,
   model: AIModel,
   message: string,
-  onChunk?: (content: string, reasoning: string) => void
+  onChunk?: (content: string, reasoning: string) => void,
+  conversationHistory?: LightweightMessage[]
 ): Promise<ChatResponse> {
-  const quizRequest = parseQuizRequest(message);
+  const quizRequest = parseQuizRequest(message, conversationHistory);
   const baseParams = getDeepSeekRequestParams(actualModel);
 
   const runAttempt = async (userContent: string) => {
@@ -676,7 +659,7 @@ function getDomainName(urlStr: string): string {
   }
 }
 
-async function clientPerformSerperSearch(query: string, deepseekKey: string): Promise<{
+export async function clientPerformSerperSearch(query: string, deepseekKey: string): Promise<{
   organic: SerperSearchResult[];
   image?: SerperImageResult;
 }> {
@@ -980,12 +963,12 @@ export async function callDeepSeekDirect(
   }
 
   if (detectStructuredQuizIntent(message)) {
-    return generateDedicatedQuizDirect(DEEPSEEK_API_KEY, actualModel, model, message, onChunk);
+    return generateDedicatedQuizDirect(DEEPSEEK_API_KEY, actualModel, model, message, onChunk, conversationHistory);
   }
 
   const quizIntent = isQuizIntent(message);
-  const inferredQuizTopic = quizIntent ? extractQuizTopic(message) : "";
-  const effectiveUserMessage = quizIntent ? buildQuizFocusedMessage(message) : message;
+  const inferredQuizTopic = quizIntent ? extractQuizTopic(message, conversationHistory) : "";
+  const effectiveUserMessage = quizIntent ? buildQuizFocusedMessage(message, conversationHistory) : message;
 
   // Handle client-side search logic if search is active
   const isSearchActive = model === "apex-elite" || features.deepResearch;

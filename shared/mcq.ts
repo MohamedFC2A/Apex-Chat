@@ -207,20 +207,84 @@ function extractTopicByAnchor(message: string): string {
   return "";
 }
 
-export function extractQuizTopic(message: string): string {
+const GENERIC_TOPICS = new Set([
+  "عنها", "عنه", "عنهم", "عنهاُ", "عن ذلك", "عن هذا", "بالموضوع", "هذا", "ذلك", "هذه", "الموضوع", "الموضوع السابق", "الدرس", "الدرس السابق", "المقال", "المادة", "القصة", "النص", "عن المادة", "عن الدرس", "الامتحان", "الاختبار", "هناك", "معلومات", "عن الموضوع", "المعلومات", "عنها بالكامل", "عنه بالكامل", "عنها بالتفصيل", "عنه بالتفصيل", "عنها تفصيليا", "عنه تفصيليا",
+  "it", "them", "this", "that", "these", "those", "the topic", "the subject", "the text", "the article", "the story", "the lesson", "the previous topic", "the previous subject", "about it", "about that", "about this", "above", "the info", "the information", "about them", "about these", "about those"
+]);
+
+export function isGenericTopic(topic: string): boolean {
+  const normalized = topic.trim().toLowerCase();
+  if (!normalized) return true;
+  if (normalized.length <= 3) return true; // too short to be a real topic (e.g. "ها", "هو", "هي")
+  if (GENERIC_TOPICS.has(normalized)) return true;
+  
+  const arabicPronouns = /^(عنها|عنه|عنهم|هذا|هذه|ذلك|الموضوع|الدرس|المقال|المادة|القصة|النص|المعلومات|it|this|that|them|topic|info)$/i;
+  if (arabicPronouns.test(normalized)) return true;
+
+  return false;
+}
+
+export function extractQuizTopic(
+  message: string,
+  conversationHistory?: Array<{ role: string; content: string }>
+): string {
   const anchoredTopic = extractTopicByAnchor(message);
-  if (anchoredTopic) {
+  if (anchoredTopic && !isGenericTopic(anchoredTopic)) {
     return anchoredTopic;
   }
 
   const cleaned = cleanupTopic(message);
+  if (cleaned && !isGenericTopic(cleaned)) {
+    return cleaned;
+  }
+
+  // If the extracted topic is generic or empty, scan the conversation history
+  if (conversationHistory && conversationHistory.length > 0) {
+    // 1. Scan backward for a user message that was NOT a quiz intent
+    for (let i = conversationHistory.length - 1; i >= 0; i--) {
+      const hist = conversationHistory[i];
+      if (hist.role === "user" && hist.content && !detectQuizIntent(hist.content)) {
+        const histTopic = extractTopicByAnchor(hist.content) || cleanupTopic(hist.content);
+        if (histTopic && !isGenericTopic(histTopic)) {
+          return histTopic;
+        }
+      }
+    }
+
+    // 2. Scan backward for an assistant message containing headers or titles
+    for (let i = conversationHistory.length - 1; i >= 0; i--) {
+      const hist = conversationHistory[i];
+      if (hist.role === "assistant" && hist.content) {
+        const headingMatch = hist.content.match(/^(?:###|##|#)\s+([^\n]+)/m);
+        if (headingMatch?.[1]) {
+          const cleanHeading = headingMatch[1].replace(/\[(?:important|info)::(.*?)\]/g, "$1").trim();
+          const cleanTopic = cleanupTopic(cleanHeading);
+          if (cleanTopic && !isGenericTopic(cleanTopic)) {
+            return cleanTopic;
+          }
+        }
+        
+        const boldMatch = hist.content.match(/^\*\*([^*]+)\*\*/);
+        if (boldMatch?.[1]) {
+          const cleanTopic = cleanupTopic(boldMatch[1]);
+          if (cleanTopic && !isGenericTopic(cleanTopic)) {
+            return cleanTopic;
+          }
+        }
+      }
+    }
+  }
+
   return cleaned || (containsArabic(message) ? "المعرفة العامة" : "general knowledge");
 }
 
-export function parseQuizRequest(message: string): ParsedQuizRequest {
+export function parseQuizRequest(
+  message: string,
+  conversationHistory?: Array<{ role: string; content: string }>
+): ParsedQuizRequest {
   return {
     rawMessage: message,
-    topic: extractQuizTopic(message),
+    topic: extractQuizTopic(message, conversationHistory),
     requestedQuestionCount: parseRequestedQuestionCount(message),
     mode: parseRequestedMode(message),
     difficulty: parseRequestedDifficulty(message),

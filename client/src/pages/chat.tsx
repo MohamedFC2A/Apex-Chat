@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useChatStore } from "@/lib/store";
 import { useSubscriptionStore } from "@/lib/subscription-store";
@@ -28,6 +28,7 @@ import type { Message, ChatResponse, AIModel } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ChatPage() {
+  const isInitialRender = useRef(true);
   const {
     activeConversationId,
     conversations,
@@ -48,8 +49,28 @@ export default function ChatPage() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
-  const [streamingContent, setStreamingContent] = useState("");
-  const [streamingReasoning, setStreamingReasoning] = useState("");
+  const [streamingContentMap, setStreamingContentMap] = useState<Record<string, string>>({});
+  const [streamingReasoningMap, setStreamingReasoningMap] = useState<Record<string, string>>({});
+  
+  const streamingContent = activeConversationId ? streamingContentMap[activeConversationId] || "" : "";
+  const streamingReasoning = activeConversationId ? streamingReasoningMap[activeConversationId] || "" : "";
+
+  const setStreamingContentForConv = useCallback((convId: string, contentOrFn: string | ((prev: string) => string)) => {
+    setStreamingContentMap(prev => {
+      const current = prev[convId] || "";
+      const nextContent = typeof contentOrFn === "function" ? contentOrFn(current) : contentOrFn;
+      return { ...prev, [convId]: nextContent };
+    });
+  }, []);
+
+  const setStreamingReasoningForConv = useCallback((convId: string, reasoningOrFn: string | ((prev: string) => string)) => {
+    setStreamingReasoningMap(prev => {
+      const current = prev[convId] || "";
+      const nextReasoning = typeof reasoningOrFn === "function" ? reasoningOrFn(current) : reasoningOrFn;
+      return { ...prev, [convId]: nextReasoning };
+    });
+  }, []);
+
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
@@ -57,6 +78,72 @@ export default function ChatPage() {
 
   const [omniStateMap, setOmniStateMap] = useState<Record<string, OmniState>>({});
   const omniState = activeConversationId ? omniStateMap[activeConversationId] ?? null : null;
+
+  // Interactive Grid Spotlight Tracking
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [isMouseActive, setIsMouseActive] = useState(false);
+  const mouseTimeoutRef = useRef<number | null>(null);
+  
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      // Ignore mouse/touch movements if on mobile to keep auto-animation running uninterrupted
+      if (window.innerWidth < 768) return;
+
+      setIsMouseActive(true);
+      if (mouseTimeoutRef.current) window.clearTimeout(mouseTimeoutRef.current);
+      
+      mouseTimeoutRef.current = window.setTimeout(() => {
+        setIsMouseActive(false);
+      }, 4000); // go idle after 4 seconds of inactivity
+
+      const el = gridRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      el.style.setProperty("--mouse-x", `${x}px`);
+      el.style.setProperty("--mouse-y", `${y}px`);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      if (mouseTimeoutRef.current) window.clearTimeout(mouseTimeoutRef.current);
+    };
+  }, []);
+
+  const getGridSpotlightColors = () => {
+    switch (selectedModel) {
+      case "apex-unbound":
+        return {
+          primary: "rgba(168, 85, 247, 0.08)", // purple
+          secondary: "rgba(236, 72, 153, 0.04)" // pink
+        };
+      case "apex-elite":
+        return {
+          primary: "rgba(16, 185, 129, 0.08)", // emerald
+          secondary: "rgba(20, 184, 166, 0.04)" // teal
+        };
+      case "apex-omni":
+        return {
+          primary: "rgba(245, 158, 11, 0.08)", // amber
+          secondary: "rgba(249, 115, 22, 0.04)" // orange
+        };
+      case "apex-pro":
+        return {
+          primary: "rgba(99, 102, 241, 0.08)", // indigo
+          secondary: "rgba(59, 130, 246, 0.04)" // blue
+        };
+      case "apex-flash":
+      default:
+        return {
+          primary: "rgba(139, 92, 246, 0.06)", // violet
+          secondary: "rgba(6, 182, 212, 0.03)" // cyan
+        };
+    }
+  };
+
+  const spotlightColors = getGridSpotlightColors();
 
   // APEX Unbound pipeline state
   const [unboundStateMap, setUnboundStateMap] = useState<Record<string, UnboundState>>({});
@@ -87,20 +174,26 @@ export default function ChatPage() {
   useEffect(() => {
     const status = getAIClientStatus();
     console.log("AI Client Status:", status);
+
+    // Prune any empty conversations from local storage/store on page load
+    const state = useChatStore.getState();
+    const activeId = state.activeConversationId;
+    const nonEmpty = state.conversations.filter(c => c.messages.length > 0 || c.id === activeId);
+    if (nonEmpty.length !== state.conversations.length) {
+      useChatStore.setState({ conversations: nonEmpty });
+    }
   }, []);
 
   useEffect(() => {
-    // Clear streaming content when active conversation changes to prevent text bleeding/overlap
-    setStreamingContent("");
-    setStreamingReasoning("");
-  }, [activeConversationId]);
-
-  useEffect(() => {
     // Smart light vibration feedback on model change for mobile devices
-    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
-      try {
-        navigator.vibrate([12, 30, 8]);
-      } catch (e) {}
+    if (!isInitialRender.current) {
+      if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+        try {
+          navigator.vibrate([12, 30, 8]);
+        } catch (e) {}
+      }
+    } else {
+      isInitialRender.current = false;
     }
 
     const isGodModeModel = selectedModel === "apex-unbound";
@@ -137,8 +230,8 @@ export default function ChatPage() {
       addMessage(thisConvId, userMessage);
       setIsGenerating(true);
       setLastError(null);
-      setStreamingContent("");
-      setStreamingReasoning("");
+      setStreamingContentForConv(thisConvId, "");
+      setStreamingReasoningForConv(thisConvId, "");
 
       try {
         const compactHistory = buildCompactConversationHistory(existingMessages);
@@ -169,7 +262,7 @@ export default function ChatPage() {
             (state) => {
               setOmniStateForConv(thisConvId, state);
               if (state.step === "synthesizing" && state.finalResponse) {
-                setStreamingContent(state.finalResponse);
+                setStreamingContentForConv(thisConvId, state.finalResponse);
               }
             },
             compactHistory
@@ -219,9 +312,9 @@ export default function ChatPage() {
               (state) => setUnboundStateForConv(thisConvId, { ...initialUnboundState, ...state }),
               (chunk, isReplace) => {
                 if (isReplace) {
-                  setStreamingContent(chunk);
+                  setStreamingContentForConv(thisConvId, chunk);
                 } else {
-                  setStreamingContent(prev => prev + chunk);
+                  setStreamingContentForConv(thisConvId, prev => prev + chunk);
                 }
               },
               previousSpec,
@@ -238,14 +331,14 @@ export default function ChatPage() {
               const unboundMessage: Message = {
                 id: crypto.randomUUID(),
                 role: "assistant",
-                content: result.content || streamingContent,
+                content: result.content || (streamingContentMap[thisConvId] || ""),
                 model: selectedModel,
                 timestamp: Date.now(),
               };
               addMessage(thisConvId!, unboundMessage);
               setIsGenerating(false);
-              setStreamingContent("");
-              setStreamingReasoning("");
+              setStreamingContentForConv(thisConvId, "");
+              setStreamingReasoningForConv(thisConvId, "");
             }
           } catch (unboundErr: any) {
             // Fall back to standard sendAIMessage if pipeline fails
@@ -259,8 +352,8 @@ export default function ChatPage() {
               features,
               reasoningLevel,
               (chunkText, chunkReasoning) => {
-                setStreamingContent(chunkText);
-                setStreamingReasoning(chunkReasoning);
+                setStreamingContentForConv(thisConvId, chunkText);
+                setStreamingReasoningForConv(thisConvId, chunkReasoning);
               },
               userMemoryContext
             );
@@ -269,14 +362,14 @@ export default function ChatPage() {
             const fallbackMessage: Message = {
               id: crypto.randomUUID(),
               role: "assistant",
-              content: response.content || streamingContent,
+              content: response.content || (streamingContentMap[thisConvId] || ""),
               model: selectedModel,
               timestamp: Date.now(),
             };
             addMessage(thisConvId!, fallbackMessage);
             setIsGenerating(false);
-            setStreamingContent("");
-            setStreamingReasoning("");
+            setStreamingContentForConv(thisConvId, "");
+            setStreamingReasoningForConv(thisConvId, "");
           }
           return;
         } else {
@@ -289,8 +382,8 @@ export default function ChatPage() {
             features,
             reasoningLevel,
             (chunkText, chunkReasoning) => {
-              setStreamingContent(chunkText);
-              setStreamingReasoning(chunkReasoning);
+              setStreamingContentForConv(thisConvId, chunkText);
+              setStreamingReasoningForConv(thisConvId, chunkReasoning);
             },
             userMemoryContext
           );
@@ -311,14 +404,14 @@ export default function ChatPage() {
         };
         addMessage(thisConvId!, assistantMessage);
         setIsGenerating(false);
-        setStreamingContent("");
-        setStreamingReasoning("");
+        setStreamingContentForConv(thisConvId, "");
+        setStreamingReasoningForConv(thisConvId, "");
       } catch (error: any) {
         setLastError(error.message || "Failed to process message");
         setOmniStateForConv(thisConvId, null);
         setIsGenerating(false);
-        setStreamingContent("");
-        setStreamingReasoning("");
+        setStreamingContentForConv(thisConvId, "");
+        setStreamingReasoningForConv(thisConvId, "");
 
         if (error.message?.includes("DeepSeek") || error.message?.includes("DEEPSEEK")) {
           toast({ title: "Cloud AI Error", description: error.message || "DeepSeek API request failed.", variant: "destructive" });
@@ -334,14 +427,16 @@ export default function ChatPage() {
         }
       }
     },
-    [activeConversationId, createConversation, addMessage, selectedModel, serviceMode, tier, features, setIsGenerating, toast, setLocation, reasoningLevel, setOmniStateForConv, setUnboundStateForConv]
+    [activeConversationId, createConversation, addMessage, selectedModel, serviceMode, tier, features, setIsGenerating, toast, setLocation, reasoningLevel, setOmniStateForConv, setUnboundStateForConv, setStreamingContentForConv, setStreamingReasoningForConv, streamingContentMap]
   );
 
   const handleStopGenerating = useCallback(() => {
     setIsGenerating(false);
-    setStreamingContent("");
-    setStreamingReasoning("");
-  }, [setIsGenerating]);
+    if (activeConversationId) {
+      setStreamingContentForConv(activeConversationId, "");
+      setStreamingReasoningForConv(activeConversationId, "");
+    }
+  }, [activeConversationId, setStreamingContentForConv, setStreamingReasoningForConv, setIsGenerating]);
 
   const handleSelectUnboundChoices = useCallback(async (choices: Array<{ questionId: string; title: string; description: string; theme: string }>) => {
     if (!activeConversationId) return;
@@ -381,9 +476,9 @@ export default function ChatPage() {
         (state) => setUnboundStateForConv(thisConvId, { ...nextState, ...state }),
         (chunk, isReplace) => {
           if (isReplace) {
-            setStreamingContent(chunk);
+            setStreamingContentForConv(thisConvId, chunk);
           } else {
-            setStreamingContent(prev => prev + chunk);
+            setStreamingContentForConv(thisConvId, prev => prev + chunk);
           }
         },
         currentUnboundState.spec,
@@ -394,19 +489,19 @@ export default function ChatPage() {
       const unboundMessage: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: result.content || streamingContent,
+        content: result.content || (streamingContentMap[thisConvId] || ""),
         model: selectedModel,
         timestamp: Date.now(),
       };
       addMessage(thisConvId!, unboundMessage);
       setIsGenerating(false);
-      setStreamingContent("");
-      setStreamingReasoning("");
+      setStreamingContentForConv(thisConvId, "");
+      setStreamingReasoningForConv(thisConvId, "");
     } catch (err: any) {
       setLastError(err.message || "Failed to resume pipeline");
       setIsGenerating(false);
     }
-  }, [activeConversationId, unboundStateMap, setUnboundStateForConv, addMessage, selectedModel, streamingContent]);
+  }, [activeConversationId, unboundStateMap, setUnboundStateForConv, addMessage, selectedModel, setStreamingContentForConv, setStreamingReasoningForConv, streamingContentMap]);
 
   const handleModelSelect = (model: AIModel) => setSelectedModel(model);
   const isGodMode = selectedModel === "apex-unbound";
@@ -437,8 +532,16 @@ export default function ChatPage() {
 
       const blob = await response.blob();
       const disposition = response.headers.get("content-disposition") || "";
-      const match = disposition.match(/filename=\"([^\"]+)\"/i);
-      const filename = match?.[1] || "apex-conversation.pdf";
+      let filename = "apex-conversation.pdf";
+      const filenameStarMatch = disposition.match(/filename\*=utf-8''([^;\s]+)/i);
+      if (filenameStarMatch) {
+        filename = decodeURIComponent(filenameStarMatch[1]);
+      } else {
+        const filenameMatch = disposition.match(/filename="?([^";\n]+)"?/i);
+        if (filenameMatch) {
+          filename = decodeURIComponent(filenameMatch[1]);
+        }
+      }
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
@@ -465,6 +568,23 @@ export default function ChatPage() {
 
   return (
     <div className="chat-shell flex flex-col h-full text-foreground min-h-0 relative overflow-hidden apex-bg">
+      {/* Interactive Grid Background */}
+      <div 
+        ref={gridRef}
+        className={`absolute inset-0 pointer-events-none z-0 opacity-55 transition-opacity duration-300 ${
+          !isMouseActive ? "animate-spotlight-auto" : ""
+        }`}
+        style={{
+          backgroundImage: `
+            radial-gradient(circle 280px at var(--mouse-x, 50%) var(--mouse-y, 35%), ${spotlightColors.primary}, transparent 80%),
+            radial-gradient(circle 500px at var(--mouse-x, 50%) var(--mouse-y, 35%), ${spotlightColors.secondary}, transparent),
+            linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px)
+          `,
+          backgroundSize: "100% 100%, 100% 100%, 48px 48px, 48px 48px",
+          backgroundPosition: "0 0, 0 0, center center, center center",
+        }}
+      />
 
       {/* ── Ambient glow orbs removed ── */}
       {isGodMode && (
@@ -513,29 +633,14 @@ export default function ChatPage() {
                 </div>
               </div>
 
-              <div className="flex-1 min-w-0 sm:flex-none sm:min-w-[200px]">
-                <ModelSelector selectedModel={selectedModel} onSelectModel={handleModelSelect} />
+              <div className="flex-1 min-w-[160px] sm:flex-none sm:min-w-[200px]">
+                <ModelSelector selectedModel={selectedModel} onSelectModel={handleModelSelect} disabled={isGenerating} />
               </div>
             </div>
 
             {/* Right: live status + theme */}
-            <div className="hidden sm:flex items-center gap-2">
-              {activeConversation?.messages.length ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleExportConversation}
-                  disabled={isExportingConversation}
-                  className="h-9 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-zinc-300 hover:bg-white/[0.06]"
-                >
-                  {isExportingConversation ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <FileDown className="mr-2 h-4 w-4" />
-                  )}
-                  <span className="text-xs font-arabic">تصدير المحادثة PDF</span>
-                </Button>
-              ) : null}
+            <div className="hidden sm:flex items-center gap-2 shrink-0">
+
               <AnimatePresence>
                 {isGenerating && (
                   <motion.div

@@ -17,9 +17,10 @@ import { useState } from "react";
 interface ModelSelectorProps {
   selectedModel: AIModel;
   onSelectModel: (model: AIModel) => void;
+  disabled?: boolean;
 }
 
-export function ModelSelector({ selectedModel, onSelectModel }: ModelSelectorProps) {
+export function ModelSelector({ selectedModel, onSelectModel, disabled }: ModelSelectorProps) {
   const { canAccessModel, tier } = useSubscriptionStore();
   const [isOpen, setIsOpen] = useState(false);
   
@@ -74,18 +75,19 @@ export function ModelSelector({ selectedModel, onSelectModel }: ModelSelectorPro
   const currentStyles = getButtonStyles();
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
+    <DropdownMenu open={isOpen && !disabled} onOpenChange={(open) => !disabled && setIsOpen(open)}>
+      <DropdownMenuTrigger asChild disabled={disabled}>
         <motion.div
-          whileHover={{ scale: 1.02, y: -1 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={disabled ? {} : { scale: 1.02, y: -1 }}
+          whileTap={disabled ? {} : { scale: 0.98 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
         >
           <Button 
             variant="outline" 
-            className={`model-selector-btn w-full justify-start gap-1.5 sm:gap-2 min-w-0 sm:min-w-[200px] relative overflow-hidden whitespace-nowrap transition-all duration-300 ${currentStyles.button} ${
+            disabled={disabled}
+            className={`model-selector-btn w-full justify-start gap-1.5 sm:gap-2 min-w-[160px] sm:min-w-[200px] relative overflow-hidden whitespace-nowrap transition-all duration-300 ${currentStyles.button} ${
               isFreeTier && selectedModel === "apex-flash" ? "shimmer-button" : ""
-            }`}
+            } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             {isFreeTier && selectedModel === "apex-flash" && (
               <motion.div

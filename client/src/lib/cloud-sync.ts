@@ -168,8 +168,10 @@ function shouldAttemptSync(): boolean {
  * Convert local conversation to cloud format
  */
 function toCloudConversation(conv: Conversation, userId: string): CloudConversation {
+    // Strip out undefined values before saving to Firestore, as it throws on undefined fields
+    const cleanConv = JSON.parse(JSON.stringify(conv));
     return {
-        ...conv,
+        ...cleanConv,
         userId,
         syncedAt: new Date().toISOString(),
         isDeleted: false,

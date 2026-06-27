@@ -1,5 +1,5 @@
 import { apiRequest } from "@/lib/queryClient";
-import { sendAIMessage } from "@/lib/ai-client";
+import { sendAIMessage, clientPerformSerperSearch } from "@/lib/ai-client";
 import type { ChatResponse, Message } from "@shared/schema";
 
 export interface AgentDraft {
@@ -105,7 +105,8 @@ function delay(ms: number): Promise<void> {
 async function callAgent(
   agentType: keyof typeof AGENT_CONFIGS,
   message: string,
-  conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>
+  conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>,
+  searchContext?: string
 ): Promise<string> {
   const config = AGENT_CONFIGS[agentType];
   
@@ -118,8 +119,13 @@ async function callAgent(
       createdAt: new Date().toISOString()
     })) as unknown as Message[];
 
+    let customPrompt = config.systemPrompt;
+    if (agentType === "researcher" && searchContext) {
+      customPrompt += `\n\n=== GOOGLE REAL-TIME SEARCH RESULTS ===\nUse the following real-time data to answer the user request:\n${searchContext}`;
+    }
+
     const response = await sendAIMessage(
-      `${config.systemPrompt}\n\nUser: ${message}`,
+      `${customPrompt}\n\nUser: ${message}`,
       config.model,
       formattedHistory,
       "standard",
@@ -144,6 +150,20 @@ export async function processOmniRequest(
   onStateUpdate: (state: OmniState) => void,
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>
 ): Promise<ChatResponse> {
+  // Perform search once for the original user message at the very beginning of the pipeline
+  let searchContext = "";
+  try {
+    const deepseekKey = import.meta.env.VITE_DEEPSEEK_API_KEY || "";
+    const searchData = await clientPerformSerperSearch(message, deepseekKey);
+    if (searchData.organic && searchData.organic.length > 0) {
+      searchContext = searchData.organic
+        .map((item, index) => `[${index + 1}] Title: ${item.title}\nURL: ${item.link}\nSnippet: ${item.snippet}`)
+        .join("\n\n");
+    }
+  } catch (err) {
+    console.error("Search failed in processOmniRequest:", err);
+  }
+
   // Initialize state
   const initialState: OmniState = {
     step: "dispatch",
@@ -199,7 +219,7 @@ export async function processOmniRequest(
         // Increased timeout from 15s to 45s to resolve API / connection latency timeouts
         const timeout = delay(45000).then(() => "__TIMEOUT__");
         const responseOrTimeout = await Promise.race([
-          callAgent(agentType, message, conversationHistory),
+          callAgent(agentType, message, conversationHistory, searchContext),
           timeout,
         ]);
         
@@ -278,13 +298,13 @@ export async function processOmniRequest(
   try {
     const finalResponse = await sendAIMessage(
       synthesisPrompt,
-      "apex-elite", // Use APEX Elite for synthesis reasoning
+      "apex-pro", // Use APEX Pro for synthesis reasoning (no search trigger)
       finalHistory,
       "standard",
       false, // isGodMode
       {
         thinking: true,
-        deepResearch: true,
+        deepResearch: false, // Disable search on the massive synthesis prompt
         godMode: false,
       },
       "thinking",

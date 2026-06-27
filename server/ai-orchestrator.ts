@@ -6,6 +6,7 @@ import {
   formatQuizAsCodeBlock,
   parseQuizRequest,
   tryParseQuizFromText,
+  extractQuizTopic,
 } from "@shared/mcq";
 import {
   buildPdfGenerationInstructions,
@@ -14,6 +15,7 @@ import {
   formatPdfAsCodeBlock,
   parsePdfRequest,
   tryParsePdfFromText,
+  normalizePdfObject,
 } from "@shared/pdf";
 import { runApexOmniPipeline } from "./apex-omni/pipeline.js";
 import { getDeepSeekRequestParams, mapDeepSeekModelForTask } from "./deepseek-model-router.js";
@@ -70,27 +72,8 @@ function quizMentionsTopic(content: string, topic: string): boolean {
   return content.toLowerCase().includes(normalizedTopic);
 }
 
-function extractQuizTopic(message: string): string {
-  const stopWords = new Set([
-    "mcq", "msq", "quiz", "exam", "test",
-    "اختبار", "امتحان", "اعملي", "اعمل", "سوي", "سويلي", "انشئ", "أنشئ",
-    "كون", "كوّن", "اسئلة", "أسئلة", "اسئله", "سؤال", "سؤالات", "سوال",
-    "لي", "عن", "في", "من", "على", "اختيار", "متعدد", "اختيارمن", "اختيارمنمتعدد"
-  ]);
-
-  const tokens = message
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/[^A-Za-z0-9\u0600-\u06FF\s-]/g, " ")
-    .split(/\s+/)
-    .map((token) => token.trim())
-    .filter(Boolean)
-    .filter((token) => !stopWords.has(token.toLowerCase()));
-
-  return tokens.join(" ").trim() || "موضوع عام";
-}
-
-function buildQuizFocusedMessage(message: string): string {
-  const topic = extractQuizTopic(message);
+function buildQuizFocusedMessage(message: string, conversationHistory?: Array<{ role: string; content: string }>): string {
+  const topic = extractQuizTopic(message, conversationHistory);
   return `The user is explicitly asking for a multiple-choice quiz.
 Original user message: ${message}
 Required topic: ${topic}
@@ -111,7 +94,7 @@ async function forceQuizBlockResponse(
   conversationHistory: Array<{ role: "user" | "assistant"; content: string }> = [],
   systemPrompt?: string
 ): Promise<string> {
-  const inferredTopic = extractQuizTopic(userMessage);
+  const inferredTopic = extractQuizTopic(userMessage, conversationHistory);
   const formatterMessages = [
     ...(systemPrompt ? [{ role: "system" as const, content: `${systemPrompt}\n${MCQ_GENERATION_PROTOCOL}` }] : []),
     {
@@ -165,7 +148,7 @@ async function generateDedicatedQuizResponse(
   request: OrchestratorRequest,
   onChunk?: (chunk: { content?: string; reasoningContent?: string }) => void
 ): Promise<OrchestratorResponse> {
-  const quizRequest = parseQuizRequest(request.message);
+  const quizRequest = parseQuizRequest(request.message, request.conversationHistory);
   const maxTokens = Math.min(getModelParameters(request.model).maxTokens, 4096);
   const baseParams = getDeepSeekRequestParams(actualModel, 0.2);
 
@@ -251,14 +234,14 @@ async function generateDedicatedPdfResponse(
   onChunk?: (chunk: { content?: string; reasoningContent?: string }) => void
 ): Promise<OrchestratorResponse> {
   const pdfRequest = parsePdfRequest(request.message);
-  const maxTokens = Math.min(getModelParameters(request.model).maxTokens, 4096);
+  const maxTokens = 8192; // DeepSeek chat and reasoner support up to 8K output tokens for large content capacity
   const baseParams = getDeepSeekRequestParams(actualModel, 0.2);
 
   const buildMessages = (userContent: string) => [
     {
       role: "system" as const,
       content:
-        "You are a dedicated structured PDF document generation engine. Your only job is to produce accurate PDFDocument JSON in strict pdf-document format. Never chat conversationally. Never ask follow-up questions. Never output prose outside the pdf-document block.",
+        "You are a dedicated structured PDF document generation engine. Your only job is to produce a highly detailed, comprehensive, and complete PDFDocument JSON in strict pdf-document format, spanning up to 20 pages if necessary. Never chat conversationally. Never use placeholders. Never output prose outside the pdf-document block.",
     },
     { role: "user" as const, content: userContent },
   ];
@@ -278,13 +261,20 @@ async function generateDedicatedPdfResponse(
     const reasoningContent = (response.choices[0]?.message as any)?.reasoning_content || "";
     candidateContents.push(content);
 
+    const planMatch = content.match(/<pdf-plan>([\s\S]*?)<\/pdf-plan>/i);
+    const planText = planMatch ? planMatch[1].trim() : "";
+
     const document = tryParsePdfFromText(content, pdfRequest);
-    return { content, reasoningContent, document };
+    return { content, reasoningContent, document, planText };
   };
 
   const firstAttempt = await runAttempt(buildPdfGenerationInstructions(pdfRequest));
   if (firstAttempt.document) {
-    const formatted = formatPdfAsCodeBlock(firstAttempt.document);
+    let formatted = formatPdfAsCodeBlock(firstAttempt.document);
+    if (firstAttempt.planText) {
+      const planHeading = pdfRequest.language === "ar" ? "### 📝 خطة وإبداع الذكاء الاصطناعي\n" : "### 📝 AI Planning & Creativity\n";
+      formatted = `${planHeading}${firstAttempt.planText}\n\n${formatted}`;
+    }
     if (onChunk) {
       if (firstAttempt.reasoningContent) {
         onChunk({ reasoningContent: firstAttempt.reasoningContent });
@@ -298,7 +288,11 @@ async function generateDedicatedPdfResponse(
     buildPdfRepairInstructions(pdfRequest, candidateContents[candidateContents.length - 1] || request.message)
   );
   if (secondAttempt.document) {
-    const formatted = formatPdfAsCodeBlock(secondAttempt.document);
+    let formatted = formatPdfAsCodeBlock(secondAttempt.document);
+    if (secondAttempt.planText) {
+      const planHeading = pdfRequest.language === "ar" ? "### 📝 خطة وإبداع الذكاء الاصطناعي\n" : "### 📝 AI Planning & Creativity\n";
+      formatted = `${planHeading}${secondAttempt.planText}\n\n${formatted}`;
+    }
     if (onChunk) {
       if (secondAttempt.reasoningContent) {
         onChunk({ reasoningContent: secondAttempt.reasoningContent });
@@ -781,12 +775,12 @@ Rules:
 const PDF_GENERATION_PROTOCOL = `\n\n## PDF DOCUMENT GENERATION PROTOCOL:
 When the user asks for a PDF, report, document, exported document, or professional file, you MUST output the result inside a single fenced code block labeled \`\`\`pdf-document.
 
-Rules:
+Rules for Highly Detailed, Structured, and Dense Documents (Supporting up to 20 Pages):
 1. Output valid JSON only inside the pdf-document block. No comments, no trailing commas, and no prose before or after the block.
 2. The JSON schema must include:
 {
   "title": "Document title",
-  "subtitle": "Optional subtitle",
+  "subtitle": "Optional subtitle detailing context",
   "language": "ar" or "en" or "mixed",
   "theme": "dark" or "light" or "auto",
   "pageSize": "a4" or "letter",
@@ -795,17 +789,31 @@ Rules:
   "sections": [
     {
       "id": "section-1",
-      "type": "heading" or "paragraph" or "code" or "math" or "table" or "list" or "image" or "divider" or "quote" or "callout",
+      "type": "heading" or "paragraph" or "code" or "math" or "table" or "list" or "image" or "divider" or "quote" or "callout" or "qa",
       "content": "Section content",
-      "direction": "rtl" or "ltr"
+      "level": 1 | 2 | 3 | 4,
+      "language": "python",
+      "direction": "rtl" or "ltr",
+      "items": ["list item 1", "list item 2"],
+      "headers": ["Col 1", "Col 2"],
+      "rows": [["Row 1 Col 1", "Row 1 Col 2"]],
+      "variant": "info" | "warning" | "success" | "error",
+      "caption": "Optional caption",
+      "question": "Question text for type: qa",
+      "answer": "Answer text for type: qa"
     }
   ]
 }
-3. Use "code" sections for source code and include a "language" field.
-4. Use "math" sections for LaTeX equations.
-5. Use "table" sections with "headers" and "rows".
-6. Match the user's language exactly, and use RTL direction for Arabic text.
-7. Return only one valid \`\`\`pdf-document fenced block.`;
+3. Density and Structure: The document must be exceptionally detailed, exhaustive, and massive. Split the topic into multiple headings (H1, H2, H3, H4) followed by deep, highly comprehensive paragraphs. Each paragraph section must be at least 150-250 words long to ensure deep analytical coverage. Avoid shortcuts, placeholders, or brief summaries. Use 25 to 45 sections of various types: heading, paragraph, list, table, code, math, quote, callout, qa, and divider. The document must easily scale to 10-20 A4 pages when printed.
+4. Tables: Include comprehensive, data-rich comparison tables comparing multiple features, specs, or parameters. Columns should have descriptive headers and rows must contain complete data without placeholders.
+5. Lists & Callouts: Use lists to outline key points, and callouts to highlight warnings, info, success, or errors with appropriate variants.
+6. Q&A Blocks: Use the "qa" section type to construct detailed FAQ or question-and-answer sections (question and answer fields).
+7. Formatting details:
+   - Highlight key terms in paragraphs/lists using ==highlighted text==.
+   - Include inline mathematical equations using \\( ... \\) or $...$ syntax.
+   - For code sections, include the language and write complete, well-commented code.
+8. Match the user's language exactly, and use RTL direction for Arabic text.
+9. Return only one valid \`\`\`pdf-document fenced block.`;
 
 // Build specific model system prompt/identity
 function buildModelSystemPrompt(model: AIModel): string {
@@ -1452,8 +1460,7 @@ export async function processMessage(
       baseURL: "https://api.deepseek.com/v1",
     });
 
-    const pdfTask = request.model === "apex-flash" ? "generation" : "reasoning";
-    const pdfModel = mapDeepSeekModelForTask(request.model, pdfTask);
+    const pdfModel = "deepseek-reasoner";
     return await generateDedicatedPdfResponse(pdfClient, pdfModel, request, onChunk);
   }
 
@@ -1575,7 +1582,7 @@ async function callCerebras(
 
   const isSearchActive = request.model === "apex-elite" || request.features.deepResearch;
   const quizIntent = isQuizIntent(request.message);
-  const inferredQuizTopic = quizIntent ? extractQuizTopic(request.message) : "";
+  const inferredQuizTopic = quizIntent ? extractQuizTopic(request.message, request.conversationHistory) : "";
   let searchContext = "";
   let foundImage: SerperImageResult | undefined = undefined;
   let footballContext = "";
@@ -1716,7 +1723,7 @@ Do not repeat or generate another markdown image for this URL in your response c
 
   const modelParams = getModelParameters(request.model);
 
-  const effectiveUserMessage = quizIntent ? buildQuizFocusedMessage(request.message) : request.message;
+  const effectiveUserMessage = quizIntent ? buildQuizFocusedMessage(request.message, request.conversationHistory) : request.message;
 
   const messages = [
     { role: "system" as const, content: systemPrompt },
@@ -1868,4 +1875,129 @@ function extractReasoningAndResponse(content: string): OrchestratorResponse {
   }
 
   return { content };
+}
+
+export async function refinePdfDocumentWithAI(
+  document: any,
+  prompt: string
+): Promise<any> {
+  const OpenAI = (await import("openai")).default;
+  const apiKey = process.env.DEEPSEEK_API_KEY || "";
+  const client = new OpenAI({
+    apiKey,
+    baseURL: "https://api.deepseek.com/v1",
+  });
+
+  const systemPrompt = `You are a professional PDF document structure refinement engine.
+Your input is a complete PDFDocument JSON object and a refinement instruction.
+Your ONLY job is to modify the PDFDocument JSON according to the instruction and return the updated PDFDocument JSON inside a single \`\`\`pdf-document block.
+Do not change the JSON structure or schema.
+Every section in the output MUST have a valid 'id', 'type', and 'content'.
+If sections are added or re-ordered, make sure all ids are unique.
+Supported section types: "heading", "paragraph", "code", "math", "table", "list", "image", "divider", "quote", "callout".
+For code blocks, ensure 'language' is set. For lists, 'items' array. For tables, 'headers' and 'rows' arrays.
+Respond ONLY with the \`\`\`pdf-document codeblock containing the updated JSON. Do not write any explanations before or after the codeblock.`;
+
+  const userPrompt = `Existing PDFDocument:
+${JSON.stringify(document, null, 2)}
+
+Refinement Instruction:
+${prompt}`;
+
+  try {
+    const response = await client.chat.completions.create({
+      model: "deepseek-reasoner",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      ...getDeepSeekRequestParams("deepseek-reasoner"),
+    });
+
+    const content = response.choices[0]?.message?.content || "";
+    const pdfBlock = content.match(/```pdf-document\s*([\s\S]*?)```/i);
+    const jsonText = pdfBlock ? pdfBlock[1].trim() : content.trim();
+    const parsed = JSON.parse(jsonText);
+    const normalized = normalizePdfObject(parsed);
+    if (normalized) return normalized;
+    return document;
+  } catch (error) {
+    console.error("AI PDF Refinement failed:", error);
+    return document;
+  }
+}
+
+export async function generateStructuredPdfFromText(
+  text: string
+): Promise<any> {
+  const OpenAI = (await import("openai")).default;
+  const apiKey = process.env.DEEPSEEK_API_KEY || "";
+  const client = new OpenAI({
+    apiKey,
+    baseURL: "https://api.deepseek.com/v1",
+  });
+
+  const systemPrompt = `You are an expert content-to-PDF compiler.
+Your job is to read the provided text and compile it into a highly detailed, comprehensive, beautifully structured PDFDocument JSON representing a professional document that can easily span up to 20 pages when printed.
+You must wrap the resulting JSON inside a single \`\`\`pdf-document block.
+Do not write any markdown outside the \`\`\`pdf-document block.
+Follow the PDFDocument schema:
+{
+  "title": "Clear concise document title",
+  "subtitle": "Optional subtitle detailing context",
+  "author": "Apex AI Editor",
+  "date": "YYYY-MM-DD",
+  "language": "ar" | "en" | "mixed",
+  "theme": "dark" | "light" | "auto",
+  "pageSize": "a4" | "letter",
+  "coverPage": true,
+  "tableOfContents": true,
+  "sections": [
+    {
+      "id": "unique-id-1",
+      "type": "heading" | "paragraph" | "code" | "math" | "table" | "list" | "image" | "divider" | "quote" | "callout" | "qa",
+      "content": "Text content here...",
+      "level": 1 | 2 | 3 | 4,
+      "language": "python",
+      "items": ["list item 1", "list item 2"],
+      "headers": ["Col 1", "Col 2"],
+      "rows": [["Row 1 Col 1", "Row 1 Col 2"]],
+      "direction": "rtl" | "ltr",
+      "variant": "info" | "warning" | "success" | "error",
+      "caption": "Optional caption",
+      "question": "Question text for type: qa",
+      "answer": "Answer text for type: qa"
+    }
+  ]
+}
+Design the document outline with maximum capacity and detail:
+1. Expand and elaborate on all concepts. Do not summarize or use placeholders. Write full, dense paragraphs of text.
+2. Structure the document into 15 to 35 logical sections with proper headings (H1 to H4).
+3. Convert comparisons or lists of items to data-rich tables (using headers and rows arrays) or lists.
+4. Add relevant callouts for important warnings, notes, or tips, choosing appropriate variants (info, warning, success, error).
+5. Add Q&A blocks (type: "qa", question, answer) for FAQs or detailed clarifications.
+6. Support inline math via \\( ... \\) or $...$, and key highlighting via ==text==.
+Generate a cohesive title and cover page config. Respond ONLY with the \`\`\`pdf-document JSON codeblock.`;
+
+  try {
+    const response = await client.chat.completions.create({
+      model: "deepseek-reasoner",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: text }
+      ],
+      ...getDeepSeekRequestParams("deepseek-reasoner"),
+    });
+
+    const content = response.choices[0]?.message?.content || "";
+    const pdfBlock = content.match(/```pdf-document\s*([\s\S]*?)```/i);
+    const jsonText = pdfBlock ? pdfBlock[1].trim() : content.trim();
+    const parsed = JSON.parse(jsonText);
+    const normalized = normalizePdfObject(parsed);
+    if (normalized) return normalized;
+    throw new Error("Failed to parse AI-generated PDF document");
+  } catch (error) {
+    console.error("AI PDF Generation from text failed:", error);
+    throw error;
+  }
 }

@@ -185,9 +185,24 @@ export function ChatSidebar() {
     );
   }
 
-  // ── Mobile floating button (when sidebar closed on mobile) ──
+  // ── Mobile edge drag area (when sidebar closed on mobile) ──
   if (!sidebarOpen && isMobile) {
-    return null; // The main header handles the toggle button on mobile
+    return (
+      <motion.div
+        key="sidebar-drag-open-handle"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-y-0 left-0 w-6 z-40 cursor-grab active:cursor-grabbing md:hidden bg-transparent"
+        drag="x"
+        dragConstraints={{ left: 0, right: 100 }}
+        onDragEnd={(_, info) => {
+          if (info.offset.x > 30) {
+            setSidebarOpen(true);
+          }
+        }}
+      />
+    );
   }
 
   return (
@@ -220,11 +235,19 @@ export function ChatSidebar() {
             damping: isMobile ? 38 : 35,
             mass: 0.8,
           }}
+          drag={isMobile ? "x" : false}
+          dragConstraints={{ left: -300, right: 0 }}
+          dragElastic={{ left: 0, right: 0.1 }}
+          onDragEnd={(_, info) => {
+            if (info.offset.x < -50) {
+              setSidebarOpen(false);
+            }
+          }}
           className="fixed md:relative inset-y-0 left-0 z-50 md:z-auto flex flex-col h-full overflow-hidden"
           style={{
             width: isMobile ? "min(280px, 85vw)" : "260px",
-            background: "hsl(223 22% 7%)",
-            borderRight: "1px solid hsl(224 18% 12%)",
+            background: "hsl(var(--sidebar))",
+            borderRight: "1px solid hsl(var(--border))",
           }}
         >
           {/* Subtle top gradient accent */}
@@ -519,42 +542,36 @@ function ConversationItem({
   isMobile: boolean;
 }) {
   const timeAgo = formatDistanceToNow(new Date(conversation.updatedAt), { addSuffix: true });
-  const [showDeleteHint, setShowDeleteHint] = useState(false);
-  const x = useMotionValue(0);
-  const deleteOpacity = useTransform(x, [-80, -40], [1, 0]);
-  const itemOpacity = useTransform(x, [-80, 0], [0.4, 1]);
-  const dragRef = useRef(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const longPressTimer = useRef<number | null>(null);
 
-  const handleDragEnd = useCallback((_: any, info: PanInfo) => {
-    if (info.offset.x < -60 && isMobile) {
-      onDelete();
+  const handleTouchStart = useCallback(() => {
+    if (disabled) return;
+    if (longPressTimer.current) window.clearTimeout(longPressTimer.current);
+
+    longPressTimer.current = window.setTimeout(() => {
+      if (navigator.vibrate) navigator.vibrate(50);
+      setMenuOpen(true);
+    }, 500); // 500ms long press
+  }, [disabled]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimer.current) {
+      window.clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
     }
-    dragRef.current = false;
-  }, [onDelete, isMobile]);
+  }, []);
 
   return (
     <div className="relative overflow-hidden rounded-xl">
-      {/* Delete hint behind the item (swipe reveal on mobile) */}
-      {isMobile && (
-        <motion.div
-          style={{ opacity: deleteOpacity }}
-          className="absolute inset-y-0 right-0 w-16 flex items-center justify-center bg-red-500/15 rounded-xl"
-        >
-          <Trash2 className="w-4 h-4 text-red-400" />
-        </motion.div>
-      )}
-
       <motion.div
-        style={isMobile ? { x, opacity: itemOpacity } : undefined}
-        drag={isMobile && !disabled ? "x" : false}
-        dragConstraints={{ left: -80, right: 0 }}
-        dragElastic={{ left: 0.1, right: 0 }}
-        onDragStart={() => { dragRef.current = true; }}
-        onDragEnd={handleDragEnd}
-        whileTap={!disabled && !isMobile ? { scale: 0.98 } : undefined}
+        whileTap={!disabled ? { scale: 0.98 } : undefined}
         transition={{ type: "spring", stiffness: 400, damping: 35 }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchEnd}
         onClick={() => {
-          if (!dragRef.current && !disabled) onSelect();
+          if (!disabled) onSelect();
         }}
         className={`group relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer transition-colors duration-150 select-none ${
           isActive
@@ -586,30 +603,28 @@ function ConversationItem({
           <p className="text-[10px] text-white/25 truncate mt-0.5">{timeAgo}</p>
         </div>
 
-        {/* Actions (desktop only — mobile uses swipe) */}
-        {!isMobile && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <button
-                className="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 rounded-lg hover:bg-white/10 flex items-center justify-center"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreHorizontal className="w-3.5 h-3.5 text-white/50" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-40 bg-zinc-900/95 border-white/10 shadow-xl rounded-xl backdrop-blur-xl"
+        {/* Dropdown Menu (both desktop and mobile) */}
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+          <DropdownMenuTrigger asChild onClick={(e) => { e.stopPropagation(); setMenuOpen(true); }}>
+            <button
+              className="w-6 h-6 flex md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0 rounded-lg hover:bg-white/10 items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
             >
-              <DropdownMenuItem
-                onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                className="cursor-pointer text-red-400/80 focus:text-red-400 focus:bg-red-500/10 rounded-lg gap-2 text-sm"
-              >
-                <Trash2 className="w-3.5 h-3.5" /> حذف
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+              <MoreHorizontal className="w-3.5 h-3.5 text-white/50" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-40 bg-zinc-900/95 border-white/10 shadow-xl rounded-xl backdrop-blur-xl"
+          >
+            <DropdownMenuItem
+              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete(); }}
+              className="cursor-pointer text-red-400/80 focus:text-red-400 focus:bg-red-500/10 rounded-lg gap-2 text-sm"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> حذف
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </motion.div>
     </div>
   );

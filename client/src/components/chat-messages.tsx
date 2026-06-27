@@ -23,6 +23,13 @@ import katex from "katex";
 import remarkGfm from "remark-gfm";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { extractSourcesAndClean } from "@/lib/sources-helper";
 import { MODEL_INFO } from "@/lib/constants";
 import {
@@ -1966,37 +1973,6 @@ export function ChatMessages({
     };
   }, []);
 
-  const getSuggestionIcon = (title: string) => {
-    const t = title.toLowerCase();
-    if (/عطور/i.test(t)) return Palette;
-    if (/عيادة/i.test(t)) return Activity;
-    if (/لوحة/i.test(t)) return Monitor;
-    if (/معرض/i.test(t)) return User;
-    return MessageSquare;
-  };
-
-  const DEFAULT_SUGGESTIONS = [
-    {
-      title: "متجر عطور فاخر",
-      desc: "تصميم متجر إلكتروني جذاب وتفاعلي للمنتجات الراقية",
-      prompt: "صمم لي متجر عطور فاخر بتأثيرات زجاجية (Glassmorphic) وسلة مشتريات تفاعلية وحركات دخول انسيابية",
-    },
-    {
-      title: "عيادة طبية متكاملة",
-      desc: "موقع طبي احترافي مع حجز مواعيد وتنسيق ذكي",
-      prompt: "صمم موقعاً لعيادة طبية حديثة يشمل واجهة حجز مواعيد تفاعلية، معرض لخدمات العيادة، وقائمة الأطباء بتصميم أنيق",
-    },
-    {
-      title: "لوحة تحكم SaaS",
-      desc: "تخطيط احترافي لعرض البيانات والرسوم البيانية",
-      prompt: "صمم لوحة تحكم سحابية (SaaS Dashboard) لعرض مبيعات شركة مع فلاتر فرز حية، ورسوم بيانية تفاعلية بلغة جافا سكريبت",
-    },
-    {
-      title: "معرض أعمال للمصممين",
-      desc: "موقع شخصي لعرض المشاريع بتأثيرات ثلاثية الأبعاد",
-      prompt: "صمم موقع معرض أعمال شخصي لمصمم واجهات مستخدم يشمل بطاقات مشاريع تفاعلية مع تأثير الـ 3D Tilt ونموذج تواصل مخصص",
-    },
-  ];
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isAutoScroll, setIsAutoScroll] = useState(true);
@@ -2059,48 +2035,16 @@ export function ChatMessages({
   }, [messages, streamingContent, isStreaming]);
 
   if (messages.length === 0 && !streamingContent && !streamingReasoning) {
-    const ModelIcon = modelIcons[selectedModel] || Sparkles;
-    const displaySuggestions = DEFAULT_SUGGESTIONS;
-
     return (
       <div className="flex flex-col items-center justify-center py-10 md:py-16 max-w-2xl mx-auto px-4 text-center space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[60vh]">
-        {/* Sleek logo container */}
-        <div className="relative flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-xl">
-          <ModelIcon className="w-8 h-8 md:w-10 md:h-10 text-white" />
-        </div>
-
         {/* Headings */}
         <div className="space-y-2 md:space-y-3 font-arabic" dir="rtl">
           <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground font-arabic">
             بماذا يمكنني مساعدتك اليوم؟
           </h2>
           <p className="text-xs md:text-sm text-muted-foreground max-w-md mx-auto leading-relaxed font-arabic">
-            اختر أحد الاقتراحات المخصصة بالأسفل للبدء فوراً، أو اكتب سؤالك الخاص في صندوق الإدخال.
+            اكتب سؤالك الخاص في صندوق الإدخال للبدء.
           </p>
-        </div>
-
-        {/* Suggestions Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 w-full" dir="rtl">
-          {displaySuggestions.map((item, idx) => {
-            const SugIcon = getSuggestionIcon(item.title);
-            return (
-              <motion.button
-                key={idx}
-                onClick={() => onSelectPrompt && onSelectPrompt(item.prompt)}
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                className="flex flex-col text-right p-3.5 rounded-xl border border-zinc-800 bg-zinc-900/10 hover:bg-zinc-900/30 hover:border-violet-500/20 shadow-sm transition-all duration-200 cursor-pointer min-w-0 font-arabic relative overflow-hidden group"
-              >
-                <div className="flex items-center gap-2.5 mb-1.5 w-full">
-                  <div className="w-7 h-7 rounded-lg bg-zinc-850 border border-zinc-800 flex items-center justify-center shrink-0 text-violet-400 group-hover:text-violet-300 transition-colors">
-                    <SugIcon className="w-4 h-4" />
-                  </div>
-                  <h4 className="text-sm font-bold text-foreground truncate">{item.title}</h4>
-                </div>
-                <p className="text-xs text-muted-foreground leading-normal line-clamp-2 pr-1">{item.desc}</p>
-              </motion.button>
-            );
-          })}
         </div>
       </div>
     );
@@ -2112,14 +2056,13 @@ export function ChatMessages({
         {messages.map((message: Message, index: number) => (
           <motion.div
             key={message.id}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            exit={{ opacity: 0, scale: 0.96 }}
             transition={{
               type: "spring",
-              stiffness: 300,
-              damping: 30,
-              delay: index * 0.05,
+              stiffness: 450,
+              damping: 38,
             }}
           >
             {message.role === "user" ? (
@@ -2332,7 +2275,45 @@ function AssistantMessage({
   const [copied, setCopied] = useState(false);
   const [showReasoning, setShowReasoning] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isGeneratingSmartPdf, setIsGeneratingSmartPdf] = useState(false);
+  const [smartPdfDoc, setSmartPdfDoc] = useState<any | null>(null);
+  const [isSmartPdfDialogOpen, setIsSmartPdfDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  const isRtlMessage = /[\u0600-\u06FF]/.test(content);
+
+  const handleGenerateSmartPdf = async () => {
+    if (!content.trim()) return;
+    setIsGeneratingSmartPdf(true);
+    try {
+      const response = await fetch("/api/pdf/generate-from-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: content }),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.message || "Failed to compile smart PDF");
+      }
+      const doc = await response.json();
+      setSmartPdfDoc(doc);
+      setIsSmartPdfDialogOpen(true);
+      toast({
+        title: isRtlMessage ? "تم تجميع المستند الذكي" : "Smart PDF compiled",
+        description: isRtlMessage 
+          ? "قام الذكاء الاصطناعي بتحويل هذه الرسالة إلى مستند منظم بنجاح. يمكنك الآن معاينته وتعديله." 
+          : "AI successfully converted this message into a structured document. You can now preview and edit it.",
+      });
+    } catch (error: any) {
+      toast({
+        title: isRtlMessage ? "فشل إنشاء المستند" : "Smart PDF failed",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingSmartPdf(false);
+    }
+  };
 
   const { cleanContent, sources } = extractSourcesAndClean(content);
   const mcqState = getMCQQuizState(cleanContent);
@@ -2376,8 +2357,16 @@ function AssistantMessage({
 
       const blob = await response.blob();
       const disposition = response.headers.get("content-disposition") || "";
-      const match = disposition.match(/filename="([^"]+)"/i);
-      const filename = match?.[1] || "apex-message.pdf";
+      let filename = "apex-message.pdf";
+      const filenameStarMatch = disposition.match(/filename\*=utf-8''([^;\s]+)/i);
+      if (filenameStarMatch) {
+        filename = decodeURIComponent(filenameStarMatch[1]);
+      } else {
+        const filenameMatch = disposition.match(/filename="?([^";\n]+)"?/i);
+        if (filenameMatch) {
+          filename = decodeURIComponent(filenameMatch[1]);
+        }
+      }
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
@@ -2632,6 +2621,19 @@ function AssistantMessage({
               <div className="flex items-center gap-1 opacity-0 transition-all group-hover:opacity-100">
                 <Button
                   variant="ghost" size="sm"
+                  onClick={handleGenerateSmartPdf}
+                  disabled={isGeneratingSmartPdf}
+                  className="h-6 px-2 hover:bg-white/6 text-violet-400 hover:text-violet-300 rounded-lg"
+                  title={isRtlMessage ? "إنشاء مستند ذكي بالذكاء الاصطناعي" : "Generate Smart PDF with AI"}
+                >
+                  {isGeneratingSmartPdf ? (
+                    <><RotateCw className="w-3 h-3 mr-1 animate-spin" /><span className="text-xs font-semibold">AI PDF</span></>
+                  ) : (
+                    <><Sparkles className="w-3 h-3 mr-1" /><span className="text-xs font-semibold">AI PDF</span></>
+                  )}
+                </Button>
+                <Button
+                  variant="ghost" size="sm"
                   onClick={handleExportPdf}
                   disabled={isExportingPdf}
                   className="h-6 px-2 hover:bg-white/6 text-muted-foreground hover:text-foreground rounded-lg"
@@ -2769,6 +2771,25 @@ function AssistantMessage({
             )}
           </div>
         )}
+        <Dialog open={isSmartPdfDialogOpen} onOpenChange={setIsSmartPdfDialogOpen}>
+          <DialogContent className="max-h-[90vh] overflow-y-auto border-white/10 bg-zinc-950 text-zinc-100 sm:max-w-4xl">
+            <DialogHeader className={isRtlMessage ? "text-right font-arabic" : "text-left"}>
+              <DialogTitle className="text-xl flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-violet-400 animate-pulse" />
+                <span>{isRtlMessage ? "محرر مستندات AI PDF الذكية" : "Smart AI PDF Document Creator"}</span>
+              </DialogTitle>
+              <DialogDescription className="text-zinc-400">
+                {isRtlMessage 
+                  ? "قم بمعاينة، تعديل، وتحسين المستند الذي أنشأه الذكاء الاصطناعي، ثم قم بتحميله كملف PDF مطبوع."
+                  : "Preview, refine, and download the AI-structured PDF document."}
+              </DialogDescription>
+            </DialogHeader>
+
+            {smartPdfDoc && (
+              <PDFExportWidget jsonText={JSON.stringify(smartPdfDoc)} />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </motion.div>
   );

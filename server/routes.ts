@@ -1,15 +1,16 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { chatRequestSchema } from "@shared/schema";
-import type { PDFDocument } from "@shared/pdf";
-import { processMessage, validateModelAccess } from "./ai-orchestrator";
+import { detectPdfIntent, formatPdfAsCodeBlock, parsePdfRequest, tryParseAnyPdfFromText, type PDFDocument } from "@shared/pdf";
+import { processMessage, validateModelAccess, refinePdfDocumentWithAI, generateStructuredPdfFromText } from "./ai-orchestrator";
 import { randomUUID } from "crypto";
 import { runUnboundPipeline } from "./apex-unbound/pipeline.js";
 import OpenAI from "openai";
 import DOMPurify from "isomorphic-dompurify";
 import { cleanJsonString } from "./apex-unbound/architect-agent.js";
-import { generatePdf } from "./pdf-engine.js";
+import { generatePdf, buildPdfHtml } from "./pdf-engine.js";
 import { conversationToPdfDocument, markdownToPdfDocument } from "./markdown-to-pdf.js";
+import { generateOptimizedPdf, generateQualityReport, optimizePdfDocument } from "./pdf-optimizer.js";
 
 const previewStore = new Map<string, { html: string; createdAt: number }>();
 
@@ -39,6 +40,34 @@ function normalizeStructuredPdfDocument(raw: unknown): PDFDocument {
     tableOfContents: typeof doc.tableOfContents === "boolean" ? doc.tableOfContents : true,
     language: doc.language || "en",
   };
+}
+
+function normalizeChatPdfResponse(userMessage: string, content: string): string {
+  const parsed = tryParseAnyPdfFromText(content);
+  if (parsed) {
+    return formatPdfAsCodeBlock(parsed);
+  }
+
+  const request = parsePdfRequest(userMessage);
+  const title =
+    request.language === "ar"
+      ? `مستند ${request.topic}`
+      : `${request.topic || "Document"} PDF`;
+
+  const fallbackDoc = markdownToPdfDocument(content, {
+    title,
+    language: request.language,
+    theme: "dark",
+    pageSize: "a4",
+    coverPage: true,
+    tableOfContents: true,
+    metadata: {
+      category: "generated-pdf",
+      keywords: ["pdf", "chat", request.topic],
+    },
+  });
+
+  return formatPdfAsCodeBlock(fallbackDoc);
 }
 
 // Clean up previews older than 1 hour to prevent memory leaks
@@ -81,6 +110,8 @@ export async function registerRoutes(
         stream
       } = validationResult.data;
 
+      const isPdfRequest = detectPdfIntent(message);
+
 
 
       // Standard flow (non-God Mode): Use DeepSeek via orchestrator
@@ -109,25 +140,51 @@ export async function registerRoutes(
         res.setHeader("Connection", "keep-alive");
 
         try {
-          await processMessage({
-            message,
-            model: targetModel,
-            mode,
-            reasoningLevel,
-            subscriptionTier,
-            features,
-            conversationHistory,
-            userMemoryContext,
-            clientLocalTime,
-          }, (chunk) => {
-            res.write(`data: ${JSON.stringify({
-              id: randomUUID(),
-              content: chunk.content || "",
-              reasoningContent: chunk.reasoningContent || "",
-              model,
-              conversationId: conversationId || randomUUID()
-            })}\n\n`);
-          });
+          if (isPdfRequest) {
+            const response = await processMessage({
+              message,
+              model: targetModel,
+              mode,
+              reasoningLevel,
+              subscriptionTier,
+              features,
+              conversationHistory,
+              userMemoryContext,
+              clientLocalTime,
+            });
+
+            const normalizedPdfContent = normalizeChatPdfResponse(message, response.content);
+            const chunkSize = 220;
+            for (let index = 0; index < normalizedPdfContent.length; index += chunkSize) {
+              res.write(`data: ${JSON.stringify({
+                id: randomUUID(),
+                content: normalizedPdfContent.slice(index, index + chunkSize),
+                reasoningContent: index === 0 ? response.reasoningContent || "" : "",
+                model,
+                conversationId: conversationId || randomUUID()
+              })}\n\n`);
+            }
+          } else {
+            await processMessage({
+              message,
+              model: targetModel,
+              mode,
+              reasoningLevel,
+              subscriptionTier,
+              features,
+              conversationHistory,
+              userMemoryContext,
+              clientLocalTime,
+            }, (chunk) => {
+              res.write(`data: ${JSON.stringify({
+                id: randomUUID(),
+                content: chunk.content || "",
+                reasoningContent: chunk.reasoningContent || "",
+                model,
+                conversationId: conversationId || randomUUID()
+              })}\n\n`);
+            });
+          }
         } catch (err: any) {
           console.error("Streaming error:", err);
           res.write(`data: ${JSON.stringify({ error: err.message || "Failed to process message" })}\n\n`);
@@ -149,9 +206,11 @@ export async function registerRoutes(
         clientLocalTime,
       });
 
+      const normalizedContent = isPdfRequest ? normalizeChatPdfResponse(message, response.content) : response.content;
+
       return res.json({
         id: randomUUID(),
-        content: response.content,
+        content: normalizedContent,
         reasoningContent: response.reasoningContent,
         model, // echo the requested model to the client
         conversationId: conversationId || randomUUID(),
@@ -202,20 +261,102 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Invalid export request" });
       }
 
-      const pdfBuffer = await generatePdf(pdfDocument, {
+      // Apply smart optimizations (deduplication, short paragraph merge, TOC enrichment)
+      const optimizedDoc = optimizePdfDocument(pdfDocument, {
+        deduplication: true,
+        mergeShortParagraphs: true,
+        enrichToc: true,
+      });
+
+      const pdfBuffer = await generateOptimizedPdf(optimizedDoc, {
         theme: options?.theme === "light" ? "light" : options?.theme === "dark" ? "dark" : pdfDocument.theme,
         pageSize: options?.pageSize === "letter" ? "letter" : "a4",
       });
 
       const filename = `${sanitizeFilename(pdfDocument.title)}.pdf`;
       res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(filename)}"; filename*=UTF-8''${encodeURIComponent(filename)}`);
       res.setHeader("Content-Length", pdfBuffer.length);
       res.send(pdfBuffer);
     } catch (error) {
       console.error("PDF generation failed:", error);
       res.status(500).json({
         error: "Failed to generate PDF",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+
+  app.post("/api/pdf/refine", async (req, res) => {
+    try {
+      const { document, prompt } = req.body;
+      if (!document || !prompt) {
+        return res.status(400).json({ error: "Document and prompt are required" });
+      }
+      const refinedDoc = await refinePdfDocumentWithAI(document, prompt);
+      return res.json(refinedDoc);
+    } catch (error) {
+      console.error("PDF refinement endpoint failed:", error);
+      return res.status(500).json({
+        error: "Failed to refine PDF",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+
+  // Quality report for a PDF document
+  app.post("/api/pdf/quality-report", async (req, res) => {
+    try {
+      const { document } = req.body;
+      if (!document) {
+        return res.status(400).json({ error: "Document is required" });
+      }
+      const normalized = normalizeStructuredPdfDocument(document);
+      const report = generateQualityReport(normalized);
+      return res.json(report);
+    } catch (error) {
+      console.error("PDF quality report failed:", error);
+      return res.status(500).json({
+        error: "Failed to generate quality report",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+
+  // HTML preview for a PDF document (for in-browser preview)
+  app.post("/api/pdf/preview-html", async (req, res) => {
+    try {
+      const { document } = req.body;
+      if (!document) {
+        return res.status(400).json({ error: "Document is required" });
+      }
+      const normalized = normalizeStructuredPdfDocument(document);
+      const optimized = optimizePdfDocument(normalized, { deduplication: true, mergeShortParagraphs: true });
+      const html = buildPdfHtml(optimized);
+      const id = Math.random().toString(36).slice(2, 10);
+      previewStore.set(id, { html, createdAt: Date.now() });
+      return res.json({ previewId: id, url: `/api/pdf/preview/${id}` });
+    } catch (error) {
+      console.error("PDF preview-html failed:", error);
+      return res.status(500).json({
+        error: "Failed to generate preview",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+
+  app.post("/api/pdf/generate-from-text", async (req, res) => {
+    try {
+      const { text } = req.body;
+      if (!text) {
+        return res.status(400).json({ error: "Text is required" });
+      }
+      const generatedDoc = await generateStructuredPdfFromText(text);
+      return res.json(generatedDoc);
+    } catch (error) {
+      console.error("PDF generation from text endpoint failed:", error);
+      return res.status(500).json({
+        error: "Failed to generate PDF from text",
         message: error instanceof Error ? error.message : "Unknown error",
       });
     }

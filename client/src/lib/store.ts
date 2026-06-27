@@ -23,6 +23,7 @@ interface ChatState {
   lastSyncAt: string | null;
 
   activeQuizProgress: { current: number; total: number } | null;
+  activePdfProgress: { current: number; total: number } | null;
 
   // Actions
   setSelectedModel: (model: AIModel) => void;
@@ -31,6 +32,7 @@ interface ChatState {
   setSidebarOpen: (open: boolean) => void;
   setIsGenerating: (generating: boolean) => void;
   setActiveQuizProgress: (progress: { current: number; total: number } | null) => void;
+  setActivePdfProgress: (progress: { current: number; total: number } | null) => void;
 
   // Conversation actions
   createConversation: () => string;
@@ -60,12 +62,33 @@ export const useChatStore = create<ChatState>()(
       sidebarOpen: true,
       isGenerating: false,
       activeQuizProgress: null,
+      activePdfProgress: null,
       
       // Cloud Sync State
       isSyncing: false,
       lastSyncAt: null,
 
-      setSelectedModel: (model) => set({ selectedModel: model }),
+      setSelectedModel: (model) => {
+        set((state) => {
+          const activeId = state.activeConversationId;
+          let updatedConversations = state.conversations;
+          if (activeId) {
+            updatedConversations = state.conversations.map((conv) =>
+              conv.id === activeId ? { ...conv, model, updatedAt: Date.now() } : conv
+            );
+            const updatedConv = updatedConversations.find(c => c.id === activeId);
+            if (updatedConv) {
+              import("./auth-store").then(({ useAuthStore }) => {
+                const user = useAuthStore.getState().user;
+                if (user?.uid) {
+                  debouncedSaveConversation(user.uid, updatedConv);
+                }
+              });
+            }
+          }
+          return { selectedModel: model, conversations: updatedConversations };
+        });
+      },
       setServiceMode: (mode) => set({ serviceMode: mode }),
       setReasoningLevel: (level) => set({ reasoningLevel: level }),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -75,6 +98,12 @@ export const useChatStore = create<ChatState>()(
         if (!current && !progress) return;
         if (current && progress && current.current === progress.current && current.total === progress.total) return;
         set({ activeQuizProgress: progress });
+      },
+      setActivePdfProgress: (progress) => {
+        const current = get().activePdfProgress;
+        if (!current && !progress) return;
+        if (current && progress && current.current === progress.current && current.total === progress.total) return;
+        set({ activePdfProgress: progress });
       },
 
       createConversation: () => {
@@ -88,14 +117,61 @@ export const useChatStore = create<ChatState>()(
           createdAt: Date.now(),
           updatedAt: Date.now(),
         };
-        set((state) => ({
-          conversations: [newConversation, ...state.conversations],
-          activeConversationId: id,
-        }));
+        set((state) => {
+          const activeId = state.activeConversationId;
+          let updatedConversations = state.conversations;
+
+          // Prune previous active conversation if it had no messages
+          if (activeId) {
+            const prevConv = state.conversations.find((c) => c.id === activeId);
+            if (prevConv && prevConv.messages.length === 0) {
+              updatedConversations = state.conversations.filter((c) => c.id !== activeId);
+              import("./auth-store").then(({ useAuthStore }) => {
+                const user = useAuthStore.getState().user;
+                if (user?.uid) {
+                  cloudDeleteConversation(user.uid, activeId);
+                }
+              });
+            }
+          }
+
+          return {
+            conversations: [newConversation, ...updatedConversations],
+            activeConversationId: id,
+          };
+        });
         return id;
       },
 
-      setActiveConversation: (id) => set({ activeConversationId: id, activeQuizProgress: null }),
+      setActiveConversation: (id) => {
+        set((state) => {
+          const activeId = state.activeConversationId;
+          let updatedConversations = state.conversations;
+
+          // Prune previous active conversation if it had no messages
+          if (activeId && activeId !== id) {
+            const prevConv = state.conversations.find((c) => c.id === activeId);
+            if (prevConv && prevConv.messages.length === 0) {
+              updatedConversations = state.conversations.filter((c) => c.id !== activeId);
+              import("./auth-store").then(({ useAuthStore }) => {
+                const user = useAuthStore.getState().user;
+                if (user?.uid) {
+                  cloudDeleteConversation(user.uid, activeId);
+                }
+              });
+            }
+          }
+
+          const conv = updatedConversations.find((c) => c.id === id);
+          const nextModel = conv?.model || state.selectedModel;
+          return {
+            conversations: updatedConversations,
+            activeConversationId: id,
+            selectedModel: nextModel,
+            activeQuizProgress: null,
+          };
+        });
+      },
 
       addMessage: (conversationId, message) => {
         set((state) => {
@@ -180,8 +256,12 @@ export const useChatStore = create<ChatState>()(
           // Merge cloud and local, preferring most recent
           const merged = mergeConversations(localConversations, cloudConversations);
           
+          // Prune empty conversations (except the currently active one)
+          const activeId = get().activeConversationId;
+          const prunedMerged = merged.filter(c => c.messages.length > 0 || c.id === activeId);
+          
           set({ 
-            conversations: merged,
+            conversations: prunedMerged,
             isSyncing: false,
             lastSyncAt: new Date().toISOString()
           });

@@ -67,13 +67,13 @@ export function PDFLoadingCard({ language = "ar" }: PDFLoadingCardProps) {
 
   return (
     <div
-      className="my-4 overflow-hidden rounded-3xl border border-cyan-500/20 bg-gradient-to-br from-zinc-950/95 via-zinc-950/80 to-cyan-950/20 p-6 shadow-[0_20px_60px_rgba(6,182,212,0.08)] backdrop-blur-xl"
+      className="my-4 overflow-hidden rounded-3xl border border-zinc-800/80 dark:border-zinc-900/80 bg-gradient-to-br from-zinc-950/90 via-zinc-950/95 to-violet-950/10 p-6 shadow-lg backdrop-blur-xl"
       dir={isRtl ? "rtl" : "ltr"}
     >
       <div className="flex flex-col items-center gap-5 text-center">
         <div className="relative flex h-24 w-24 items-center justify-center">
           <motion.div
-            className="absolute inset-0 rounded-[28px] border border-cyan-400/20"
+            className="absolute inset-0 rounded-[28px] border border-violet-500/20"
             animate={{ rotate: 360 }}
             transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
           />
@@ -82,8 +82,8 @@ export function PDFLoadingCard({ language = "ar" }: PDFLoadingCardProps) {
             animate={{ rotate: -360 }}
             transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
           />
-          <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03]">
-            <FileText className="h-7 w-7 text-cyan-300" />
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-zinc-800/80 bg-white/[0.02]">
+            <FileText className="h-7 w-7 text-violet-400" />
             <Sparkles className="absolute -right-1 -top-1 h-4 w-4 text-violet-300" />
           </div>
         </div>
@@ -112,7 +112,7 @@ export function PDFLoadingCard({ language = "ar" }: PDFLoadingCardProps) {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.25 }}
             >
-              <span className="text-cyan-300">PDF</span> {facts[factIndex]}
+              <span className="text-violet-400 font-semibold">PDF</span> {facts[factIndex]}
             </motion.p>
           </AnimatePresence>
         </div>

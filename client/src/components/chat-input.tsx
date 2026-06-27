@@ -66,7 +66,7 @@ export function ChatInput({
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { isGenerating, serviceMode, selectedModel, setSelectedModel, activeQuizProgress } = useChatStore();
+  const { isGenerating, serviceMode, selectedModel, setSelectedModel, activeQuizProgress, activePdfProgress } = useChatStore();
   const { canUseDeepResearch, canUseGodMode } = useSubscriptionStore();
   const {
     thinking,
@@ -500,16 +500,22 @@ export function ChatInput({
         className={`relative flex flex-col gap-2 p-2.5 md:p-3 rounded-xl backdrop-blur-md transition-all duration-200 bg-card border ${currentStyles.container}`}
         style={(currentStyles as any).customStyle}
       >
-        {activeQuizProgress ? (
+        {activeQuizProgress || activePdfProgress ? (
           <div 
             className={cn(
-              "absolute top-0 h-[2.5px] rounded-t-xl animate-gradient bg-[length:200%_200%] z-10 transition-all duration-300 ease-out", 
-              currentStyles.bar,
+              "absolute top-0 h-[2.5px] rounded-t-xl z-10 transition-all duration-300 ease-out bg-gradient-to-r from-violet-500 to-cyan-500", 
               typeof document !== "undefined" && (document.documentElement.dir === "rtl" || document.dir === "rtl")
                 ? "right-0 left-auto" 
                 : "left-0 right-auto"
             )} 
-            style={{ width: `${Math.max((activeQuizProgress.current / activeQuizProgress.total) * 100, 5)}%` }}
+            style={{ 
+              width: `${Math.max(
+                activeQuizProgress 
+                  ? (activeQuizProgress.current / activeQuizProgress.total) * 100 
+                  : (activePdfProgress!.current / activePdfProgress!.total) * 100, 
+                5
+              )}%` 
+            }}
           />
         ) : (
           <div className={cn("absolute top-0 left-0 right-0 h-[2.5px] rounded-t-xl animate-gradient bg-[length:200%_200%] z-10", currentStyles.bar)} />
