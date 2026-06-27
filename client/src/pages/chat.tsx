@@ -112,6 +112,33 @@ export default function ChatPage() {
     };
   }, []);
 
+  // JS-based Auto-Animation loop for mobile or idle desktop spotlight (fully cross-browser/iOS compliant)
+  useEffect(() => {
+    let animationFrameId: number;
+    let angle = 0;
+
+    const animateSpotlight = () => {
+      const el = gridRef.current;
+      const isMobile = window.innerWidth < 768;
+      
+      if (el && (!isMouseActive || isMobile)) {
+        angle += 0.004; // slow, gentle pan speed
+        const x = 50 + Math.sin(angle) * 35; // moves between 15% and 85%
+        const y = 45 + Math.cos(angle * 1.4) * 20; // moves between 25% and 65%
+        
+        el.style.setProperty("--mouse-x", `${x}%`);
+        el.style.setProperty("--mouse-y", `${y}%`);
+      }
+
+      animationFrameId = requestAnimationFrame(animateSpotlight);
+    };
+
+    animationFrameId = requestAnimationFrame(animateSpotlight);
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [isMouseActive]);
+
   const getGridSpotlightColors = () => {
     switch (selectedModel) {
       case "apex-unbound":
@@ -571,9 +598,7 @@ export default function ChatPage() {
       {/* Interactive Grid Background */}
       <div 
         ref={gridRef}
-        className={`absolute inset-0 pointer-events-none z-0 opacity-55 transition-opacity duration-300 ${
-          !isMouseActive ? "animate-spotlight-auto" : ""
-        }`}
+        className="absolute inset-0 pointer-events-none z-0 opacity-55 transition-opacity duration-300"
         style={{
           backgroundImage: `
             radial-gradient(circle 280px at var(--mouse-x, 50%) var(--mouse-y, 35%), ${spotlightColors.primary}, transparent 80%),
