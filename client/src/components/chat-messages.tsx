@@ -17,7 +17,6 @@ import { PDFLoadingCard } from "@/components/pdf-loading-card";
 import type { OmniState } from "@/lib/omni-service";
 import type { UnboundState } from "@/lib/unbound-service";
 import { ThinkingBubble } from "@/components/chat-message";
-import { CognitiveMonitorPanel } from "@/components/cognitive-monitor-panel";
 import type { AgentMaskConfiguration } from "@shared/types/v2";
 import ReactMarkdown from "react-markdown";
 import katex from "katex";
@@ -2229,17 +2228,6 @@ export function ChatMessages({
 
       <div ref={messagesEndRef} />
     </div>
-
-    {/* V2 Cognitive Monitor Panel — floats outside chat scroll, routes pipeline internals away from chat bubble */}
-    <CognitiveMonitorPanel
-      isOpen={monitorOpen}
-      onToggle={() => setMonitorOpen(o => !o)}
-      omniState={selectedModel === "apex-omni" ? (omniState || null) : null}
-      isProcessing={!!(selectedModel === "apex-omni" && isStreaming)}
-      pipelineLogs={pipelineLogs}
-      maskConfig={monitorMask}
-      complexityScore={monitorComplexity}
-    />
     </>
   );
 }
