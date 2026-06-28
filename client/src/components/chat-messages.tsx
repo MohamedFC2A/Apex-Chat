@@ -17,6 +17,8 @@ import { PDFLoadingCard } from "@/components/pdf-loading-card";
 import type { OmniState } from "@/lib/omni-service";
 import type { UnboundState } from "@/lib/unbound-service";
 import { ThinkingBubble } from "@/components/chat-message";
+import { CognitiveMonitorPanel } from "@/components/cognitive-monitor-panel";
+import type { AgentMaskConfiguration } from "@shared/types/v2";
 import ReactMarkdown from "react-markdown";
 import katex from "katex";
 
@@ -2019,6 +2021,58 @@ export function ChatMessages({
     };
   }, []);
 
+  // ── V2 Cognitive Monitor State ─────────────────────────────────────────────
+  const [monitorOpen, setMonitorOpen] = useState(false);
+  const [pipelineLogs, setPipelineLogs] = useState<string[]>([]);
+  const [monitorComplexity, setMonitorComplexity] = useState(0);
+  const [monitorMask] = useState<AgentMaskConfiguration | null>(null);
+
+  // Auto-open the monitor when Apex Omni starts a high-complexity stream
+  useEffect(() => {
+    if (selectedModel === "apex-omni" && isStreaming && streamingContent) {
+      // Detect complexity level from Phase header in streaming content
+      const level3Match = streamingContent.match(/Level 3 Stream/);
+      const level2Match = streamingContent.match(/Level 2 Stream/);
+      if (level3Match) {
+        setMonitorComplexity(8);
+        setMonitorOpen(true);
+      } else if (level2Match) {
+        setMonitorComplexity(5);
+      } else {
+        setMonitorComplexity(2);
+      }
+    }
+    if (!isStreaming) {
+      // Reset logs when a new message cycle begins
+      if (!streamingContent) setPipelineLogs([]);
+    }
+  }, [selectedModel, isStreaming, streamingContent]);
+
+  // Extract phase log lines from streaming content and route to monitor panel
+  useEffect(() => {
+    if (!streamingContent || selectedModel !== "apex-omni") return;
+    const lines = streamingContent.split("\n");
+    const logLines = lines.filter(line => {
+      const t = line.trim();
+      return (
+        t.startsWith("**[Phase") ||
+        t.startsWith("[Phase") ||
+        (t.startsWith(">") && t.length > 2) ||
+        t.startsWith("[V2") ||
+        t.startsWith("[Speculative") ||
+        t.startsWith("[Concurrent")
+      );
+    });
+    if (logLines.length > 0) {
+      setPipelineLogs(prev => {
+        const combined = [...prev, ...logLines];
+        const unique = Array.from(new Set(combined));
+        return unique.slice(-50);
+      });
+    }
+  }, [streamingContent, selectedModel]);
+  // ── End V2 Monitor State ───────────────────────────────────────────────────
+
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isAutoScroll, setIsAutoScroll] = useState(true);
@@ -2097,7 +2151,8 @@ export function ChatMessages({
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6">
+    <>
+      <div className="w-full max-w-3xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-4 md:space-y-6">
       <AnimatePresence mode="popLayout">
         {messages.map((message: Message, index: number) => (
           <motion.div
@@ -2174,6 +2229,18 @@ export function ChatMessages({
 
       <div ref={messagesEndRef} />
     </div>
+
+    {/* V2 Cognitive Monitor Panel — floats outside chat scroll, routes pipeline internals away from chat bubble */}
+    <CognitiveMonitorPanel
+      isOpen={monitorOpen}
+      onToggle={() => setMonitorOpen(o => !o)}
+      omniState={selectedModel === "apex-omni" ? (omniState || null) : null}
+      isProcessing={!!(selectedModel === "apex-omni" && isStreaming)}
+      pipelineLogs={pipelineLogs}
+      maskConfig={monitorMask}
+      complexityScore={monitorComplexity}
+    />
+    </>
   );
 }
 

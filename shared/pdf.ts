@@ -177,6 +177,8 @@ export interface PDFDocument {
   coverPage: boolean;
   tableOfContents: boolean;
   sections: PDFSection[];
+  /** V2 Authorization Gate: true only when an explicit operational command triggered this document */
+  isCommandAuthorized?: boolean;
   metadata?: {
     subject?: string;
     keywords?: string[];

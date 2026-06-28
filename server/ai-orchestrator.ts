@@ -1418,28 +1418,53 @@ Please review the assembled code and write the "✅ Architecture Notes" explaini
   return { content: cumulativeContent };
 }
 
-export function evaluateComponentIntent(prompt: string): { triggerQuiz: boolean; triggerPDF: boolean } {
-  const normalizedPrompt = prompt.toLowerCase().trim();
-  
-  // Strict check expressions requiring command action words, not just descriptive topic nouns
-  const explicitQuizIntents = [
-    "اعملي اختبار", "انشئ امتحان", "create a quiz", "test me on", 
-    "generate mcq", "امتحنني", "اسألني في", "سوي اختبار"
+/**
+ * V2 Macro-Intent Verification Gateway
+ *
+ * Implements the Explicit Generation Request Scale from the V2 blueprint.
+ * Requires BOTH an imperative action verb AND a structural output keyword
+ * to achieve a confidence score ≥ 0.85 and trigger widget generation.
+ *
+ * Confidence tiers:
+ *   0.10 — Conversational reference  → markdown prose only
+ *   0.30 — Loose speculative mention → suggest interaction link
+ *   0.95 — Explicit operational cmd  → trigger widget rendering
+ */
+export function verifyWidgetGenerationIntent(prompt: string): { triggerQuiz: boolean; triggerPDF: boolean } {
+  const cleanPrompt = prompt.trim();
+
+  // ── Explicit Operational Commands (confidence ≥ 0.95) ──
+  // MUST contain an imperative action verb + structural output noun together
+  const executionQuizRegex = /(انشئ|اعمل|صمم|generate|create|build|اضبط|امتحنني|اسألني|سوي|ابني|انشء)\s*(امتحان|اختبار|quiz|test|mcq|msq|أسئلة\s+اختيار|اختيار\s+من\s+متعدد)/i;
+  const executionPDFRegex  = /(انشئ|اعمل|صمم|generate|create|build|نزلي|صدّر|export|حول\s+ل|اكتب\s+ملف)\s*(pdf|ملف\s+pdf|document|تقرير|مستند|وثيقة)/i;
+
+  // ── Speculative / Conversational Guards (block false positives) ──
+  // These patterns indicate the user is asking ABOUT a concept, not commanding generation
+  const speculativeQuizPatterns = [
+    /(هل\s+في|هل\s+عندك|هل\s+يمكن|هل\s+هناك|في\s+امتحان|في\s+اختبار)/i,
+    /(is\s+there\s+a\s+quiz|any\s+questions\s+for|could\s+you\s+make|what\s+is\s+a\s+quiz)/i,
+    /(يعني\s+ايه|كلمني\s+عن\s+شكل|اشرح\s+لي\s+نظام)/i,
   ];
-  
-  const explicitPDFIntents = [
-    "صمم ملف pdf", "حمل الاجابة pdf", "export to pdf", "generate document",
-    "نزلي ملف pdf", "اطبع pdf"
+  const speculativePDFPatterns = [
+    /(هل\s+يمكن|ممكن\s+تعمل|can\s+you\s+make|could\s+you\s+export|what\s+is\s+a\s+pdf)/i,
+    /(يعني\s+ايه|كلمني\s+عن|اشرح\s+لي)/i,
   ];
 
-  const hasExplicitQuiz = explicitQuizIntents.some(intent => normalizedPrompt.includes(intent));
-  const hasExplicitPDF = explicitPDFIntents.some(intent => normalizedPrompt.includes(intent));
+  const isSpeculativeQuiz = speculativeQuizPatterns.some(p => p.test(cleanPrompt));
+  const isSpeculativePDF  = speculativePDFPatterns.some(p => p.test(cleanPrompt));
 
-  return {
-    triggerQuiz: hasExplicitQuiz,
-    triggerPDF: hasExplicitPDF
-  };
+  const triggerQuiz = executionQuizRegex.test(cleanPrompt) && !isSpeculativeQuiz;
+  const triggerPDF  = executionPDFRegex.test(cleanPrompt)  && !isSpeculativePDF;
+
+  if (triggerQuiz || triggerPDF) {
+    console.log(`[V2 Intent Gateway] Widget authorized — Quiz: ${triggerQuiz}, PDF: ${triggerPDF}`);
+  } else {
+    console.log(`[V2 Intent Gateway] Widget blocked — no explicit operational command detected`);
+  }
+
+  return { triggerQuiz, triggerPDF };
 }
+
 
 export async function processMessage(
   request: OrchestratorRequest,
@@ -1471,7 +1496,7 @@ export async function processMessage(
     throw new Error("God Mode is exclusive to Elite or Omni subscription.");
   }
 
-  const componentIntent = evaluateComponentIntent(request.message);
+  const componentIntent = verifyWidgetGenerationIntent(request.message);
 
   if (componentIntent.triggerPDF && detectStructuredPdfIntent(request.message)) {
     const OpenAI = (await import("openai")).default;

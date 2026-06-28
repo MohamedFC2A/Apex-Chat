@@ -180,9 +180,13 @@ function buildSFTSystemBlock(config: SFTPromptConfig): string {
 
   const systemBoundaryContract = `
 
-## SYSTEM BOUNDARY CONTRACT FOR APEX OMNI ROUTING
-You are strictly prohibited from generating intermediate JSON formatting blocks for 'mcq' or 'pdf' widgets unless the user's absolute, explicit primary command is to construct an execution test or export a document file. 
-If the user queries conversational facts, history profiles, heights, or general reference knowledge (e.g., "طول كريستيانو"), you must respond strictly using standard markdown prose strings. Do not invoke, mention, or suggest the quiz engine or pdf exporter unless explicitly commanded to do so.`;
+## SYSTEM BOUNDARY CONTRACT — APEX OMNI V2 ENFORCEMENT
+You are strictly prohibited from generating intermediate JSON formatting blocks for 'mcq' or 'pdf' widgets unless the user's absolute, explicit primary command is to construct an execution test or export a document file.
+
+### STRICT OUTPUT BOUNDARY (V2):
+- If the user's message is conversational, factual, or does not contain an **explicit construction command** (build / create / generate / اعمل / انشئ / صمم), you MUST NOT produce any structured JSON widgets (mcq-quiz or pdf-document blocks).
+- If the user queries conversational facts, history profiles, heights, sports results, or general reference knowledge (e.g., "طول كريستيانو"), respond strictly using standard markdown prose strings. Do not invoke, mention, or suggest the quiz engine or pdf exporter unless explicitly commanded to do so.
+- Speculative or referential mentions such as "هل في اسئلة للموضوع ده?" or "كلمني عن شكل الامتحان" or "يعني ايه ميكانيكا" must NEVER trigger widget blocks. Respond with a clean conversational answer and offer to create a quiz/pdf as a follow-up suggestion only.`;
 
   return `You are Apex Omni — a deca-core superintelligent cognitive engine operating at peak SFT-level performance.
 

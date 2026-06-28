@@ -190,9 +190,11 @@ function SynthesisCard({ isSynthesizing }: { isSynthesizing: boolean }) {
 
 interface OmniProcessViewProps {
   state: OmniState;
+  /** When true, renders inside the CognitiveMonitorPanel — uses full-width layout */
+  isInMonitor?: boolean;
 }
 
-export function OmniProcessView({ state }: OmniProcessViewProps) {
+export function OmniProcessView({ state, isInMonitor = false }: OmniProcessViewProps) {
   const isSynthesizing = state.step === "synthesizing";
   const isComplete = state.step === "complete";
   
@@ -201,7 +203,7 @@ export function OmniProcessView({ state }: OmniProcessViewProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="w-full max-w-4xl mx-auto mb-6"
+      className={isInMonitor ? "w-full" : "w-full max-w-4xl mx-auto mb-6"}
     >
       {/* Header */}
       <div className="text-center mb-6">

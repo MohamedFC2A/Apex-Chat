@@ -24,6 +24,8 @@ export interface MCQQuiz {
   description: string;
   mode: MCQQuizMode;
   questions: MCQQuestion[];
+  /** V2 Authorization Gate: true only when an explicit operational command triggered this quiz */
+  isCommandAuthorized?: boolean;
 }
 
 export interface ParsedQuizRequest {
@@ -42,6 +44,7 @@ const QUIZ_SCHEMA = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   mode: z.enum(["practice", "exam"]),
+  isCommandAuthorized: z.boolean().optional(),
   questions: z
     .array(
       z.object({
