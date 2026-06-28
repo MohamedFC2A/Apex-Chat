@@ -2109,24 +2109,22 @@ export function ChatMessages({
           </motion.div>
         )}
 
-        {isStreaming && (selectedModel === "apex-omni" || streamingContent || streamingReasoning) && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          >
-            <AssistantMessage
-              content={streamingContent || ""}
-              model={selectedModel}
-              reasoning={streamingReasoning}
-              omniState={selectedModel === "apex-omni" ? (omniState || undefined) : undefined}
-              unboundState={undefined}
-              onSelectUnboundChoice={onSelectUnboundChoice}
-              isStreaming
-            />
-          </motion.div>
-        )}
       </AnimatePresence>
+
+      {/* Render the streaming message OUTSIDE AnimatePresence for instant, glitch-free swap */}
+      {isStreaming && (selectedModel === "apex-omni" || streamingContent || streamingReasoning) && (
+        <div className="w-full mt-4">
+          <AssistantMessage
+            content={streamingContent || ""}
+            model={selectedModel}
+            reasoning={streamingReasoning}
+            omniState={selectedModel === "apex-omni" ? (omniState || undefined) : undefined}
+            unboundState={undefined}
+            onSelectUnboundChoice={onSelectUnboundChoice}
+            isStreaming
+          />
+        </div>
+      )}
 
       <div ref={messagesEndRef} />
     </div>
@@ -2583,8 +2581,8 @@ function AssistantMessage({
   return (
     <motion.div
       className={cn(
-        "flex gap-3 md:gap-4 group p-3.5 md:p-4 rounded-2xl border border-zinc-900 bg-zinc-900/15 backdrop-blur-sm transition-all duration-500 shadow-sm",
-        isStreaming && "bg-zinc-900/30 border-violet-500/10 shadow-[0_0_20px_rgba(139,92,246,0.02)]"
+        "flex gap-3 md:gap-4 group p-3.5 md:p-4 rounded-2xl border border-zinc-800/40 bg-zinc-800/25 dark:bg-zinc-800/20 backdrop-blur-md transition-all duration-500 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15)]",
+        isStreaming && "bg-zinc-800/40 border-violet-500/20 shadow-[0_0_25px_rgba(139,92,246,0.04)]"
       )}
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
