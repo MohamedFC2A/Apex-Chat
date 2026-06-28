@@ -41,14 +41,12 @@ export function VoucherModal({ isOpen, onClose, targetTier }: VoucherModalProps)
             const { useSubscriptionStore } = await import("@/lib/subscription-store");
             useSubscriptionStore.getState().setTier("omni");
 
-            // Sync to Firebase
+            // Sync to Supabase
             const { useAuthStore } = await import("@/lib/auth-store");
             const user = useAuthStore.getState().user;
             if (user) {
-                const { doc, setDoc } = await import("firebase/firestore");
-                const { db } = await import("@/lib/firebase");
-                const userDocRef = doc(db, "users", user.uid);
-                await setDoc(userDocRef, { tier: "omni" }, { merge: true });
+                const { supabase } = await import("@/lib/supabase");
+                await supabase.from("profiles").update({ tier: "omni" }).eq("id", user.uid);
                 useAuthStore.getState().updateTier("omni");
             }
 

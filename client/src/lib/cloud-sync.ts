@@ -1,30 +1,11 @@
 /**
- * CLOUD SYNC SERVICE
- * Handles real-time synchronization of chat conversations to Firestore
- * localStorage serves as temporary cache, Firestore is source of truth
- * 
- * PATH: users/{uid}/chats/{chatId}
+ * CLOUD SYNC SERVICE (SUPABASE VERSION)
+ * Handles real-time synchronization of chat conversations to Supabase Postgres
+ * localStorage serves as temporary cache, Supabase is source of truth
  */
 
-import { 
-    collection, 
-    doc, 
-    setDoc, 
-    getDoc, 
-    getDocs, 
-    deleteDoc,
-    query, 
-    where, 
-    orderBy, 
-    limit,
-    onSnapshot,
-    writeBatch,
-    serverTimestamp,
-    Timestamp,
-    FirestoreError
-} from "firebase/firestore";
-import { db } from "./firebase";
-import type { Conversation, Message, CloudConversation } from "@shared/schema";
+import { supabase } from "./supabase";
+import type { Conversation } from "@shared/schema";
 
 // ========== TYPES ==========
 
@@ -41,7 +22,6 @@ export type SyncErrorCode =
     | 'PERMISSION_DENIED'
     | 'OFFLINE'
     | 'NETWORK_ERROR'
-    | 'INDEX_BUILDING'
     | 'UNKNOWN';
 
 export interface SyncError {
@@ -91,143 +71,74 @@ if (typeof window !== 'undefined') {
 
 // Debounce timer for batch syncs
 let syncDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-const SYNC_DEBOUNCE_MS = 2000; // Wait 2 seconds before syncing to batch writes
-
-// ========== ERROR HANDLING ==========
+const SYNC_DEBOUNCE_MS = 2000;
 
 /**
- * Parse Firestore error into sync error
+ * Parse Supabase error into sync error
  */
-function parseFirestoreError(error: unknown): SyncError {
-    const err = error as FirestoreError;
-    
-    // Index Building (failed-precondition)
-    if (err?.code === 'failed-precondition') {
-        // Check if it's specifically an index error
-        if (err?.message?.includes('index') || err?.message?.includes('requires an index')) {
-            return {
-                code: 'INDEX_BUILDING',
-                message: 'Firestore index is building. Please wait a few minutes.',
-                fallbackToLocal: true,
-                userFriendlyMessage: '🔧 System Optimizing... This may take a few minutes.'
-            };
-        }
-    }
-    
-    // Permission Denied
-    if (err?.code === 'permission-denied') {
+function parseSupabaseError(error: any): SyncError {
+    if (error?.code === 'PGRST116' || error?.code === '42501') {
         syncState.permissionDenied = true;
         return {
             code: 'PERMISSION_DENIED',
-            message: 'Firestore permission denied. Please refresh your login.',
+            message: 'Database permission denied. Please check auth state.',
             fallbackToLocal: true,
-            userFriendlyMessage: '🔒 Login Refresh Needed. Please sign out and sign back in.'
+            userFriendlyMessage: '🔒 Access Refused. Please check your credentials.'
         };
     }
     
-    // Offline errors
-    if (
-        err?.code === 'unavailable' ||
-        err?.message?.includes('offline') ||
-        err?.message?.includes('client is offline')
-    ) {
+    if (!syncState.isOnline) {
         return {
             code: 'OFFLINE',
-            message: 'You appear to be offline. Changes saved locally.',
+            message: 'You are offline.',
             fallbackToLocal: true,
-            userFriendlyMessage: '📡 Offline Mode - Changes saved locally'
+            userFriendlyMessage: '📡 Offline Mode - Using local storage'
         };
     }
-    
-    // Network errors
-    if (err?.message?.includes('network') || err?.message?.includes('fetch')) {
-        return {
-            code: 'NETWORK_ERROR',
-            message: 'Network error. Changes saved locally.',
-            fallbackToLocal: true,
-            userFriendlyMessage: '🌐 Network Issue - Using local storage'
-        };
-    }
-    
+
     return {
         code: 'UNKNOWN',
-        message: err?.message || 'Unknown sync error',
+        message: error?.message || 'Unknown database error',
         fallbackToLocal: true,
         userFriendlyMessage: '⚠️ Sync temporarily unavailable - Using local storage'
     };
 }
 
-/**
- * Check if we should attempt cloud sync
- */
 function shouldAttemptSync(): boolean {
     return syncState.isOnline && !syncState.permissionDenied;
 }
 
 /**
- * Convert local conversation to cloud format
- */
-function toCloudConversation(conv: Conversation, userId: string): CloudConversation {
-    // Strip out undefined values before saving to Firestore, as it throws on undefined fields
-    const cleanConv = JSON.parse(JSON.stringify(conv));
-    return {
-        ...cleanConv,
-        userId,
-        syncedAt: new Date().toISOString(),
-        isDeleted: false,
-    };
-}
-
-/**
- * Convert cloud conversation to local format
- */
-function fromCloudConversation(cloudConv: any): Conversation {
-    const { userId, syncedAt, isDeleted, ...localConv } = cloudConv;
-    return localConv as Conversation;
-}
-
-/**
- * Get collection reference for user's chats
- * PATH: users/{uid}/chats
- */
-function getChatsRef(userId: string) {
-    return collection(db, "users", userId, "chats");
-}
-
-/**
  * SAVE SINGLE CONVERSATION TO CLOUD
- * Used for real-time updates as user chats
- * PATH: users/{uid}/chats/{chatId}
  */
 export async function saveConversation(userId: string, conversation: Conversation): Promise<void> {
-    if (!userId || !conversation.id) {
-        console.warn("[CloudSync] Invalid userId or conversation.id");
-        return;
-    }
-    
-    // Skip if we know we can't sync
-    if (!shouldAttemptSync()) {
-        console.warn("[CloudSync] Skipping save - offline or permission denied");
-        return;
-    }
+    if (!userId || !conversation.id) return;
+    if (!shouldAttemptSync()) return;
 
     try {
         syncState.isSyncing = true;
         syncState.syncError = null;
 
-        const chatRef = doc(db, "users", userId, "chats", conversation.id);
-        const cloudConv = toCloudConversation(conversation, userId);
+        const { error } = await supabase.from("conversations").upsert({
+            id: conversation.id,
+            user_id: userId,
+            title: conversation.title,
+            messages: conversation.messages,
+            model: conversation.model,
+            mode: conversation.mode,
+            created_at: conversation.createdAt,
+            updated_at: conversation.updatedAt,
+            is_deleted: false,
+        });
 
-        await setDoc(chatRef, cloudConv, { merge: true });
+        if (error) throw error;
 
         syncState.lastSyncAt = new Date().toISOString();
-        syncState.permissionDenied = false; // Reset on success
+        syncState.permissionDenied = false;
     } catch (error) {
-        const syncError = parseFirestoreError(error);
+        const syncError = parseSupabaseError(error);
         console.warn(`[CloudSync] Save failed (${syncError.code}):`, syncError.message);
-        syncState.syncError = syncError.message;
-        
-        // Don't throw - fail silently for UX, localStorage handles persistence
+        syncState.syncError = syncError.userFriendlyMessage;
     } finally {
         syncState.isSyncing = false;
     }
@@ -235,95 +146,64 @@ export async function saveConversation(userId: string, conversation: Conversatio
 
 /**
  * DELETE CONVERSATION FROM CLOUD
- * Soft delete with isDeleted flag for recovery option
- * PATH: users/{uid}/chats/{chatId}
  */
 export async function deleteConversation(userId: string, conversationId: string): Promise<void> {
     if (!userId || !conversationId) return;
-    
-    // Skip if we know we can't sync
-    if (!shouldAttemptSync()) {
-        return;
-    }
+    if (!shouldAttemptSync()) return;
 
     try {
-        const chatRef = doc(db, "users", userId, "chats", conversationId);
-        
-        // Soft delete - mark as deleted but keep data
-        await setDoc(chatRef, { 
-            isDeleted: true, 
-            deletedAt: new Date().toISOString() 
-        }, { merge: true });
+        const { error } = await supabase.from("conversations").update({
+            is_deleted: true,
+            deleted_at: new Date().toISOString(),
+        }).eq("id", conversationId).eq("user_id", userId);
 
+        if (error) throw error;
     } catch (error) {
-        const syncError = parseFirestoreError(error);
+        const syncError = parseSupabaseError(error);
         console.warn(`[CloudSync] Delete failed (${syncError.code}):`, syncError.message);
-        // Fail silently - local delete still works
     }
 }
 
 /**
  * FETCH ALL CHATS FROM CLOUD
- * Used on app startup to restore user's chat history
- * PATH: users/{uid}/chats
- * 
- * CRITICAL: Query must match Firestore index:
- * - Collection: users/{uid}/chats
- * - Fields: isDeleted (==), updatedAt (desc)
  */
 export async function fetchConversationsFromCloud(userId: string): Promise<Conversation[]> {
     if (!userId) return [];
-    
-    // Skip if we know we can't sync
-    if (!shouldAttemptSync()) {
-        console.warn("[CloudSync] Skipping fetch - offline or permission denied");
-        return [];
-    }
+    if (!shouldAttemptSync()) return [];
 
     try {
         syncState.isSyncing = true;
-        
-        const chatsRef = getChatsRef(userId);
-        
-        // Fetch all documents in the collection directly, no order or filters to avoid index errors
-        const snapshot = await getDocs(chatsRef);
-        const conversations: Conversation[] = [];
 
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            // Filter deleted chats locally
-            if (data && data.isDeleted !== true) {
-                conversations.push(fromCloudConversation(data));
-            }
-        });
+        const { data, error } = await supabase
+            .from("conversations")
+            .select("*")
+            .eq("user_id", userId)
+            .eq("is_deleted", false)
+            .order("updated_at", { ascending: false })
+            .limit(100);
 
-        // Sort in-memory: updatedAt Descending
-        conversations.sort((a, b) => b.updatedAt - a.updatedAt);
+        if (error) throw error;
 
-        // Apply local limit of 100 chats
-        const limitedConversations = conversations.slice(0, 100);
+        const conversations: Conversation[] = (data || []).map((row: any) => ({
+            id: row.id,
+            title: row.title,
+            messages: row.messages,
+            model: row.model,
+            mode: row.mode,
+            createdAt: Number(row.created_at),
+            updatedAt: Number(row.updated_at),
+        }));
 
         syncState.lastSyncAt = new Date().toISOString();
         syncState.syncError = null;
-        syncState.permissionDenied = false; // Reset on success
+        syncState.permissionDenied = false;
 
-        return limitedConversations;
-
+        return conversations;
     } catch (error) {
-        const syncError = parseFirestoreError(error);
-        
-        // Log with appropriate severity
-        if (syncError.code === 'INDEX_BUILDING') {
-            console.warn(`[CloudSync] ${syncError.userFriendlyMessage}`);
-            console.warn('[CloudSync] Create index at: https://console.firebase.google.com/project/gen-lang-client-0258578294/firestore/indexes');
-        } else if (syncError.code === 'PERMISSION_DENIED') {
-            console.error(`[CloudSync] ${syncError.userFriendlyMessage}`);
-        } else {
-            console.warn(`[CloudSync] Fetch failed (${syncError.code}):`, syncError.message);
-        }
-        
+        const syncError = parseSupabaseError(error);
+        console.warn(`[CloudSync] Fetch failed (${syncError.code}):`, syncError.message);
         syncState.syncError = syncError.userFriendlyMessage;
-        return []; // Return empty, let local cache handle it
+        return [];
     } finally {
         syncState.isSyncing = false;
     }
@@ -331,49 +211,38 @@ export async function fetchConversationsFromCloud(userId: string): Promise<Conve
 
 /**
  * BATCH SYNC ALL LOCAL CHATS TO CLOUD
- * Used for initial migration or force sync
- * PATH: users/{uid}/chats/{chatId}
  */
 export async function syncConversationsToCloud(userId: string, conversations: Conversation[]): Promise<void> {
     if (!userId || conversations.length === 0) return;
-    
-    // Skip if we know we can't sync
-    if (!shouldAttemptSync()) {
-        console.warn("[CloudSync] Skipping batch sync - offline or permission denied");
-        return;
-    }
+    if (!shouldAttemptSync()) return;
 
     try {
         syncState.isSyncing = true;
         syncState.pendingChanges = conversations.length;
 
-        // Use batched writes for efficiency (max 500 per batch)
-        const batchSize = 500;
-        const batches = [];
+        const records = conversations.map((conv) => ({
+            id: conv.id,
+            user_id: userId,
+            title: conv.title,
+            messages: conv.messages,
+            model: conv.model,
+            mode: conv.mode,
+            created_at: conv.createdAt,
+            updated_at: conv.updatedAt,
+            is_deleted: false,
+        }));
 
-        for (let i = 0; i < conversations.length; i += batchSize) {
-            const batch = writeBatch(db);
-            const chunk = conversations.slice(i, i + batchSize);
-
-            chunk.forEach((conv) => {
-                const chatRef = doc(db, "users", userId, "chats", conv.id);
-                batch.set(chatRef, toCloudConversation(conv, userId), { merge: true });
-            });
-
-            batches.push(batch.commit());
-        }
-
-        await Promise.all(batches);
+        const { error } = await supabase.from("conversations").upsert(records);
+        if (error) throw error;
 
         syncState.lastSyncAt = new Date().toISOString();
         syncState.pendingChanges = 0;
         syncState.syncError = null;
         syncState.permissionDenied = false;
-
     } catch (error) {
-        const syncError = parseFirestoreError(error);
+        const syncError = parseSupabaseError(error);
         console.warn(`[CloudSync] Batch sync failed (${syncError.code}):`, syncError.message);
-        syncState.syncError = syncError.message;
+        syncState.syncError = syncError.userFriendlyMessage;
     } finally {
         syncState.isSyncing = false;
     }
@@ -381,70 +250,47 @@ export async function syncConversationsToCloud(userId: string, conversations: Co
 
 /**
  * SUBSCRIBE TO REAL-TIME UPDATES
- * Returns unsubscribe function
- * PATH: users/{uid}/chats
- * 
- * CRITICAL: Query must match Firestore index:
- * - Collection: users/{uid}/chats
- * - Fields: isDeleted (==), updatedAt (desc)
  */
 export function subscribeToConversations(
     userId: string, 
     onUpdate: (conversations: Conversation[]) => void
 ): () => void {
     if (!userId) return () => {};
-    
-    // Skip if we know we can't sync
-    if (!shouldAttemptSync()) {
-        console.warn("[CloudSync] Skipping subscription - offline or permission denied");
-        return () => {};
-    }
+    if (!shouldAttemptSync()) return () => {};
 
-    const chatsRef = getChatsRef(userId);
-    
-    const unsubscribe = onSnapshot(chatsRef, 
-        (snapshot) => {
-            const conversations: Conversation[] = [];
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                if (data && data.isDeleted !== true) {
-                    conversations.push(fromCloudConversation(data));
-                }
-            });
-            conversations.sort((a, b) => b.updatedAt - a.updatedAt);
-            const limited = conversations.slice(0, 100);
-            
-            syncState.permissionDenied = false; // Reset on success
-            syncState.lastSyncAt = new Date().toISOString();
-            syncState.syncError = null;
-            onUpdate(limited);
-        },
-        (error) => {
-            const syncError = parseFirestoreError(error);
-            
-            // Graceful error handling - don't crash the app
-            if (syncError.code === 'INDEX_BUILDING') {
-                console.warn(`[CloudSync] ${syncError.userFriendlyMessage}`);
-                console.warn('[CloudSync] Realtime sync paused. Using local data.');
-                console.warn('[CloudSync] Create index at: https://console.firebase.google.com/project/gen-lang-client-0258578294/firestore/indexes');
-            } else if (syncError.code === 'PERMISSION_DENIED') {
-                console.error(`[CloudSync] ${syncError.userFriendlyMessage}`);
-                console.error('[CloudSync] Check Firestore security rules.');
-            } else {
-                console.warn(`[CloudSync] Realtime listener error (${syncError.code}):`, syncError.message);
+    // Initial load
+    fetchConversationsFromCloud(userId).then(onUpdate);
+
+    // Setup realtime subscription channel
+    const channel = supabase
+        .channel(`conversations-channel-${userId}`)
+        .on(
+            "postgres_changes",
+            {
+                event: "*",
+                schema: "public",
+                table: "conversations",
+                filter: `user_id=eq.${userId}`,
+            },
+            async () => {
+                const refreshed = await fetchConversationsFromCloud(userId);
+                onUpdate(refreshed);
             }
-            
-            syncState.syncError = syncError.userFriendlyMessage;
-            // Don't crash - just log the error and continue with local data
-        }
-    );
+        )
+        .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                syncState.permissionDenied = false;
+                syncState.syncError = null;
+            }
+        });
 
-    return unsubscribe;
+    return () => {
+        supabase.removeChannel(channel);
+    };
 }
 
 /**
- * DEBOUNCED SYNC
- * Batches multiple rapid changes into a single sync operation
+ * DEBOUNCED SAVE
  */
 export function debouncedSaveConversation(userId: string, conversation: Conversation): void {
     syncState.pendingChanges++;
@@ -459,43 +305,30 @@ export function debouncedSaveConversation(userId: string, conversation: Conversa
     }, SYNC_DEBOUNCE_MS);
 }
 
-/**
- * GET CURRENT SYNC STATE
- */
 export function getSyncState(): SyncState {
     return { ...syncState };
 }
 
-/**
- * FORCE IMMEDIATE SYNC
- */
 export async function forceSyncNow(userId: string): Promise<void> {
     if (syncDebounceTimer) {
         clearTimeout(syncDebounceTimer);
         syncDebounceTimer = null;
     }
     
-    // Import and get current conversations from local store
     const { useChatStore } = await import("./store");
     const conversations = useChatStore.getState().conversations;
     
     await syncConversationsToCloud(userId, conversations);
 }
 
-/**
- * MERGE CLOUD AND LOCAL CONVERSATIONS
- * Resolves conflicts using "last write wins" strategy
- */
 export function mergeConversations(
     local: Conversation[], 
     cloud: Conversation[]
 ): Conversation[] {
     const merged = new Map<string, Conversation>();
 
-    // Add all cloud conversations first
     cloud.forEach((conv) => merged.set(conv.id, conv));
 
-    // Override with local if local is newer
     local.forEach((localConv) => {
         const cloudConv = merged.get(localConv.id);
         if (!cloudConv || localConv.updatedAt > cloudConv.updatedAt) {
@@ -503,11 +336,9 @@ export function mergeConversations(
         }
     });
 
-    // Sort by updatedAt descending
     return Array.from(merged.values()).sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
-// Export the full service interface
 export const cloudSyncService: CloudSyncService = {
     syncConversationsToCloud,
     fetchConversationsFromCloud,
@@ -519,4 +350,3 @@ export const cloudSyncService: CloudSyncService = {
 };
 
 export default cloudSyncService;
-

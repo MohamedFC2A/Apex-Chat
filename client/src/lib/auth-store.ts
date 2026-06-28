@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { User as FirebaseUser } from "firebase/auth";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 import type { SubscriptionTier, UserWallet, UserSubscription, TransactionHistoryItem } from "@shared/schema";
 
 export interface UserProfile {
@@ -32,7 +32,7 @@ export const DEFAULT_SUBSCRIPTION: UserSubscription = {
 interface AuthStore {
   user: UserProfile | null;
   isLoading: boolean;
-  setUser: (firebaseUser: FirebaseUser | null, tier?: SubscriptionTier, walletData?: Partial<{ wallet: UserWallet; subscription: UserSubscription; history: TransactionHistoryItem[] }>) => void;
+  setUser: (supabaseUser: SupabaseUser | null, tier?: SubscriptionTier, walletData?: Partial<{ wallet: UserWallet; subscription: UserSubscription; history: TransactionHistoryItem[] }>) => void;
   updateTier: (tier: SubscriptionTier) => void;
   updateWallet: (wallet: UserWallet) => void;
   addTransaction: (transaction: TransactionHistoryItem) => void;
@@ -45,17 +45,17 @@ export const useAuthStore = create<AuthStore>()(
       user: null,
       isLoading: true,
 
-      setUser: (firebaseUser, tier = "omni", walletData) => {
-        if (!firebaseUser) {
+      setUser: (supabaseUser, tier = "omni", walletData) => {
+        if (!supabaseUser) {
           set({ user: null, isLoading: false });
           return;
         }
 
         const userProfile: UserProfile = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL,
+          uid: supabaseUser.id,
+          email: supabaseUser.email || null,
+          displayName: supabaseUser.user_metadata?.display_name || supabaseUser.user_metadata?.full_name || null,
+          photoURL: supabaseUser.user_metadata?.avatar_url || null,
           tier: "omni",
           createdAt: Date.now(),
           wallet: walletData?.wallet || DEFAULT_WALLET,

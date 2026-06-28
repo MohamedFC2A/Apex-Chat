@@ -1,23 +1,13 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import {
-  onAuthStateChanged,
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  sendPasswordResetEmail,
-  updateProfile,
-  type User as FirebaseUser,
-} from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth, googleProvider, db } from "./firebase";
+import { supabase } from "./supabase";
 import { useAuthStore } from "./auth-store";
 import { useSubscriptionStore } from "./subscription-store";
 import { useChatStore } from "./store";
 import type { SubscriptionTier } from "@shared/schema";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface AuthContextType {
-  user: FirebaseUser | null;
+  user: SupabaseUser | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
@@ -42,14 +32,14 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const authStore = useAuthStore();
   const subscriptionStore = useSubscriptionStore();
 
-  // Sync Firestore user data with local stores
-  const syncUserData = async (firebaseUser: FirebaseUser | null) => {
-    if (!firebaseUser) {
+  // Sync user data with local stores
+  const syncUserData = async (supabaseUser: SupabaseUser | null) => {
+    if (!supabaseUser) {
       authStore.setUser(null);
       subscriptionStore.setTier("omni");
       useChatStore.getState().clearStore();
@@ -57,21 +47,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     const currentUser = authStore.user;
-    if (currentUser && currentUser.uid !== firebaseUser.uid) {
+    if (currentUser && currentUser.uid !== supabaseUser.id) {
       console.log("[AuthProvider] User switched, clearing chat store");
       useChatStore.getState().clearStore();
     }
 
     try {
-      // Check if browser is online before querying Firestore
+      // Check if browser is online before querying Supabase
       if (typeof navigator !== "undefined" && !navigator.onLine) {
-        authStore.setUser(firebaseUser, "omni");
+        authStore.setUser(supabaseUser as any, "omni");
         subscriptionStore.setTier("omni");
         return;
       }
 
-      const userDocRef = doc(db, "users", firebaseUser.uid);
-      const userDoc = await getDoc(userDocRef);
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", supabaseUser.id)
+        .single();
 
       let tier: SubscriptionTier = "omni";
       let walletData: {
@@ -80,29 +73,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
         history: any[];
       } | undefined;
 
-      if (userDoc.exists()) {
-        const data = userDoc.data();
-        tier = "omni"; // Force to omni
-
-        // Fetch wallet data with defaults for existing users
+      if (profile) {
+        tier = "omni"; // Force to omni as per original logic
         walletData = {
-          wallet: data.wallet || { balance: 0, currency: 'USD' },
-          subscription: data.subscription || { active: false, startDate: '', expiresAt: '', autoRenew: false },
-          history: data.history || [],
+          wallet: profile.wallet || { balance: 0, currency: 'USD' },
+          subscription: profile.subscription || { active: false, startDate: '', expiresAt: '', autoRenew: false },
+          history: profile.history || [],
         };
       } else {
-        // Create new user document with wallet defaults
+        // Create new user profile with wallet defaults
         const defaultWalletData = {
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL,
+          id: supabaseUser.id,
+          email: supabaseUser.email || "",
+          display_name: supabaseUser.user_metadata?.display_name || supabaseUser.user_metadata?.full_name || "",
+          photo_url: supabaseUser.user_metadata?.avatar_url || "",
           tier: "omni",
-          createdAt: Date.now(),
+          created_at: Date.now(),
           wallet: { balance: 0, currency: 'USD' },
           subscription: { active: false, startDate: '', expiresAt: '', autoRenew: false },
           history: [],
         };
-        await setDoc(userDocRef, defaultWalletData);
+        await supabase.from("profiles").insert(defaultWalletData);
         walletData = {
           wallet: defaultWalletData.wallet,
           subscription: defaultWalletData.subscription,
@@ -110,26 +101,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         };
       }
 
-      authStore.setUser(firebaseUser, "omni", walletData);
+      authStore.setUser(supabaseUser as any, "omni", walletData);
       subscriptionStore.setTier("omni");
       
-      // CLOUD SYNC: Load chat history from Firestore (background, non-blocking)
-      useChatStore.getState().loadFromCloud(firebaseUser.uid).catch((err) => {
+      // CLOUD SYNC: Load chat history from Supabase
+      useChatStore.getState().loadFromCloud(supabaseUser.id).catch((err) => {
         console.warn("[AuthProvider] Cloud chat sync failed:", err);
       });
     } catch (error: any) {
-      // CRITICAL: Gracefully handle offline/unavailable errors without crashing
-      if (
-        error?.code === "unavailable" ||
-        error?.code === "failed-precondition" ||
-        error?.message?.includes("offline") ||
-        error?.message?.includes("client is offline")
-      ) {
-        authStore.setUser(firebaseUser, "omni");
-        subscriptionStore.setTier("omni");
-        return;
-      }
-      authStore.setUser(firebaseUser, "omni");
+      console.error("[AuthProvider] Profile sync error:", error);
+      authStore.setUser(supabaseUser as any, "omni");
       subscriptionStore.setTier("omni");
     }
   };
@@ -137,17 +118,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
 
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      // CRITICAL: Release UI immediately, don't wait for Firestore
-      setUser(firebaseUser);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const initialUser = session?.user ?? null;
+      setUser(initialUser);
       setLoading(false);
-
-      // Sync user data in background (non-blocking)
-      if (firebaseUser) {
-        syncUserData(firebaseUser);
+      if (initialUser) {
+        syncUserData(initialUser);
       } else {
         authStore.setUser(null);
         subscriptionStore.setTier("starter");
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const activeUser = session?.user ?? null;
+      setUser(activeUser);
+      setLoading(false);
+
+      if (activeUser) {
+        syncUserData(activeUser);
+      } else {
+        authStore.setUser(null);
+        subscriptionStore.setTier("starter");
+        useChatStore.getState().clearStore();
       }
     });
 
@@ -157,26 +152,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }, 3000);
 
     return () => {
-      unsubscribe();
+      subscription.unsubscribe();
       clearTimeout(timeoutId);
     };
   }, []);
 
   const signInWithGoogle = async () => {
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      await syncUserData(result.user);
-    } catch (error) {
-      throw error;
-    }
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+    if (error) throw error;
   };
 
   const signInWithEmail = async (email: string, password: string) => {
-    try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      await syncUserData(result.user);
-    } catch (error) {
-      throw error;
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
+    if (data.user) {
+      await syncUserData(data.user);
     }
   };
 
@@ -185,59 +183,56 @@ export function AuthProvider({ children }: AuthProviderProps) {
     password: string,
     displayName?: string
   ) => {
-    try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-
-      if (displayName && result.user) {
-        await updateProfile(result.user, { displayName });
-      }
-
-      await syncUserData(result.user);
-    } catch (error) {
-      throw error;
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          display_name: displayName,
+        },
+      },
+    });
+    if (error) throw error;
+    if (data.user) {
+      await syncUserData(data.user);
     }
   };
 
   const resetPassword = async (email: string) => {
-    try {
-      await sendPasswordResetEmail(auth, email);
-    } catch (error) {
-      throw error;
-    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) throw error;
   };
 
   const updateUserProfile = async (displayName?: string, photoURL?: string) => {
     if (!user) throw new Error("No user logged in");
 
-    try {
-      // Update Firebase Auth profile
-      await updateProfile(user, { displayName, photoURL });
+    const { data, error } = await supabase.auth.updateUser({
+      data: {
+        display_name: displayName,
+        avatar_url: photoURL,
+      },
+    });
+    if (error) throw error;
 
-      // Optimistically update local state first
-      const updatedUser = { ...user, displayName, photoURL };
-      setUser(updatedUser as FirebaseUser);
-
-      // Update Firestore in background
-      const userDocRef = doc(db, "users", user.uid);
-      await setDoc(
-        userDocRef,
-        { displayName, photoURL },
-        { merge: true }
-      );
-    } catch (error) {
-      throw error;
+    if (data.user) {
+      setUser(data.user);
+      
+      // Update profile table
+      await supabase.from("profiles").update({
+        display_name: displayName,
+        photo_url: photoURL
+      }).eq("id", user.id);
     }
   };
 
   const logout = async () => {
-    try {
-      await signOut(auth);
-      authStore.logout();
-      subscriptionStore.setTier("starter");
-      useChatStore.getState().clearStore();
-    } catch (error) {
-      throw error;
-    }
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    authStore.logout();
+    subscriptionStore.setTier("starter");
+    useChatStore.getState().clearStore();
   };
 
   const value: AuthContextType = {

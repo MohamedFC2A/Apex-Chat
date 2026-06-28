@@ -1,7 +1,6 @@
 import { create } from "zustand";
-import { doc, setDoc, getDoc } from "firebase/firestore";
-import { db } from "./firebase";
-import { useAuthStore, DEFAULT_WALLET, DEFAULT_SUBSCRIPTION } from "./auth-store";
+import { supabase } from "./supabase";
+import { useAuthStore } from "./auth-store";
 import type {
     SubscriptionTier,
     UserWallet,
@@ -37,16 +36,10 @@ export interface WalletError {
 
 // ========== HELPER FUNCTIONS ==========
 
-/**
- * Check if the browser is currently online
- */
 function isOnline(): boolean {
     return typeof navigator !== 'undefined' ? navigator.onLine : true;
 }
 
-/**
- * Create a standardized error object
- */
 function createWalletError(
     code: WalletErrorCode, 
     message: string, 
@@ -55,38 +48,11 @@ function createWalletError(
     return { code, message, recoverable };
 }
 
-/**
- * Parse Firebase error into wallet error
- */
-function parseFirebaseError(error: unknown): WalletError {
-    if (typeof error === 'string') {
-        return createWalletError('TRANSACTION_FAILED', error, true);
-    }
-    
+function parseSupabaseError(error: unknown): WalletError {
     const err = error as any;
-    
-    // Offline errors
-    if (
-        err?.code === 'unavailable' ||
-        err?.code === 'failed-precondition' ||
-        err?.message?.includes('offline') ||
-        err?.message?.includes('client is offline')
-    ) {
-        return createWalletError(
-            'OFFLINE',
-            'You appear to be offline. Please check your connection and try again.',
-            true
-        );
-    }
-    
-    // User not found
-    if (err?.message?.includes('User document not found')) {
-        return createWalletError('USER_NOT_FOUND', 'User account not found.', false);
-    }
-    
     return createWalletError(
         'UNKNOWN',
-        err?.message || 'An unexpected error occurred.',
+        err?.message || 'An unexpected database error occurred.',
         true
     );
 }
@@ -124,14 +90,12 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
     error: null,
 
     addCredit: async (amount, description, userId) => {
-        // Pre-flight check: Are we online?
         if (!isOnline()) {
             const error = createWalletError('OFFLINE', 'Cannot add credit while offline.');
             set({ isLoading: false, error: error.message });
             return { success: false, newBalance: 0 };
         }
         
-        // Input validation
         if (!userId) {
             set({ error: 'User ID is required' });
             return { success: false, newBalance: 0 };
@@ -144,11 +108,18 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
         set({ isLoading: true, error: null });
 
         try {
-            const authStore = useAuthStore.getState();
-            const currentBalance = authStore.user?.wallet.balance || 0;
-            const newBalance = currentBalance + amount;
+            // Get current profile
+            const { data: profile, error: profileError } = await supabase
+                .from("profiles")
+                .select("*")
+                .eq("id", userId)
+                .single();
 
-            // Create transaction record
+            if (profileError || !profile) throw new Error("Profile not found");
+
+            const currentWallet = profile.wallet || { balance: 0, currency: "USD" };
+            const newBalance = (currentWallet.balance || 0) + amount;
+
             const transaction: TransactionHistoryItem = {
                 id: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 date: new Date().toISOString(),
@@ -157,21 +128,28 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
                 description: description,
             };
 
-            // Update local state
             const newWallet: UserWallet = {
                 balance: newBalance,
                 currency: 'USD',
             };
+
+            const currentHistory = profile.history || [];
+
+            // Update to Supabase
+            const { error: updateError } = await supabase
+                .from("profiles")
+                .update({
+                    wallet: newWallet,
+                    history: [transaction, ...currentHistory],
+                })
+                .eq("id", userId);
+
+            if (updateError) throw updateError;
+
+            // Update local state
+            const authStore = useAuthStore.getState();
             authStore.updateWallet(newWallet);
             authStore.addTransaction(transaction);
-
-            // Sync to Firebase
-            const userDocRef = doc(db, "users", userId);
-            const currentHistory = authStore.user?.history || [];
-            await setDoc(userDocRef, {
-                wallet: newWallet,
-                history: [transaction, ...currentHistory],
-            }, { merge: true });
 
             set({ isLoading: false });
             return { success: true, newBalance };
@@ -183,14 +161,12 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
     },
 
     purchasePlan: async (tier, userId) => {
-        // Pre-flight check: Are we online?
         if (!isOnline()) {
             const error = createWalletError('OFFLINE', 'Cannot purchase plan while offline.');
             set({ isLoading: false, error: error.message });
             return { success: false, message: error.message };
         }
         
-        // Input validation
         if (!userId) {
             return { success: false, message: 'User ID is required' };
         }
@@ -201,71 +177,68 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
         set({ isLoading: true, error: null });
 
         try {
-            const { runTransaction } = await import("firebase/firestore");
-            const userDocRef = doc(db, "users", userId);
+            // Get current profile
+            const { data: profile, error: profileError } = await supabase
+                .from("profiles")
+                .select("*")
+                .eq("id", userId)
+                .single();
+
+            if (profileError || !profile) throw new Error("User profile not found");
+
+            const currentBalance = profile.wallet?.balance || 0;
+            const currentTier = profile.tier as SubscriptionTier || 'starter';
             const planPrice = PLAN_PRICES[tier];
 
-            await runTransaction(db, async (transaction) => {
-                const docSnap = await transaction.get(userDocRef);
-                if (!docSnap.exists()) throw "User document not found";
+            if (currentTier === tier) {
+                throw new Error(`You are already subscribed to the ${getTierName(tier)} plan.`);
+            }
 
-                const userData = docSnap.data();
-                const currentBalance = userData.wallet?.balance || 0;
-                const currentTier = userData.tier as SubscriptionTier || 'starter';
+            if (!canUpgradeToTier(currentTier, tier)) {
+                throw new Error(`Cannot downgrade from ${getTierName(currentTier)} to ${getTierName(tier)}. You can only upgrade to higher tiers.`);
+            }
 
-                // 1. ATOMIC VALIDATION
-                if (currentTier === tier) {
-                    throw `You are already subscribed to the ${getTierName(tier)} plan.`;
-                }
+            if (currentBalance < planPrice) {
+                throw new Error(`Insufficient funds. Balance: $${currentBalance}, Required: $${planPrice}`);
+            }
 
-                // CRITICAL: Prevent Downgrades
-                if (!canUpgradeToTier(currentTier, tier)) {
-                    throw `Cannot downgrade from ${getTierName(currentTier)} to ${getTierName(tier)}. You can only upgrade to higher tiers.`;
-                }
+            const newBalance = currentBalance - planPrice;
+            const now = new Date();
+            const expiresAt = new Date(now);
+            expiresAt.setMonth(expiresAt.getMonth() + 1);
 
-                if (currentBalance < planPrice) {
-                    throw `Insufficient funds. Balance: $${currentBalance}, Required: $${planPrice}`;
-                }
+            const newHistoryItem: TransactionHistoryItem = {
+                id: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                date: now.toISOString(),
+                type: 'PLAN_PURCHASE',
+                amount: -planPrice,
+                description: `${tier.charAt(0).toUpperCase() + tier.slice(1)} Plan Purchase`,
+            };
 
-                // 2. CALCULATIONS
-                const newBalance = currentBalance - planPrice;
-                const now = new Date();
-                const expiresAt = new Date(now);
-                expiresAt.setMonth(expiresAt.getMonth() + 1);
+            const currentHistory = profile.history || [];
+            const newHistory = [newHistoryItem, ...currentHistory];
 
-                const newHistoryItem: TransactionHistoryItem = {
-                    id: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                    date: now.toISOString(),
-                    type: 'PLAN_PURCHASE',
-                    amount: -planPrice,
-                    description: `${tier.charAt(0).toUpperCase() + tier.slice(1)} Plan Purchase`,
-                };
+            // Update to Supabase
+            const { error: updateError } = await supabase
+                .from("profiles")
+                .update({
+                    wallet: { balance: newBalance, currency: "USD" },
+                    tier: tier,
+                    subscription: {
+                        active: true,
+                        startDate: now.toISOString(),
+                        expiresAt: expiresAt.toISOString(),
+                        autoRenew: false,
+                    },
+                    history: newHistory
+                })
+                .eq("id", userId);
 
-                const currentHistory = userData.history || [];
-                const newHistory = [newHistoryItem, ...currentHistory];
+            if (updateError) throw updateError;
 
-                // 3. ATOMIC COMMIT
-                transaction.update(userDocRef, {
-                    "wallet.balance": newBalance,
-                    "tier": tier,
-                    "subscription.active": true,
-                    "subscription.startDate": now.toISOString(),
-                    "subscription.expiresAt": expiresAt.toISOString(),
-                    "history": newHistory
-                });
+            // Sync state
+            await get().syncWalletFromFirebase(userId);
 
-                // 4. INSTANT LOCAL SYNC (Inside transaction scope for safety, but state update happens after)
-            });
-
-            // 5. POST-COMMIT STATE UPDATE (Instant UX)
-            // Use get() to access current state for other properties, but override what we just changed
-            const authStore = useAuthStore.getState();
-
-            // Re-fetch strictly just to be safe OR optimistically update
-            // We'll optimistically update based on our known calculation
-            await useWalletStore.getState().syncWalletFromFirebase(userId);
-
-            // Also force subscription store update
             const { useSubscriptionStore } = await import("./subscription-store");
             useSubscriptionStore.getState().setTier(tier);
 
@@ -276,38 +249,29 @@ export const useWalletStore = create<WalletStore>()((set, get) => ({
             };
         } catch (error) {
             console.error("Transaction failed:", error);
-            const errorMessage = typeof error === 'string' ? error : (error as Error).message;
+            const errorMessage = error instanceof Error ? error.message : String(error);
             set({ isLoading: false, error: errorMessage });
             return { success: false, message: errorMessage };
         }
     },
 
     syncWalletFromFirebase: async (userId) => {
-        // Skip sync if offline
-        if (!isOnline()) {
-            console.warn('[WalletStore] Skipping sync - offline');
-            return;
-        }
-        
-        if (!userId) {
-            console.warn('[WalletStore] Skipping sync - no userId');
-            return;
-        }
+        if (!isOnline() || !userId) return;
         
         set({ isLoading: true, error: null });
 
         try {
-            const userDocRef = doc(db, "users", userId);
-            const userDoc = await getDoc(userDocRef);
+            const { data: profile, error: fetchError } = await supabase
+                .from("profiles")
+                .select("*")
+                .eq("id", userId)
+                .single();
 
-            if (userDoc.exists()) {
-                const data = userDoc.data();
+            if (fetchError) throw fetchError;
+
+            if (profile && profile.wallet) {
                 const authStore = useAuthStore.getState();
-
-                // Update wallet if exists
-                if (data.wallet) {
-                    authStore.updateWallet(data.wallet as UserWallet);
-                }
+                authStore.updateWallet(profile.wallet as UserWallet);
             }
 
             set({ isLoading: false });

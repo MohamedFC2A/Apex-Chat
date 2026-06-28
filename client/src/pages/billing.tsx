@@ -40,21 +40,20 @@ export default function BillingPage() {
         
         setIsSeeding(true);
         try {
-            const { doc, setDoc } = await import("firebase/firestore");
-            const { db } = await import("@/lib/firebase");
+            const { supabase } = await import("@/lib/supabase");
             
             let seededCount = 0;
             for (const voucher of MULTI_USE_VOUCHER_SEEDS) {
-                const voucherRef = doc(db, "vouchers", voucher.code);
-                await setDoc(voucherRef, {
+                const { error } = await supabase.from("vouchers").upsert({
                     code: voucher.code,
                     amount: voucher.amount,
-                    maxUses: voucher.maxUses,
+                    max_uses: voucher.maxUses,
                     description: voucher.description,
-                    usedBy: [],
+                    used_by: [],
                     status: 'active',
-                    createdAt: new Date().toISOString()
+                    created_at: new Date().toISOString()
                 });
+                if (error) throw error;
                 seededCount++;
             }
             

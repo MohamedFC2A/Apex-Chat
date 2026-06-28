@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { SubscriptionTier, AIModel, Voucher } from "@shared/schema";
 import { MODELS, MODEL_TIER_MAP } from "@/lib/constants";
+import { supabase } from "./supabase";
 
 interface SubscriptionStore {
     tier: SubscriptionTier;
@@ -14,9 +15,7 @@ interface SubscriptionStore {
 }
 
 const modelTierMap: Record<AIModel, SubscriptionTier> = MODEL_TIER_MAP;
-
 const allModels: AIModel[] = MODELS;
-
 const tierHierarchy = { starter: 0, pro: 1, elite: 2, omni: 3 };
 
 export const useSubscriptionStore = create<SubscriptionStore>()(
@@ -38,7 +37,6 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
                         };
                     }
 
-                    // Normalize code (trim whitespace + uppercase)
                     const normalizedCode = String(code).trim().toUpperCase();
                     if (!normalizedCode) {
                         return {
@@ -47,28 +45,20 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
                         };
                     }
 
-                    // Import Firestore Tools
-                    const { db } = await import("./firebase");
-                    const { collection, query, where, getDocs, limit, doc, runTransaction, arrayUnion } = await import("firebase/firestore");
+                    // Query the voucher
+                    const { data: voucherData, error: fetchError } = await supabase
+                        .from("vouchers")
+                        .select("*")
+                        .eq("code", normalizedCode)
+                        .single();
 
-                    // STEP 1: QUERY-BASED LOOKUP (Find voucher by code field, not doc ID)
-                    const vouchersRef = collection(db, "vouchers");
-                    const q = query(vouchersRef, where("code", "==", normalizedCode), limit(1));
-                    const querySnapshot = await getDocs(q);
-
-                    if (querySnapshot.empty) {
+                    if (fetchError || !voucherData) {
                         return {
                             success: false,
                             message: "Invalid voucher code. Please check and try again.",
                         };
                     }
 
-                    // Get the voucher document (first match)
-                    const voucherDoc = querySnapshot.docs[0];
-                    const voucherRef = voucherDoc.ref;
-                    const voucherData = voucherDoc.data() as Voucher;
-
-                    // Pre-transaction validation (fast-fail checks)
                     if (voucherData.status === "exhausted") {
                         return {
                             success: false,
@@ -76,8 +66,7 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
                         };
                     }
 
-                    // Check if user already used this voucher
-                    const usedByArray = voucherData.usedBy || [];
+                    const usedByArray = voucherData.used_by || [];
                     if (usedByArray.includes(user.uid)) {
                         return {
                             success: false,
@@ -85,91 +74,64 @@ export const useSubscriptionStore = create<SubscriptionStore>()(
                         };
                     }
 
-                    // Transaction Result Variables
-                    let newBalance = 0;
-                    let redeemedAmount = 0;
-                    let remainingUses = 0;
-                    const userRef = doc(db, "users", user.uid);
+                    // Get user profile
+                    const { data: profile, error: profileError } = await supabase
+                        .from("profiles")
+                        .select("*")
+                        .eq("id", user.uid)
+                        .single();
 
-                    // STEP 2: ATOMIC TRANSACTION (Multi-Use Logic)
-                    await runTransaction(db, async (transaction) => {
-                        // 1. RE-READ PHASE (Inside transaction for atomicity)
-                        const voucherSnap = await transaction.get(voucherRef);
-                        const userSnap = await transaction.get(userRef);
-
-                        // 2. VALIDATION PHASE (Re-check inside transaction)
-                        if (!voucherSnap.exists()) {
-                            throw "Voucher disappeared during transaction.";
-                        }
-
-                        const freshVoucherData = voucherSnap.data() as Voucher;
-                        const currentUsedBy = freshVoucherData.usedBy || [];
-                        const maxUses = freshVoucherData.maxUses || 1; // Default to single-use for legacy vouchers
-                        
-                        // CRITICAL: Race condition check (voucher exhausted)
-                        if (freshVoucherData.status === "exhausted") {
-                            throw "This voucher has reached its maximum usage limit.";
-                        }
-                        
-                        // CRITICAL: Check if this user already redeemed (inside transaction)
-                        if (currentUsedBy.includes(user.uid)) {
-                            throw "You have already redeemed this voucher.";
-                        }
-                        
-                        // CRITICAL: Check if max uses reached (race condition protection)
-                        if (currentUsedBy.length >= maxUses) {
-                            throw "This voucher has reached its maximum usage limit.";
-                        }
-                        
-                        // Ensure amount is valid
-                        if (!freshVoucherData.amount || freshVoucherData.amount <= 0) {
-                            throw "This voucher has no credit value.";
-                        }
-
-                        // 3. CALCULATION PHASE
-                        const userData = userSnap.data() || {};
-                        const currentWallet = userData.wallet || { balance: 0, currency: "USD" };
-                        redeemedAmount = freshVoucherData.amount;
-                        newBalance = (currentWallet.balance || 0) + redeemedAmount;
-                        remainingUses = maxUses - (currentUsedBy.length + 1);
-
-                        const transactionRecord = {
-                            id: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                            date: new Date().toISOString(),
-                            type: 'CREDIT_REDEEM',
-                            amount: redeemedAmount,
-                            description: `Redeemed Code ${normalizedCode}`,
+                    if (profileError || !profile) {
+                        return {
+                            success: false,
+                            message: "User profile not found.",
                         };
+                    }
 
-                        const currentHistory = userData.history || [];
+                    const maxUses = voucherData.max_uses || 1;
+                    const redeemedAmount = voucherData.amount;
+                    const currentWallet = profile.wallet || { balance: 0, currency: "USD" };
+                    const newBalance = (currentWallet.balance || 0) + redeemedAmount;
+                    const remainingUses = maxUses - (usedByArray.length + 1);
 
-                        // 4. ATOMIC WRITE PHASE (All-or-nothing commit)
-                        
-                        // Determine if voucher should be marked exhausted
-                        const newUsedByLength = currentUsedBy.length + 1;
-                        const isExhausted = newUsedByLength >= maxUses;
-                        
-                        // Update voucher with user tracking
-                        transaction.update(voucherRef, {
-                            usedBy: arrayUnion(user.uid),
-                            status: isExhausted ? "exhausted" : "active",
-                            lastRedeemedAt: new Date().toISOString(),
-                            lastRedeemedBy: user.uid
-                        });
+                    const transactionRecord = {
+                        id: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                        date: new Date().toISOString(),
+                        type: 'CREDIT_REDEEM',
+                        amount: redeemedAmount,
+                        description: `Redeemed Code ${normalizedCode}`,
+                    };
 
-                        // Credit user wallet and add transaction history
-                        transaction.set(userRef, {
+                    const currentHistory = profile.history || [];
+                    const isExhausted = (usedByArray.length + 1) >= maxUses;
+
+                    // Update voucher
+                    const newUsedBy = [...usedByArray, user.uid];
+                    const { error: voucherUpdateError } = await supabase
+                        .from("vouchers")
+                        .update({
+                            used_by: newUsedBy,
+                            status: isExhausted ? "exhausted" : "active"
+                        })
+                        .eq("code", normalizedCode);
+
+                    if (voucherUpdateError) throw voucherUpdateError;
+
+                    // Update profile
+                    const { error: profileUpdateError } = await supabase
+                        .from("profiles")
+                        .update({
                             wallet: { ...currentWallet, balance: newBalance },
                             history: [transactionRecord, ...currentHistory]
-                        }, { merge: true });
-                    });
+                        })
+                        .eq("id", user.uid);
 
-                    // 6. SYNC LOCAL STATE (Success)
+                    if (profileUpdateError) throw profileUpdateError;
+
+                    // Sync local state
                     const { useWalletStore } = await import("./wallet-store");
-                    // Force a re-fetch to ensure local state matches DB
                     await useWalletStore.getState().syncWalletFromFirebase(user.uid);
 
-                    // Build success message with remaining uses info
                     const successMessage = remainingUses > 0 
                         ? `Voucher redeemed! $${redeemedAmount} added. (${remainingUses} uses remaining)`
                         : `Voucher redeemed! $${redeemedAmount} added. (Last use - voucher exhausted)`;
