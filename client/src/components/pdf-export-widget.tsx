@@ -207,7 +207,7 @@ function generateClientSidePrintHtml(doc: PDFDocument): string {
   `;
 }
 
-export function PDFExportWidget({ jsonText }: { jsonText: string }) {
+export function PDFExportWidget({ jsonText, intentVerified }: { jsonText: string; intentVerified?: boolean }) {
   const parsed = useMemo(() => parsePdfDocument(jsonText), [jsonText]);
   const [documentState, setDocumentState] = useState<PDFDocument | null>(parsed.document);
   const [theme] = useState<"dark" | "light">(parsed.document?.theme === "light" ? "light" : "dark");
@@ -226,6 +226,12 @@ export function PDFExportWidget({ jsonText }: { jsonText: string }) {
   }, [parsed.document]);
 
   const [hasAutoDownloaded, setHasAutoDownloaded] = useState(false);
+
+  if (!intentVerified) {
+    console.warn("Security Safeguard: PDF block blocked from rendering without user confirmation.");
+    const fallbackText = parsed.document?.title || "PDF Document Content (Intent not verified)";
+    return <p className="text-sm text-neutral-400 font-arabic" dir="auto">{fallbackText}</p>;
+  }
 
   // Auto-download PDF once generated and ready
   useEffect(() => {

@@ -1315,7 +1315,7 @@ function WebPreviewModal({ html, onClose }: { html: string; onClose: () => void 
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="w-6 h-6 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 flex items-center justify-center transition-colors sm:hidden animate-none"
+              className="w-6 h-6 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 flex items-center justify-center transition-colors sm:hidden"
               title="Close"
               type="button"
             >
@@ -1419,17 +1419,37 @@ function WebPreviewModal({ html, onClose }: { html: string; onClose: () => void 
           </div>
         )}
 
-        {/* Iframe Renderer */}
-        {url && (
-          <iframe
-            ref={iframeRef}
-            src={url}
-            className="flex-1 w-full bg-white"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
-            onLoad={() => setIsLoaded(true)}
-            title="APEX Unbound Website Preview"
-          />
-        )}
+        {/* Split Window Body */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Left panel (Desktop source code viewport) */}
+          {deviceMode === "desktop" && (
+            <div className="hidden md:flex flex-col w-1/2 border-r border-zinc-800 bg-zinc-950 overflow-hidden">
+              <div className="px-4 py-2 bg-zinc-900 border-b border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-widest font-mono shrink-0">
+                Source HTML Code
+              </div>
+              <pre className="flex-1 p-4 overflow-auto text-xs text-zinc-300 font-mono bg-black/40">
+                <code>{html}</code>
+              </pre>
+            </div>
+          )}
+
+          {/* Right panel (Iframe preview viewport) */}
+          <div className={cn(
+            "h-full relative overflow-hidden bg-white",
+            deviceMode === "mobile" ? "w-full" : "flex-1 md:w-1/2"
+          )}>
+            {url && (
+              <iframe
+                ref={iframeRef}
+                src={url}
+                className="w-full h-full bg-white border-0"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
+                onLoad={() => setIsLoaded(true)}
+                title="APEX Unbound Website Preview"
+              />
+            )}
+          </div>
+        </div>
       </motion.div>
     </div>
   );
@@ -1716,12 +1736,38 @@ function CodeBlockWrapper({ language, code, parentContent }: { language: string;
   const isHtml = language === "html" || language === "htm" ||
     (!language && (/<!DOCTYPE\s+html/i.test(code) || /^\s*<html/i.test(code)));
 
+  const lastUserPrompt = useChatStore((state) => {
+    const activeId = state.activeConversationId;
+    const conv = state.conversations.find((c) => c.id === activeId);
+    const userMsgs = conv?.messages.filter((m) => m.role === "user") ?? [];
+    return userMsgs[userMsgs.length - 1]?.content ?? "";
+  });
+
+  const intentVerified = useMemo(() => {
+    const normalizedPrompt = lastUserPrompt.toLowerCase().trim();
+    if (language === "mcq-quiz") {
+      const explicitQuizIntents = [
+        "اعملي اختبار", "انشئ امتحان", "create a quiz", "test me on", 
+        "generate mcq", "امتحنني", "اسألني في", "سوي اختبار"
+      ];
+      return explicitQuizIntents.some(intent => normalizedPrompt.includes(intent));
+    }
+    if (language === "pdf-document") {
+      const explicitPDFIntents = [
+        "صمم ملف pdf", "حمل الاجابة pdf", "export to pdf", "generate document",
+        "نزلي ملف pdf", "اطبع pdf"
+      ];
+      return explicitPDFIntents.some(intent => normalizedPrompt.includes(intent));
+    }
+    return false;
+  }, [lastUserPrompt, language]);
+
   if (language === "mcq-quiz") {
-    return <MCQQuizWidget jsonText={code} />;
+    return <MCQQuizWidget jsonText={code} intentVerified={intentVerified} />;
   }
 
   if (language === "pdf-document") {
-    return <PDFExportWidget jsonText={code} />;
+    return <PDFExportWidget jsonText={code} intentVerified={intentVerified} />;
   }
 
   const getBundledHtml = () => {

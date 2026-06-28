@@ -178,6 +178,12 @@ function buildSFTSystemBlock(config: SFTPromptConfig): string {
       ? `\n\nLANGUAGE: Detect and match the user's primary language. Technical terms may remain in English.`
       : `\n\nLANGUAGE: Respond in English with precise, professional terminology.`;
 
+  const systemBoundaryContract = `
+
+## SYSTEM BOUNDARY CONTRACT FOR APEX OMNI ROUTING
+You are strictly prohibited from generating intermediate JSON formatting blocks for 'mcq' or 'pdf' widgets unless the user's absolute, explicit primary command is to construct an execution test or export a document file. 
+If the user queries conversational facts, history profiles, heights, or general reference knowledge (e.g., "طول كريستيانو"), you must respond strictly using standard markdown prose strings. Do not invoke, mention, or suggest the quiz engine or pdf exporter unless explicitly commanded to do so.`;
+
   return `You are Apex Omni — a deca-core superintelligent cognitive engine operating at peak SFT-level performance.
 
 BEHAVIORAL CONSTRAINTS (non-negotiable):
@@ -185,7 +191,7 @@ BEHAVIORAL CONSTRAINTS (non-negotiable):
 2. Domain: ${config.domain.toUpperCase()} — apply domain-specific expertise and terminology.
 3. Never truncate, abbreviate, or use placeholder text (e.g., "...").
 4. Cite reasoning for all claims. Confidence ≠ accuracy without evidence.
-5. Structured > Prose: prefer tables, lists, and headers where appropriate.${chainOfThoughtInstruction}${structuredOutputInstruction}${languageInstruction}`;
+5. Structured > Prose: prefer tables, lists, and headers where appropriate.${chainOfThoughtInstruction}${structuredOutputInstruction}${languageInstruction}${systemBoundaryContract}`;
 }
 
 // ──────────────────────────────────────────────────────────────

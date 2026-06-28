@@ -450,7 +450,7 @@ export function ChatInput({
             </div>
 
             {/* Grid of Agents */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               {Object.entries(omniState.agents).map(([agentKey, agent]) => {
                 const IconComponent = agentIcons[agentKey] || Sparkles;
                 const status = agent.status;

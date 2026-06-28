@@ -291,7 +291,25 @@ export function MCQQuizLoadingCard() {
   );
 }
 
-export function MCQQuizWidget({ jsonText }: { jsonText: string }) {
+export function MCQQuizWidget({ jsonText, intentVerified }: { jsonText: string; intentVerified?: boolean }) {
+  const parsedRawJson = useMemo(() => {
+    try {
+      const cleaned = jsonText
+        .replace(/^```mcq-quiz\s*/i, "")
+        .replace(/```$/i, "")
+        .trim();
+      return JSON.parse(cleaned);
+    } catch {
+      return null;
+    }
+  }, [jsonText]);
+
+  if (!intentVerified) {
+    console.warn("Security Safeguard: MCQ block blocked from rendering without user confirmation.");
+    const fallbackText = parsedRawJson?.explanation || parsedRawJson?.description || parsedRawJson?.title || "Quiz Content (Intent not verified)";
+    return <p className="text-sm text-neutral-400 font-arabic" dir="auto">{fallbackText}</p>;
+  }
+
   const parsed = useMemo(() => {
     try {
       return { quiz: normalizeQuiz(jsonText), error: null };

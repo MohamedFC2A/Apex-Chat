@@ -19,7 +19,7 @@ import {
 } from "@shared/pdf";
 import { runApexOmniPipeline } from "./apex-omni/pipeline.js";
 import { getDeepSeekRequestParams, mapDeepSeekModelForTask } from "./deepseek-model-router.js";
-import { runApexSearch } from "./apex-search-engine.js";
+import { runApexSearch, buildApexSearchContext } from "./apex-search-engine.js";
 import { buildApexFootballContext } from "./apex-football-engine.js";
 
 // AI Orchestrator Service - Cerebras Integration
@@ -1418,6 +1418,29 @@ Please review the assembled code and write the "✅ Architecture Notes" explaini
   return { content: cumulativeContent };
 }
 
+export function evaluateComponentIntent(prompt: string): { triggerQuiz: boolean; triggerPDF: boolean } {
+  const normalizedPrompt = prompt.toLowerCase().trim();
+  
+  // Strict check expressions requiring command action words, not just descriptive topic nouns
+  const explicitQuizIntents = [
+    "اعملي اختبار", "انشئ امتحان", "create a quiz", "test me on", 
+    "generate mcq", "امتحنني", "اسألني في", "سوي اختبار"
+  ];
+  
+  const explicitPDFIntents = [
+    "صمم ملف pdf", "حمل الاجابة pdf", "export to pdf", "generate document",
+    "نزلي ملف pdf", "اطبع pdf"
+  ];
+
+  const hasExplicitQuiz = explicitQuizIntents.some(intent => normalizedPrompt.includes(intent));
+  const hasExplicitPDF = explicitPDFIntents.some(intent => normalizedPrompt.includes(intent));
+
+  return {
+    triggerQuiz: hasExplicitQuiz,
+    triggerPDF: hasExplicitPDF
+  };
+}
+
 export async function processMessage(
   request: OrchestratorRequest,
   onChunk?: (chunk: { content?: string; reasoningContent?: string }) => void
@@ -1448,7 +1471,9 @@ export async function processMessage(
     throw new Error("God Mode is exclusive to Elite or Omni subscription.");
   }
 
-  if (detectStructuredPdfIntent(request.message)) {
+  const componentIntent = evaluateComponentIntent(request.message);
+
+  if (componentIntent.triggerPDF && detectStructuredPdfIntent(request.message)) {
     const OpenAI = (await import("openai")).default;
     const deepseekKey = process.env.DEEPSEEK_API_KEY;
     if (!deepseekKey) {
@@ -1464,7 +1489,7 @@ export async function processMessage(
     return await generateDedicatedPdfResponse(pdfClient, pdfModel, request, onChunk);
   }
 
-  if (detectStructuredQuizIntent(request.message)) {
+  if (componentIntent.triggerQuiz && detectStructuredQuizIntent(request.message)) {
     const OpenAI = (await import("openai")).default;
     const deepseekKey = process.env.DEEPSEEK_API_KEY;
     if (!deepseekKey) {
@@ -1488,9 +1513,127 @@ export async function processMessage(
     if (!deepseekKey) throw new Error("DEEPSEEK_API_KEY is not configured.");
 
     const omniClient = new OpenAI({ apiKey: deepseekKey, baseURL: "https://api.deepseek.com/v1" });
-    const omniActualModel = mapDeepSeekModelForTask("apex-omni", "reasoning");
+    
+    // Evaluate Prompt Complexity
+    const evaluatePromptComplexity = (msg: string, hist: Array<{ role: string; content: string }> = []): number => {
+      let score = 1;
+      const complexKeywords = [
+        /\b(solve|explain|prove|derive|optimize|refactor|design|architect|debug|analyze|calculate|math|algorithm|mcts|tot)\b/i,
+        /(حل|شرح|تصميم|رياضيات|حساب|برمجة|تحسين|خوارزمية|خطوة بخطوة)/i,
+        /code|شيفرة|كود/i
+      ];
+      for (const kw of complexKeywords) {
+        if (kw.test(msg)) score += 2;
+      }
+      if (msg.length > 600) score += 3;
+      else if (msg.length > 200) score += 1.5;
+      if (hist.length > 6) score += 2;
+      else if (hist.length > 2) score += 1;
+      return Math.min(10, Math.max(1, score));
+    };
 
-    // Build the base system prompt (used as context inside the pipeline)
+    const complexity = evaluatePromptComplexity(request.message, request.conversationHistory);
+    console.log(`[Complexity Profiler] Score: ${complexity}/10`);
+
+    // Level 1 Stream: Direct Token Return (Complexity <= 3)
+    if (complexity <= 3) {
+      console.log(`[Orchestrator] Level 1 Stream: Direct Token Return (Complexity ${complexity} <= 3)`);
+      if (onChunk) {
+        onChunk({ content: `**[Phase 1] Level 1 Stream: Direct Token Return**\n` });
+        onChunk({ content: `> Low complexity detected (${complexity}/10). Initiating direct token stream...\n\n` });
+      }
+      const fastModel = "deepseek-chat";
+      const messages = [
+        { role: "system" as const, content: buildCerebrasSystemPrompt("apex-flash", mode, features, request.clientLocalTime) },
+        ...(request.conversationHistory || []).map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+        { role: "user" as const, content: request.message }
+      ];
+
+      let content = "";
+      if (onChunk) {
+        const stream = await omniClient.chat.completions.create({
+          model: fastModel,
+          messages,
+          max_tokens: 2048,
+          stream: true,
+          temperature: 0.5
+        });
+        for await (const chunk of stream as any) {
+          const text = chunk.choices[0]?.delta?.content || "";
+          if (text) {
+            content += text;
+            onChunk({ content: text });
+          }
+        }
+      } else {
+        const response = await omniClient.chat.completions.create({
+          model: fastModel,
+          messages,
+          max_tokens: 2048,
+          stream: false,
+          temperature: 0.5
+        });
+        content = response.choices[0]?.message?.content || "";
+      }
+      return { content };
+    }
+
+    // Level 2 Stream: RAG + Vision Reranking (3 < Complexity < 7)
+    if (complexity > 3 && complexity < 7) {
+      console.log(`[Orchestrator] Level 2 Stream: RAG + Vision Reranking (Complexity ${complexity})`);
+      if (onChunk) {
+        onChunk({ content: `**[Phase 1] Level 2 Stream: RAG + Vision Reranking**\n` });
+        onChunk({ content: `> Medium complexity detected (${complexity}/10). Performing web search & vision reranking...\n` });
+      }
+      
+      const searchResponse = await runApexSearch(request.message, { intent: "answer" });
+      const searchContext = buildApexSearchContext(searchResponse);
+      
+      if (onChunk) {
+        onChunk({ content: `> Context aggregation complete. Streaming response...\n\n` });
+      }
+
+      let systemPrompt = buildCerebrasSystemPrompt("apex-elite", mode, features, request.clientLocalTime);
+      systemPrompt += `\n\n=== CONTEXT AGGREGATION (RAG & VISION RERANKED) ===\n${searchContext}`;
+
+      const messages = [
+        { role: "system" as const, content: systemPrompt },
+        ...(request.conversationHistory || []).map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+        { role: "user" as const, content: request.message }
+      ];
+
+      let content = "";
+      if (onChunk) {
+        const stream = await omniClient.chat.completions.create({
+          model: "deepseek-chat",
+          messages,
+          max_tokens: 3072,
+          stream: true,
+          temperature: 0.6
+        });
+        for await (const chunk of stream as any) {
+          const text = chunk.choices[0]?.delta?.content || "";
+          if (text) {
+            content += text;
+            onChunk({ content: text });
+          }
+        }
+      } else {
+        const response = await omniClient.chat.completions.create({
+          model: "deepseek-chat",
+          messages,
+          max_tokens: 3072,
+          stream: false,
+          temperature: 0.6
+        });
+        content = response.choices[0]?.message?.content || "";
+      }
+      return { content };
+    }
+
+    // Level 3 Stream: Full Reasoning Engine (Complexity >= 7)
+    console.log(`[Orchestrator] Level 3 Stream: Full Reasoning Engine (Complexity ${complexity} >= 7)`);
+    const omniActualModel = mapDeepSeekModelForTask("apex-omni", "reasoning");
     const omniSystemBase = buildCerebrasSystemPrompt(model, mode, features, request.clientLocalTime);
 
     try {
@@ -1515,7 +1658,6 @@ export async function processMessage(
       };
     } catch (pipelineError: any) {
       console.error("[Orchestrator] Apex Omni Pipeline failed, falling back to standard DeepSeek:", pipelineError.message);
-      // Fall through to standard callCerebras as fallback
     }
   }
 

@@ -229,113 +229,79 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
     >
-      <div className="relative rounded-xl border border-border bg-card/85 backdrop-blur-xl shadow-xl overflow-hidden">
-
-        {/* Top accent line - color shifts with state */}
+      <div className="w-full rounded-xl border border-white/5 bg-neutral-950/40 p-4 backdrop-blur-md md:p-6 shadow-xl relative overflow-hidden">
+        {/* Subtle top accent line */}
         <div className={cn(
-          "absolute top-0 left-0 right-0 h-[2px] transition-all duration-700",
+          "absolute top-0 left-0 right-0 h-[1.5px] transition-all duration-700",
           isComplete
-            ? "bg-gradient-to-r from-emerald-600 via-emerald-400 to-emerald-600"
-            : "bg-gradient-to-r from-amber-600 via-amber-400 to-amber-600"
+            ? "bg-gradient-to-r from-emerald-500/40 via-emerald-400/40 to-emerald-500/40"
+            : "bg-gradient-to-r from-amber-500/40 via-amber-400/40 to-amber-500/40"
         )} />
 
-        {/* Subtle grid background */}
-        <div
-          className="absolute inset-0 opacity-[0.015] dark:opacity-[0.025] pointer-events-none"
-          style={{
-            backgroundImage: `
-              linear-gradient(currentColor 1px, transparent 1px),
-              linear-gradient(90deg, currentColor 1px, transparent 1px)
-            `,
-            backgroundSize: "24px 24px",
-          }}
-        />
-
-        {/* Ambient glow */}
-        <div className={cn(
-          "absolute top-0 right-0 w-48 h-48 rounded-full blur-3xl pointer-events-none opacity-20 transition-colors duration-700",
-          isComplete ? "bg-emerald-500/10" : "bg-amber-500/10"
-        )} />
-
-        <div className="relative z-10 p-4">
-
-          {/* ── HEADER ── */}
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <div className="flex items-center gap-2.5">
-              <div className={cn(
-                "p-1.5 rounded-md border transition-colors duration-500",
-                isComplete ? "bg-emerald-500/10 border-emerald-500/20" : "bg-amber-500/10 border-amber-500/20"
-              )}>
-                <Network className={cn("w-3.5 h-3.5 transition-colors duration-500", isComplete ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400 animate-pulse")} />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold tracking-[0.15em] text-foreground uppercase">
-                  Apex Omni — Deca-Core
-                </p>
-                <p className="text-[8px] text-muted-foreground tracking-widest mt-0.5 uppercase">
-                  {isComplete ? "Cognitive Synthesis Complete" : isSynthesizing ? "Aggregating Agent Outputs" : "Parallel Inference Active"}
-                </p>
+        <div className="relative z-10 flex flex-col gap-4">
+          {/* Header & Progress */}
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-1">
+              <h2 className="font-mono text-xs tracking-widest text-neutral-400 uppercase">
+                {isComplete ? "COGNITIVE SYNTHESIS COMPLETE" : isSynthesizing ? "AGGREGATING AGENT OUTPUTS" : "PARALLEL INFERENCE MATRIX"}
+              </h2>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground">
+                  {completedCount}/{totalAgents} AGENTS COMPLETE
+                </span>
+                <span className={cn(
+                  "text-[10px] font-bold",
+                  isComplete ? "text-emerald-400" : "text-amber-400"
+                )}>
+                  {progressValue}%
+                </span>
               </div>
             </div>
 
-            {/* Live counters */}
-            <div className="flex items-center gap-2">
-              {activeCount > 0 && (
-                <span className="flex items-center gap-1 text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse" />
-                  {activeCount} running
-                </span>
-              )}
-              <span className={cn(
-                "text-[9px] font-bold px-2 py-0.5 rounded-full border tracking-wider",
-                isComplete
-                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                  : "bg-muted text-muted-foreground border-border"
-              )}>
-                {completedCount}/{totalAgents}
-              </span>
-              <div className={cn(
-                "w-2 h-2 rounded-full border",
-                isComplete
-                  ? "bg-emerald-500 border-emerald-400 dark:bg-emerald-400 dark:border-emerald-300 shadow-[0_0_6px_rgba(52,211,153,0.7)]"
-                  : "bg-amber-500 border-amber-400 dark:bg-amber-400 dark:border-amber-300 animate-pulse shadow-[0_0_6px_rgba(251,191,36,0.7)]"
-              )} />
+            {/* Core Progress Bar */}
+            <div className="w-full md:w-64 space-y-1">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-900 border border-white/5">
+                <div
+                  className={cn(
+                    "h-full transition-all duration-300",
+                    isComplete ? "bg-emerald-500" : "bg-amber-500"
+                  )}
+                  style={{ width: `${progressValue}%` }}
+                />
+              </div>
             </div>
           </div>
 
-          {/* ── PIPELINE TRACK ── */}
-          <div className="relative mb-4 bg-muted/40 border border-border/60 rounded-lg px-3 py-3 overflow-x-auto scrollbar-none">
+          {/* ── PIPELINE TRACK (Hidden on mobile) ── */}
+          <div className="relative bg-neutral-950/20 border border-white/5 rounded-lg px-3 py-3 overflow-x-auto scrollbar-none hidden md:block">
             {/* SVG connector rail */}
             <svg
               className="absolute inset-0 w-full h-full pointer-events-none"
               preserveAspectRatio="none"
             >
-              {/* Base dashed rail */}
               <line
                 x1="5%" y1="50%" x2="95%" y2="50%"
-                className="stroke-muted-foreground/30 dark:stroke-border"
+                className="stroke-neutral-800"
                 strokeWidth="1"
                 strokeDasharray="3 4"
               />
-              {/* Animated progress rail */}
               {!isComplete && (
                 <motion.line
                   x1="5%"
                   y1="50%"
                   x2={`${5 + progressValue * 0.9}%`}
                   y2="50%"
-                  className="stroke-amber-500 dark:stroke-amber-400"
+                  className="stroke-amber-500/50"
                   strokeWidth="1.5"
                   strokeDasharray="5 5"
                   animate={{ strokeDashoffset: [0, -20] }}
                   transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
                 />
               )}
-              {/* Complete rail */}
               {isComplete && (
                 <motion.line
                   x1="5%" y1="50%" x2="95%" y2="50%"
-                  className="stroke-emerald-500 dark:stroke-emerald-400"
+                  className="stroke-emerald-500/50"
                   strokeWidth="1.5"
                   initial={{ pathLength: 0 }}
                   animate={{ pathLength: 1 }}
@@ -345,7 +311,7 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
             </svg>
 
             {/* Agent nodes */}
-            <div className="relative z-10 flex items-center justify-between gap-2 min-w-[500px] md:min-w-0">
+            <div className="relative z-10 flex items-center justify-between gap-2">
               {agents.map(({ key, agent }) => {
                 const meta = agentMeta[key];
                 const AgentIcon = meta.icon;
@@ -357,45 +323,36 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
                 return (
                   <button
                     key={key}
-                    onClick={() => {
-                      setPanelOpen(true);
-                      setExpandedAgent(expandedAgent === key ? null : key);
-                    }}
-                    className="flex flex-col items-center gap-1.5 group focus:outline-none flex-shrink-0"
+                    onClick={() => setExpandedAgent(expandedAgent === key ? null : key)}
+                    className="flex flex-col items-center gap-1 group focus:outline-none flex-shrink-0"
                     title={`${meta.name} — ${meta.role}`}
                   >
-                    {/* Node circle */}
                     <div className="relative">
-                      {/* Ping ring for active agents */}
                       {isActive && (
-                        <span className="absolute -inset-1.5 rounded-full border border-amber-500/50 dark:border-amber-400/60 animate-ping" />
+                        <span className="absolute -inset-1 rounded-full border border-amber-500/30 animate-ping" />
                       )}
-                      {/* Selection ring */}
                       {expandedAgent === key && (
-                        <span className="absolute -inset-1 rounded-full border border-foreground/30" />
+                        <span className="absolute -inset-0.5 rounded-full border border-white/20" />
                       )}
-
                       <div className={cn(
-                        "w-6 h-6 rounded-full flex items-center justify-center border transition-all duration-300",
-                        isDone && `${meta.bgColor} ${meta.borderColor} group-hover:scale-110 shadow-sm`,
-                        isActive && "bg-amber-500/20 border-amber-500/60 dark:border-amber-400/60 animate-pulse group-hover:scale-110",
-                        isPending && "bg-muted border-border/50"
+                        "w-5 h-5 rounded-full flex items-center justify-center border transition-all duration-300",
+                        isDone && `${meta.bgColor} ${meta.borderColor} group-hover:scale-105`,
+                        isActive && "bg-amber-500/10 border-amber-500/40 animate-pulse group-hover:scale-105",
+                        isPending && "bg-neutral-900 border-white/5"
                       )}>
                         <AgentIcon className={cn(
-                          "w-3 h-3 transition-colors",
+                          "w-2.5 h-2.5 transition-colors",
                           isDone && meta.color,
-                          isActive && "text-amber-600 dark:text-amber-400",
-                          isPending && "text-muted-foreground/50"
+                          isActive && "text-amber-500",
+                          isPending && "text-neutral-600"
                         )} />
                       </div>
                     </div>
-
-                    {/* Label */}
                     <span className={cn(
-                      "text-[7px] font-bold tracking-wider uppercase leading-none",
-                      isDone && "text-foreground/80 dark:text-zinc-300",
-                      isActive && "text-amber-600 dark:text-amber-400",
-                      isPending && "text-muted-foreground/60"
+                      "text-[6.5px] font-bold tracking-wider uppercase leading-none",
+                      isDone && "text-neutral-400",
+                      isActive && "text-amber-500",
+                      isPending && "text-neutral-600"
                     )}>
                       {meta.shortCode}
                     </span>
@@ -405,230 +362,109 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
             </div>
           </div>
 
-          {/* ── PROGRESS BAR ── */}
-          <div className="space-y-1.5 mb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <Activity className={cn(
-                  "w-3 h-3",
-                  isComplete ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400 animate-pulse"
-                )} />
-                <span className="text-[9px] uppercase tracking-widest font-semibold text-muted-foreground">
-                  {isComplete ? "Synthesis Complete" : isSynthesizing ? "Synthesizing" : "Processing"}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className={cn(
-                  "text-[10px] font-bold tabular-nums",
-                  isComplete ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
-                )}>
-                  {progressValue}%
-                </span>
-              </div>
-            </div>
+          {/* ── LOWER CHECKLIST GRID MATRIX (Deca-Core Checklist) ── */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+            {agents.map(({ key, agent }) => {
+              const meta = agentMeta[key];
+              const AgentIcon = meta.icon;
+              const status = agent.status;
+              const isDone = status === "complete";
+              const isActive = status === "drafting";
+              const isSelected = expandedAgent === key;
 
-            {/* Progress track */}
-            <div className="relative h-1 bg-muted rounded-full overflow-hidden border border-border/30">
-              {/* Animated shimmer on top of progress */}
-              {!isComplete && (
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-background/25 to-transparent"
-                  animate={{ x: ["-100%", "200%"] }}
-                  transition={{ repeat: Infinity, duration: 1.8, ease: "linear" }}
-                />
-              )}
-              <motion.div
-                className={cn(
-                  "h-full rounded-full",
-                  isComplete
-                    ? "bg-gradient-to-r from-emerald-600 to-emerald-400"
-                    : "bg-gradient-to-r from-amber-600 to-amber-400 dark:from-amber-700 dark:to-amber-400"
-                )}
-                initial={{ width: 0 }}
-                animate={{ width: `${progressValue}%` }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              />
-            </div>
-
-            {/* Sub-metrics row */}
-            <div className="flex items-center justify-between pt-0.5 flex-wrap gap-1">
-              <span className="text-[8px] text-muted-foreground/80 uppercase tracking-wider">
-                {completedCount} agents complete · {activeCount} active · {totalAgents - completedCount - activeCount} queued
-              </span>
-              {sources.length > 0 && (
+              return (
                 <button
-                  onClick={() => setShowSources(true)}
-                  className="text-[8px] text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 transition-colors flex items-center gap-1 uppercase tracking-wider font-bold"
+                  key={key}
+                  onClick={() => setExpandedAgent(isSelected ? null : key)}
+                  className={cn(
+                    "flex flex-col items-start p-2.5 rounded-lg border text-[11px] text-left transition-all duration-200",
+                    isDone
+                      ? "bg-emerald-500/[0.02] border-emerald-500/10 text-emerald-400/90 hover:border-emerald-500/30"
+                      : isActive
+                        ? "bg-amber-500/[0.02] border-amber-500/20 text-amber-400/90 animate-pulse hover:border-amber-500/40"
+                        : "bg-white/[0.01] border-white/[0.03] text-zinc-500 hover:border-white/10",
+                    isSelected && (isDone ? "border-emerald-500 bg-emerald-500/5" : isActive ? "border-amber-500 bg-amber-500/5" : "border-zinc-500 bg-zinc-800/10")
+                  )}
                 >
-                  <BookOpen className="w-2.5 h-2.5" />
-                  {sources.length} sources
+                  <div className="flex items-center gap-1.5 truncate w-full mb-1">
+                    <AgentIcon className={cn(
+                      "w-3.5 h-3.5 flex-shrink-0",
+                      isDone ? "text-emerald-400" : isActive ? "text-amber-400" : "text-zinc-600"
+                    )} />
+                    <span className="capitalize truncate font-mono font-semibold">{meta.name}</span>
+                  </div>
+                  <div className="flex items-center justify-between w-full text-[9px] text-muted-foreground/60 mt-auto">
+                    <span>{meta.shortCode}</span>
+                    <span>{status === "complete" ? "DONE" : status === "drafting" ? "ACTIVE" : "QUEUED"}</span>
+                  </div>
                 </button>
-              )}
-            </div>
+              );
+            })}
           </div>
 
-          {/* ── TOGGLE BUTTON ── */}
-          <button
-            onClick={() => setPanelOpen(!panelOpen)}
-            className={cn(
-              "w-full flex items-center justify-center gap-2 py-2 rounded-lg border text-[9px] font-bold uppercase tracking-widest transition-all duration-200",
-              panelOpen
-                ? "bg-muted border-border text-foreground hover:bg-muted/80"
-                : "bg-muted/30 border-border/60 text-muted-foreground hover:border-border hover:text-foreground"
+          {/* Sources and Actions Bar */}
+          <div className="flex items-center justify-between border-t border-white/5 pt-2">
+            <span className="text-[8px] text-muted-foreground/60 uppercase tracking-wider">
+              Parallel execution pool active
+            </span>
+            {sources.length > 0 && (
+              <button
+                onClick={() => setShowSources(true)}
+                className="text-[8px] text-violet-400 hover:text-violet-300 transition-colors flex items-center gap-1 uppercase tracking-wider font-bold"
+              >
+                <BookOpen className="w-2.5 h-2.5" />
+                {sources.length} sources
+              </button>
             )}
-          >
-            {panelOpen ? (
-              <><ChevronUp className="w-3 h-3" /> Collapse Agent Panel</>
-            ) : (
-              <><ChevronDown className="w-3 h-3" /> Expand Agent Panel</>
-            )}
-          </button>
+          </div>
 
-          {/* ── EXPANDABLE AGENT PANEL ── */}
+          {/* Expanded Agent Details (Rendered inline below grid) */}
           <AnimatePresence>
-            {panelOpen && (
+            {expandedAgent && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-                className="overflow-hidden"
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden border-t border-white/5 pt-3"
               >
-                <div className="mt-3 space-y-2 pt-3 border-t border-border/60">
-                  {/* Column headers */}
-                  <div className="grid grid-cols-[auto_1fr_auto_auto] gap-3 px-2 pb-1 border-b border-border/30">
-                    <span className="text-[8px] text-muted-foreground uppercase tracking-widest">Agent</span>
-                    <span className="text-[8px] text-muted-foreground uppercase tracking-widest">Specialization</span>
-                    <span className="text-[8px] text-muted-foreground uppercase tracking-widest hidden md:inline">Output</span>
-                    <span className="text-[8px] text-muted-foreground uppercase tracking-widest">Status</span>
-                  </div>
-
-                  {agents.map(({ key, agent }) => {
-                    const meta = agentMeta[key];
-                    const AgentIcon = meta.icon;
-                    const status = agent.status;
-                    const isExpanded = expandedAgent === key;
-                    const isDone = status === "complete";
-                    const isActive = status === "drafting";
-
-                    return (
-                      <div key={key} className={cn(
-                        "rounded-lg border transition-all duration-200 overflow-hidden",
-                        isExpanded ? `${meta.bgColor} ${meta.borderColor}` : "bg-muted/20 border-border/40 hover:border-border/60"
-                      )}>
-                        {/* Row */}
-                        <button
-                          className="w-full grid grid-cols-[auto_1fr_auto_auto] gap-3 items-center px-3 py-2.5 text-left"
-                          onClick={() => setExpandedAgent(isExpanded ? null : key)}
-                        >
-                          {/* Icon + name */}
-                          <div className={cn(
-                            "p-1.5 rounded-md border",
-                            isDone ? `${meta.bgColor} ${meta.borderColor}` : "bg-muted border-border"
-                          )}>
-                            <AgentIcon className={cn(
-                              "w-3 h-3",
-                              isDone ? meta.color : isActive ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground/60"
-                            )} />
-                          </div>
-
-                          {/* Specialization */}
-                          <div className="min-w-0">
-                            <p className={cn(
-                              "text-[10px] font-bold leading-none mb-1",
-                              isDone ? "text-foreground/90 dark:text-zinc-200" : isActive ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground"
-                            )}>
-                              {meta.name}
-                            </p>
-                            <p className="text-[8px] text-muted-foreground/75 truncate leading-none">
-                              {meta.role}
-                            </p>
-                          </div>
-
-                          {/* Output type */}
-                          <span className={cn(
-                            "text-[8px] font-mono tracking-tight px-1.5 py-0.5 rounded border whitespace-nowrap hidden md:inline",
-                            isDone ? `${meta.bgColor} ${meta.color} ${meta.borderColor}` : "text-muted-foreground/80 bg-muted border-border"
-                          )}>
-                            {meta.outputType}
-                          </span>
-
-                          {/* Status */}
-                          <div className="flex items-center gap-1.5">
-                            <StatusPill status={status} />
-                            {isExpanded
-                              ? <ChevronUp className="w-3 h-3 text-muted-foreground/60" />
-                              : <ChevronDown className="w-3 h-3 text-muted-foreground/60" />
-                            }
-                          </div>
-                        </button>
-
-                        {/* Expanded content */}
-                        <AnimatePresence>
-                          {isExpanded && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.2 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="px-3 pb-3 pt-1 border-t border-border/30 space-y-2">
-                                {/* Specialization detail */}
-                                <div className="flex items-start gap-2">
-                                  <Target className="w-3.5 h-3.5 text-muted-foreground/60 mt-0.5 flex-shrink-0" />
-                                  <p className="text-[9px] text-muted-foreground leading-relaxed">
-                                    {meta.specialization}
-                                  </p>
-                                </div>
-
-                                {/* Output box */}
-                                {status === "complete" && (agent.response || agent.draft) && (
-                                  <div className="space-y-1">
-                                    <div className="flex items-center gap-1.5">
-                                      <FileCode2 className="w-2.5 h-2.5 text-muted-foreground/60" />
-                                      <span className="text-[8px] text-muted-foreground/60 uppercase tracking-widest font-bold">Agent Output</span>
-                                    </div>
-                                    <div className="bg-black/90 dark:bg-black/60 border border-border/80 rounded-lg p-2.5 max-h-36 overflow-y-auto">
-                                      <pre className={cn(
-                                        "text-[9px] leading-relaxed whitespace-pre-wrap break-words font-mono",
-                                        meta.color
-                                      )}>
-                                        {agent.response || agent.draft || "No output recorded."}
-                                      </pre>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {status === "drafting" && (
-                                  <div className="flex items-center gap-2 py-2">
-                                    <RotateCw className="w-3 h-3 text-amber-600 dark:text-amber-400 animate-spin" />
-                                    <span className="text-[9px] text-amber-600 dark:text-amber-400">
-                                      Analyzing — generating output stream...
-                                    </span>
-                                  </div>
-                                )}
-
-                                {status === "loading" && (
-                                  <div className="flex items-center gap-2 py-2">
-                                    <Clock className="w-3 h-3 text-muted-foreground/60" />
-                                    <span className="text-[9px] text-muted-foreground/60">
-                                      Queued — awaiting cognitive dispatch slot
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                {(() => {
+                  const meta = agentMeta[expandedAgent];
+                  const agentData = state.agents[expandedAgent];
+                  const status = agentData?.status;
+                  return (
+                    <div className={cn("p-3 rounded-lg border", meta.borderColor, meta.bgColor)}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-[10px] text-white tracking-wider font-mono">
+                          {meta.name.toUpperCase()} OUTPUT Log
+                        </span>
+                        <span className="text-[8px] px-1.5 py-0.5 rounded border border-white/10 uppercase tracking-widest font-mono">
+                          {status}
+                        </span>
                       </div>
-                    );
-                  })}
-                </div>
+                      
+                      {status === "complete" && (agentData.response || agentData.draft) ? (
+                        <div className="bg-black/40 border border-white/5 rounded p-2.5 max-h-36 overflow-y-auto">
+                          <pre className={cn("text-[9px] leading-relaxed whitespace-pre-wrap break-words font-mono", meta.color)}>
+                            {agentData.response || agentData.draft}
+                          </pre>
+                        </div>
+                      ) : status === "drafting" ? (
+                        <div className="flex items-center gap-2 py-1 text-amber-400 text-[9px] font-mono">
+                          <RotateCw className="w-3 h-3 animate-spin" />
+                          <span>Generating cognitive stream...</span>
+                        </div>
+                      ) : (
+                        <div className="text-zinc-500 text-[9px] font-mono">
+                          Awaiting execution slot...
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </motion.div>
             )}
           </AnimatePresence>
-
         </div>
       </div>
 
