@@ -18,8 +18,8 @@ export default function SettingsPage() {
   const authStore = useAuthStore();
   const { toast } = useToast();
 
-  const [displayName, setDisplayName] = useState(user?.displayName || "");
-  const [photoURL, setPhotoURL] = useState(user?.photoURL || "");
+  const [displayName, setDisplayName] = useState(user?.user_metadata?.display_name || "");
+  const [photoURL, setPhotoURL] = useState(user?.user_metadata?.avatar_url || "");
   const [isLoading, setIsLoading] = useState(false);
   const [syncStatus, setSyncStatus] = useState(getSyncState());
   const [isSyncing, setIsSyncing] = useState(false);
@@ -34,10 +34,10 @@ export default function SettingsPage() {
   }, []);
 
   const handleForceSync = async () => {
-    if (!user?.uid) return;
+    if (!user?.id) return;
     setIsSyncing(true);
     try {
-      await forceSyncNow(user.uid);
+      await forceSyncNow(user.id);
       toast({
         title: "✅ Sync Complete",
         description: "All chats synced to cloud successfully.",
@@ -101,7 +101,7 @@ export default function SettingsPage() {
   const userProfile = authStore.user;
   const initials = (displayName || user.email || "U")
     .split(" ")
-    .map((n) => n[0])
+    .map((n: string) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
@@ -145,7 +145,7 @@ export default function SettingsPage() {
             {/* Avatar */}
             <div className="flex flex-col sm:flex-row items-center gap-6 mb-8">
               <Avatar className="w-24 h-24 border-2 border-white/10">
-                <AvatarImage src={photoURL || user.photoURL || undefined} />
+                <AvatarImage src={photoURL || user.user_metadata?.avatar_url || undefined} />
                 <AvatarFallback className="bg-zinc-800 text-white text-2xl">
                   {initials}
                 </AvatarFallback>

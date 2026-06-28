@@ -215,6 +215,130 @@ Be strict and differentiate scores.`;
   return computeHeuristicReward(response, query);
 }
 
+export function computeFormatReward(response: string): number {
+  let score = 1.0;
+  
+  // Code block matching balance check
+  const codeBlocks = response.match(/```/g);
+  if (codeBlocks && codeBlocks.length % 2 !== 0) {
+    score -= 0.3; // Penalty for open/unbalanced code block
+  }
+
+  // Check valid JSON syntax if JSON block is detected
+  const jsonBlocks = response.match(/```json([\s\S]*?)```/gi);
+  if (jsonBlocks) {
+    for (const block of jsonBlocks) {
+      try {
+        const rawJson = block.replace(/```json|```/gi, "").trim();
+        JSON.parse(rawJson);
+      } catch (e) {
+        score -= 0.4;
+      }
+    }
+  }
+
+  return Math.max(0.0, score);
+}
+
+export function computeDebateReward(response: string, query: string): number {
+  let score = 1.0;
+  const responseLower = response.toLowerCase();
+
+  // Safety checks against standard boilerplate AI refusals or hallucination indicators
+  const refusalPatterns = [
+    "i apologize",
+    "i'm sorry, but",
+    "as an ai",
+    "i cannot assist",
+    "against my guidelines"
+  ];
+  for (const pattern of refusalPatterns) {
+    if (responseLower.includes(pattern)) {
+      score -= 0.6; // Refusal penalty
+    }
+  }
+
+  // Structural checks: did it address query-specific metadata constraints
+  if (query.includes("=== ATTACHMENT_EVIDENCE_START ===") && !responseLower.includes("attachment")) {
+    score -= 0.2; // Structural compliance penalty
+  }
+
+  return Math.max(0.0, score);
+}
+
+export function computeSandboxReward(response: string): number {
+  let score = 1.0;
+
+  // Extract JS/TS block and dry-run code parsing to record runtime syntax flags
+  const jsBlocks = response.match(/```(?:javascript|js|typescript|ts)\b([\s\S]*?)```/gi);
+  if (jsBlocks) {
+    for (const block of jsBlocks) {
+      const code = block.replace(/```(?:javascript|js|typescript|ts)\b|```/gi, "").trim();
+      try {
+        new Function(code);
+      } catch (e) {
+        score -= 0.3; // Runtime compilation penalty
+      }
+    }
+  }
+
+  // Check basic HTML tag closure structure
+  const htmlBlocks = response.match(/```html\b([\s\S]*?)```/gi);
+  if (htmlBlocks) {
+    for (const block of htmlBlocks) {
+      const code = block.replace(/```html\b|```/gi, "").trim();
+      const openTags = code.match(/<[a-zA-Z1-6]+[^>]*>/g) || [];
+      const closeTags = code.match(/<\/[a-zA-Z1-6]+>/g) || [];
+      if (Math.abs(openTags.length - closeTags.length) > 5) {
+        score -= 0.2; // Malformed HTML structure
+      }
+    }
+  }
+
+  // CSS structure validation
+  const cssBlocks = response.match(/```css\b([\s\S]*?)```/gi);
+  if (cssBlocks) {
+    for (const block of cssBlocks) {
+      const code = block.replace(/```css\b|```/gi, "").trim();
+      const openBraces = (code.match(/{/g) || []).length;
+      const closeBraces = (code.match(/}/g) || []).length;
+      if (openBraces !== closeBraces) {
+        score -= 0.25; // Malformed CSS code block
+      }
+    }
+  }
+
+  return Math.max(0.0, score);
+}
+
+export async function computeTotalGrpoReward(
+  client: OpenAI,
+  actualModel: string,
+  response: string,
+  query: string,
+  useNeuralReward: boolean,
+  w1 = 0.3,
+  w2 = 0.3,
+  w3 = 0.4
+): Promise<number> {
+  const rFormat = computeFormatReward(response);
+  const rDebate = computeDebateReward(response, query);
+  const rSandbox = computeSandboxReward(response);
+  
+  const rTotal = w1 * rFormat + w2 * rDebate + w3 * rSandbox;
+  
+  // Combine with neural evaluation or heuristic baseline for contextual alignment
+  let baseReward = 0;
+  if (useNeuralReward) {
+    baseReward = await computeNeuralReward(client, actualModel, response, query);
+  } else {
+    baseReward = computeHeuristicReward(response, query);
+  }
+  
+  // 60% weight on the programmatic/mathematical multi-variable compliance, 40% on semantic alignment
+  return 0.6 * rTotal + 0.4 * baseReward;
+}
+
 // ──────────────────────────────────────────────────────────────
 // GRPO Statistics
 // ──────────────────────────────────────────────────────────────
@@ -287,9 +411,7 @@ export async function runGRPO(
 
   // ── Step 2: Compute rewards ──
   const rewardPromises = validOutputs.map((output) =>
-    config.useNeuralReward
-      ? computeNeuralReward(client, actualModel, output, query)
-      : Promise.resolve(computeHeuristicReward(output, query))
+    computeTotalGrpoReward(client, actualModel, output, query, config.useNeuralReward)
   );
   const rewards = await Promise.all(rewardPromises);
 

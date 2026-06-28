@@ -5,3 +5,10 @@ server/public
 vite.config.ts.*
 *.tar.gz
 .env.local
+.env.production
+.env
+.firebase
+.playwright-cli
+output/*.pdf
+deploy.log
+.vercel

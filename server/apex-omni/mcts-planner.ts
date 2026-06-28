@@ -187,13 +187,16 @@ Query: "${query}"
 
 Output a concise but comprehensive response plan (3-7 bullet points):`;
 
+  const proposerSystem = "You are a strategic response planner Proposer. Create structured plans for answering queries.";
+
+  let currentPlan = "";
   try {
     const response = await client.chat.completions.create({
       model: actualModel === "deepseek-reasoner" ? "deepseek-chat" : actualModel,
       messages: [
         {
           role: "system",
-          content: "You are a strategic response planner. Create structured plans for answering queries.",
+          content: proposerSystem,
         },
         { role: "user", content: expansionPrompt },
       ],
@@ -201,17 +204,78 @@ Output a concise but comprehensive response plan (3-7 bullet points):`;
       temperature: 0.7,
       ...(Object.keys(logitBias).length > 0 ? { logit_bias: logitBias } : {}),
     } as any);
-
-    const content = response.choices[0]?.message?.content || "";
-    const child = createNode(content, node);
-    node.children.push(child);
-    return child;
+    currentPlan = response.choices[0]?.message?.content || "";
   } catch (err) {
-    console.warn("[MCTS] Expansion failed:", err);
-    const child = createNode(`[Plan unavailable for: ${query.substring(0, 50)}]`, node);
-    node.children.push(child);
-    return child;
+    console.warn("[MCTS Proposer] Expansion failed:", err);
+    currentPlan = `[Plan unavailable for: ${query.substring(0, 50)}]`;
   }
+
+  // Adversarial Critic Check
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    if (currentPlan.includes("unavailable") || !currentPlan) break;
+
+    const criticPrompt = `Review this response plan for the query: "${query}"
+Plan to review:
+${currentPlan}
+
+Check if this plan misses any key aspects of the query, has logical flaws, or has structural issues. Respond with "PASSED" if it's completely solid. Otherwise list the flaws briefly.`;
+
+    let critique = "";
+    try {
+      const response = await client.chat.completions.create({
+        model: "deepseek-chat", // Fast critic
+        messages: [
+          { role: "system", content: "You are a strict, adversarial plan Critic. Output 'PASSED' if there are no flaws in the plan." },
+          { role: "user", content: criticPrompt }
+        ],
+        max_tokens: 200,
+        temperature: 0.2
+      });
+      critique = response.choices[0]?.message?.content || "";
+    } catch (err) {
+      console.warn(`[MCTS Critic] Verification failed on attempt ${attempt}:`, err);
+      break;
+    }
+
+    if (critique.trim().toUpperCase().includes("PASSED")) {
+      console.log("[MCTS Critic] Plan passed verification.");
+      break;
+    }
+
+    console.log(`[MCTS Critic] Plan failed verification. Feedback: ${critique.substring(0, 100)}...`);
+
+    // Proposer refactors to address flaws
+    const refactorPrompt = `Refactor the response plan to fix the flaws identified by the critic.
+Query: "${query}"
+Current Plan:
+${currentPlan}
+
+Critic Feedback:
+${critique}
+
+Provide the complete refactored plan.`;
+
+    try {
+      const response = await client.chat.completions.create({
+        model: actualModel === "deepseek-reasoner" ? "deepseek-chat" : actualModel,
+        messages: [
+          { role: "system", content: proposerSystem },
+          { role: "user", content: refactorPrompt },
+        ],
+        max_tokens: config.maxTokensPerNode,
+        temperature: 0.5,
+        ...(Object.keys(logitBias).length > 0 ? { logit_bias: logitBias } : {}),
+      } as any);
+      currentPlan = response.choices[0]?.message?.content || currentPlan;
+    } catch (err) {
+      console.warn(`[MCTS Proposer] Refactoring failed on attempt ${attempt}:`, err);
+      break;
+    }
+  }
+
+  const child = createNode(currentPlan, node);
+  node.children.push(child);
+  return child;
 }
 
 // ──────────────────────────────────────────────────────────────

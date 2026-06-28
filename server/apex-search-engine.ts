@@ -365,6 +365,24 @@ export async function runApexSearch(message: string, options: ApexSearchOptions 
       });
     });
 
+    // Vision-Language Reranking Step
+    const imagePayloads = extractBase64Images(message);
+    const candidateTextChunks = organic.map((o: ApexOrganicResult) => `${o.title}\n${o.snippet}`);
+    if (imagePayloads.length > 0 && candidateTextChunks.length > 0) {
+      console.log(`[Apex Search] Intercepting ${candidateTextChunks.length} chunks for Vision Reranking...`);
+      const rerankedTextChunks = await runVisionReranking(message, imagePayloads, candidateTextChunks);
+      const rerankedOrganic: typeof organic = [];
+      for (const chunk of rerankedTextChunks) {
+        const found = organic.find((o: ApexOrganicResult) => `${o.title}\n${o.snippet}` === chunk);
+        if (found) rerankedOrganic.push(found);
+      }
+      for (const item of organic) {
+        if (!rerankedOrganic.includes(item)) rerankedOrganic.push(item);
+      }
+      organic.length = 0;
+      organic.push(...rerankedOrganic);
+    }
+
     const primary = imageAssets[0];
     return {
       organic,
@@ -404,4 +422,84 @@ export function buildApexSearchContext(searchResults: Partial<ApexSearchResponse
   }
 
   return context;
+}
+
+export function extractBase64Images(message: string): string[] {
+  const images: string[] = [];
+  const regex = /data:image\/[a-zA-Z+.-]+;base64,[a-zA-Z0-9+/=]+/g;
+  let match;
+  while ((match = regex.exec(message)) !== null) {
+    images.push(match[0]);
+  }
+  
+  const evidenceStartIdx = message.indexOf("=== ATTACHMENT_EVIDENCE_START ===");
+  const evidenceEndIdx = message.indexOf("=== ATTACHMENT_EVIDENCE_END ===");
+  if (evidenceStartIdx !== -1 && evidenceEndIdx !== -1) {
+    const evidenceBlock = message.substring(evidenceStartIdx, evidenceEndIdx);
+    const base64Regex = /(?:[A-Za-z0-9+/]{4}){15,}/g;
+    let b64Match;
+    while ((b64Match = base64Regex.exec(evidenceBlock)) !== null) {
+      images.push(`data:image/png;base64,${b64Match[0]}`);
+    }
+  }
+  return images;
+}
+
+export async function runVisionReranking(
+  query: string,
+  imagePayloads: string[],
+  textChunks: string[]
+): Promise<string[]> {
+  if (!textChunks || textChunks.length === 0) {
+    return [];
+  }
+  if (!process.env.OPENROUTER_API_KEY) {
+    console.warn("[Vision Reranking] OPENROUTER_API_KEY is not set. Skipping reranking.");
+    return textChunks;
+  }
+
+  try {
+    const documents = textChunks.map((chunk, index) => {
+      if (imagePayloads && imagePayloads.length > 0) {
+        const image = imagePayloads[index % imagePayloads.length];
+        return {
+          text: chunk,
+          image: image.startsWith("data:") ? image : `data:image/jpeg;base64,${image}`
+        };
+      }
+      return chunk;
+    });
+
+    const payload = {
+      model: "nvidia/llama-nemotron-rerank-vl-1b-v2:free",
+      query: query,
+      documents: documents
+    };
+
+    const response = await fetch("https://openrouter.ai/api/v1/rerank", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenRouter Rerank API returned status ${response.status}: ${errorText}`);
+    }
+
+    const result = await response.json();
+    if (result && result.results && Array.isArray(result.results)) {
+      const sortedResults = result.results.sort((a: any, b: any) => b.relevance_score - a.relevance_score);
+      const sortedChunks = sortedResults.map((r: any) => textChunks[r.index]);
+      console.log(`[Vision Reranking] Reranked ${textChunks.length} documents. Top score: ${sortedResults[0]?.relevance_score}`);
+      return sortedChunks;
+    }
+  } catch (error) {
+    console.error("[Vision Reranking] Failed to run reranking:", error);
+  }
+
+  return textChunks;
 }

@@ -272,134 +272,96 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
             </div>
           </div>
 
-          {/* ── PIPELINE TRACK (Hidden on mobile) ── */}
-          <div className="relative bg-neutral-950/20 border border-white/5 rounded-lg px-3 py-3 overflow-x-auto scrollbar-none hidden md:block">
-            {/* SVG connector rail */}
-            <svg
-              className="absolute inset-0 w-full h-full pointer-events-none"
-              preserveAspectRatio="none"
-            >
-              <line
-                x1="5%" y1="50%" x2="95%" y2="50%"
-                className="stroke-neutral-800"
-                strokeWidth="1"
-                strokeDasharray="3 4"
-              />
-              {!isComplete && (
-                <motion.line
-                  x1="5%"
-                  y1="50%"
-                  x2={`${5 + progressValue * 0.9}%`}
-                  y2="50%"
-                  className="stroke-amber-500/50"
-                  strokeWidth="1.5"
-                  strokeDasharray="5 5"
-                  animate={{ strokeDashoffset: [0, -20] }}
-                  transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
-                />
-              )}
-              {isComplete && (
-                <motion.line
+          {/* ── PIPELINE TRACK (Scrollable on mobile) ── */}
+          <div className="bg-neutral-950/20 border border-white/5 rounded-lg px-3 py-3 overflow-x-auto scrollbar-none">
+            <div className="relative min-w-[550px] h-10">
+              {/* SVG connector rail */}
+              <svg
+                className="absolute inset-0 w-full h-full pointer-events-none"
+                preserveAspectRatio="none"
+              >
+                <line
                   x1="5%" y1="50%" x2="95%" y2="50%"
-                  className="stroke-emerald-500/50"
-                  strokeWidth="1.5"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
+                  className="stroke-neutral-800"
+                  strokeWidth="1"
+                  strokeDasharray="3 4"
                 />
-              )}
-            </svg>
+                {!isComplete && (
+                  <motion.line
+                    x1="5%"
+                    y1="50%"
+                    x2={`${5 + progressValue * 0.9}%`}
+                    y2="50%"
+                    className="stroke-amber-500/50"
+                    strokeWidth="1.5"
+                    strokeDasharray="5 5"
+                    animate={{ strokeDashoffset: [0, -20] }}
+                    transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
+                  />
+                )}
+                {isComplete && (
+                  <motion.line
+                    x1="5%" y1="50%" x2="95%" y2="50%"
+                    className="stroke-emerald-500/50"
+                    strokeWidth="1.5"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                  />
+                )}
+              </svg>
 
-            {/* Agent nodes */}
-            <div className="relative z-10 flex items-center justify-between gap-2">
-              {agents.map(({ key, agent }) => {
-                const meta = agentMeta[key];
-                const AgentIcon = meta.icon;
-                const status = agent.status;
-                const isActive = status === "drafting";
-                const isDone = status === "complete";
-                const isPending = status === "loading";
+              {/* Agent nodes */}
+              <div className="relative z-10 flex items-center justify-between gap-2 h-full">
+                {agents.map(({ key, agent }) => {
+                  const meta = agentMeta[key];
+                  const AgentIcon = meta.icon;
+                  const status = agent.status;
+                  const isActive = status === "drafting";
+                  const isDone = status === "complete";
+                  const isPending = status === "loading";
 
-                return (
-                  <button
-                    key={key}
-                    onClick={() => setExpandedAgent(expandedAgent === key ? null : key)}
-                    className="flex flex-col items-center gap-1 group focus:outline-none flex-shrink-0"
-                    title={`${meta.name} — ${meta.role}`}
-                  >
-                    <div className="relative">
-                      {isActive && (
-                        <span className="absolute -inset-1 rounded-full border border-amber-500/30 animate-ping" />
-                      )}
-                      {expandedAgent === key && (
-                        <span className="absolute -inset-0.5 rounded-full border border-white/20" />
-                      )}
-                      <div className={cn(
-                        "w-5 h-5 rounded-full flex items-center justify-center border transition-all duration-300",
-                        isDone && `${meta.bgColor} ${meta.borderColor} group-hover:scale-105`,
-                        isActive && "bg-amber-500/10 border-amber-500/40 animate-pulse group-hover:scale-105",
-                        isPending && "bg-neutral-900 border-white/5"
-                      )}>
-                        <AgentIcon className={cn(
-                          "w-2.5 h-2.5 transition-colors",
-                          isDone && meta.color,
-                          isActive && "text-amber-500",
-                          isPending && "text-neutral-600"
-                        )} />
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setExpandedAgent(expandedAgent === key ? null : key)}
+                      className="flex flex-col items-center gap-1 group focus:outline-none flex-shrink-0"
+                      title={`${meta.name} — ${meta.role}`}
+                    >
+                      <div className="relative">
+                        {isActive && (
+                          <span className="absolute -inset-1 rounded-full border border-amber-500/30 animate-ping" />
+                        )}
+                        {expandedAgent === key && (
+                          <span className="absolute -inset-0.5 rounded-full border border-white/20" />
+                        )}
+                        <div className={cn(
+                          "w-5 h-5 rounded-full flex items-center justify-center border transition-all duration-300",
+                          isDone && `${meta.bgColor} ${meta.borderColor} group-hover:scale-105`,
+                          isActive && "bg-amber-500/10 border-amber-500/40 animate-pulse group-hover:scale-105",
+                          isPending && "bg-neutral-900 border-white/5"
+                        )}>
+                          <AgentIcon className={cn(
+                            "w-2.5 h-2.5 transition-colors",
+                            isDone && meta.color,
+                            isActive && "text-amber-500",
+                            isPending && "text-neutral-600"
+                          )} />
+                        </div>
                       </div>
-                    </div>
-                    <span className={cn(
-                      "text-[6.5px] font-bold tracking-wider uppercase leading-none",
-                      isDone && "text-neutral-400",
-                      isActive && "text-amber-500",
-                      isPending && "text-neutral-600"
-                    )}>
-                      {meta.shortCode}
-                    </span>
-                  </button>
-                );
-              })}
+                      <span className={cn(
+                        "text-[6.5px] font-bold tracking-wider uppercase leading-none",
+                        isDone && "text-neutral-400",
+                        isActive && "text-amber-500",
+                        isPending && "text-neutral-600"
+                      )}>
+                        {meta.shortCode}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-
-          {/* ── LOWER CHECKLIST GRID MATRIX (Deca-Core Checklist) ── */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-            {agents.map(({ key, agent }) => {
-              const meta = agentMeta[key];
-              const AgentIcon = meta.icon;
-              const status = agent.status;
-              const isDone = status === "complete";
-              const isActive = status === "drafting";
-              const isSelected = expandedAgent === key;
-
-              return (
-                <button
-                  key={key}
-                  onClick={() => setExpandedAgent(isSelected ? null : key)}
-                  className={cn(
-                    "flex flex-col items-start p-2.5 rounded-lg border text-[11px] text-left transition-all duration-200",
-                    isDone
-                      ? "bg-emerald-500/[0.02] border-emerald-500/10 text-emerald-400/90 hover:border-emerald-500/30"
-                      : isActive
-                        ? "bg-amber-500/[0.02] border-amber-500/20 text-amber-400/90 animate-pulse hover:border-amber-500/40"
-                        : "bg-white/[0.01] border-white/[0.03] text-zinc-500 hover:border-white/10",
-                    isSelected && (isDone ? "border-emerald-500 bg-emerald-500/5" : isActive ? "border-amber-500 bg-amber-500/5" : "border-zinc-500 bg-zinc-800/10")
-                  )}
-                >
-                  <div className="flex items-center gap-1.5 truncate w-full mb-1">
-                    <AgentIcon className={cn(
-                      "w-3.5 h-3.5 flex-shrink-0",
-                      isDone ? "text-emerald-400" : isActive ? "text-amber-400" : "text-zinc-600"
-                    )} />
-                    <span className="capitalize truncate font-mono font-semibold">{meta.name}</span>
-                  </div>
-                  <div className="flex items-center justify-between w-full text-[9px] text-muted-foreground/60 mt-auto">
-                    <span>{meta.shortCode}</span>
-                    <span>{status === "complete" ? "DONE" : status === "drafting" ? "ACTIVE" : "QUEUED"}</span>
-                  </div>
-                </button>
-              );
-            })}
           </div>
 
           {/* Sources and Actions Bar */}

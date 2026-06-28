@@ -128,43 +128,102 @@ Problem/Query to reason about:
 
 Generate your ${thoughtType} thought process in 2-4 focused paragraphs. Be specific and insightful. This is internal reasoning, not the final answer.`;
 
+  const proposerSystem = `You are a specialized ${thoughtType} proposer reasoning module. Generate initial structural code solutions, mathematical steps, or system logic paths.`;
+
+  let currentThought = "";
   try {
     const response = await client.chat.completions.create({
       model: actualModel === "deepseek-reasoner" ? "deepseek-chat" : actualModel,
       messages: [
         {
           role: "system",
-          content: `You are a specialized ${thoughtType} reasoning module. Generate ${thoughtType} thoughts about problems. Be rigorous and specific.`,
+          content: proposerSystem,
         },
         { role: "user", content: prompt },
       ],
       max_tokens: config.maxTokensPerThought,
       temperature: thoughtType === "creative" ? 0.9 : thoughtType === "analytical" ? 0.4 : 0.6,
     });
-
-    return {
-      id: generateThoughtId(),
-      type: thoughtType,
-      content: response.choices[0]?.message?.content || `[${thoughtType} thought unavailable]`,
-      valueScore: 0, // Will be set by evaluator
-      valuation: "maybe", // Will be set by evaluator
-      depth: parentContext ? 1 : 0,
-      parentIds: [],
-      children: [],
-    };
+    currentThought = response.choices[0]?.message?.content || `[${thoughtType} thought unavailable]`;
   } catch (err) {
-    console.warn(`[ToT] Failed to generate ${thoughtType} thought:`, err);
-    return {
-      id: generateThoughtId(),
-      type: thoughtType,
-      content: `[${thoughtType} reasoning path unavailable]`,
-      valueScore: 0,
-      valuation: "impossible",
-      depth: 0,
-      parentIds: [],
-      children: [],
-    };
+    console.warn(`[ToT] Failed to generate initial ${thoughtType} thought:`, err);
+    currentThought = `[${thoughtType} reasoning path unavailable]`;
   }
+
+  // Adversarial Critic Check and Refactoring (Progression Boundary)
+  // Tree graphs cannot traverse to a child node unless the Proposer refactors content to fix flaws raised by the Critic node.
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    if (currentThought.includes("unavailable")) break;
+
+    const criticPrompt = `Evaluate the following reasoning path for any logical flaws, missing syntax tokens, or edge cases.
+Query: "${query}"
+Proposed thought:
+${currentThought}
+
+Identify critical flaws, missing details, or errors. Be concise but rigorous. If it is completely correct and has no flaws, reply with "PASSED".`;
+
+    let critique = "";
+    try {
+      const response = await client.chat.completions.create({
+        model: "deepseek-chat", // Fast critic
+        messages: [
+          { role: "system", content: "You are a strict, adversarial Critic sub-agent. Identify logical flaws, syntax errors, and edge cases. Output 'PASSED' only if there are absolutely no flaws." },
+          { role: "user", content: criticPrompt }
+        ],
+        max_tokens: 300,
+        temperature: 0.2
+      });
+      critique = response.choices[0]?.message?.content || "";
+    } catch (err) {
+      console.warn(`[ToT Critic] Evaluation failed on attempt ${attempt}:`, err);
+      break;
+    }
+
+    if (critique.trim().toUpperCase().includes("PASSED")) {
+      console.log(`[ToT Critic] Thought branch ${thoughtType} PASSED verification.`);
+      break;
+    }
+
+    console.log(`[ToT Critic] Thought branch ${thoughtType} failed verification. Feedback: ${critique.substring(0, 100)}...`);
+
+    // Proposer refactors to fix flaws
+    const refactorPrompt = `Refactor the reasoning path to correct the flaws raised by the Critic.
+Original Query: "${query}"
+Current Thought:
+${currentThought}
+
+Critic Feedback:
+${critique}
+
+Provide the complete refactored thought process addressing all the critic's points.`;
+
+    try {
+      const response = await client.chat.completions.create({
+        model: actualModel === "deepseek-reasoner" ? "deepseek-chat" : actualModel,
+        messages: [
+          { role: "system", content: proposerSystem },
+          { role: "user", content: refactorPrompt }
+        ],
+        max_tokens: config.maxTokensPerThought,
+        temperature: 0.4
+      });
+      currentThought = response.choices[0]?.message?.content || currentThought;
+    } catch (err) {
+      console.warn(`[ToT Proposer] Refactoring failed on attempt ${attempt}:`, err);
+      break;
+    }
+  }
+
+  return {
+    id: generateThoughtId(),
+    type: thoughtType,
+    content: currentThought,
+    valueScore: 0, // Will be set by evaluator
+    valuation: "maybe", // Will be set by evaluator
+    depth: parentContext ? 1 : 0,
+    parentIds: [],
+    children: [],
+  };
 }
 
 // ──────────────────────────────────────────────────────────────
