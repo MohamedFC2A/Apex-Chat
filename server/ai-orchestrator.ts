@@ -791,22 +791,59 @@ Rules for Highly Detailed, Structured, and Dense Documents (Supporting up to 20 
   "sections": [
     {
       "id": "section-1",
-      "type": "heading" or "paragraph" or "code" or "math" or "table" or "list" or "image" or "divider" or "quote" or "callout" or "qa",
-      "content": "Section content",
+      "type": "heading" or "paragraph" or "code" or "math" or "table" or "list" or "image" or "divider" or "quote" or "callout" or "qa" or "stat-card" or "timeline" or "two-column" or "chart-svg" or "highlight-box" or "badge",
+      "content": "Section content / title",
       "level": 1 | 2 | 3 | 4,
       "language": "python",
       "direction": "rtl" or "ltr",
       "items": ["list item 1", "list item 2"],
       "headers": ["Col 1", "Col 2"],
       "rows": [["Row 1 Col 1", "Row 1 Col 2"]],
-      "variant": "info" | "warning" | "success" | "error",
+      "variant": "info" | "warning" | "success" | "error" | "primary" | "secondary",
       "caption": "Optional caption",
       "question": "Question text for type: qa",
-      "answer": "Answer text for type: qa"
+      "answer": "Answer text for type: qa",
+      
+      // For type: "stat-card" (Sleek UI dashboard widgets)
+      "cards": [
+        { "value": "52", "unit": "%", "label": "Battery Charged", "trend": "up", "trendValue": "2.5h left", "color": "#f59e0b" },
+        { "value": "04:36", "label": "Apps Activity", "color": "#3b82f6" }
+      ],
+
+      // For type: "timeline" (Vertical stepper/process milestones)
+      "events": [
+        { "date": "Phase 1", "title": "Milestone Title", "description": "Details here...", "icon": "⚡", "color": "#10b981" }
+      ],
+
+      // For type: "two-column" (Side-by-side comparative layout)
+      "columns": {
+        "leftHeading": "Column 1 Heading",
+        "rightHeading": "Column 2 Heading",
+        "left": "Left column details...",
+        "right": "Right column details..."
+      },
+
+      // For type: "chart-svg" (High-fidelity inline SVGs)
+      "chartType": "bar" or "pie" or "line" or "donut",
+      "chartTitle": "Chart Title",
+      "chartHeight": 240,
+      "chartData": [
+        { "label": "YouTube", "value": 120, "color": "#ef4444" },
+        { "label": "Telegram", "value": 90, "color": "#3b82f6" }
+      ],
+
+      // For type: "highlight-box" (Sleek panel card)
+      "boxColor": "#3b82f6",
+      "boxIcon": "💡",
+
+      // For type: "badge" (Tag pill groups)
+      "badges": [
+        { "text": "New", "variant": "success" }
+      ]
     }
   ]
 }
-3. Density and Structure: The document must be exceptionally detailed, exhaustive, and massive. Split the topic into multiple headings (H1, H2, H3, H4) followed by deep, highly comprehensive paragraphs. Each paragraph section must be at least 150-250 words long to ensure deep analytical coverage. Avoid shortcuts, placeholders, or brief summaries. Use 25 to 45 sections of various types: heading, paragraph, list, table, code, math, quote, callout, qa, and divider. The document must easily scale to 10-20 A4 pages when printed.
+3. Density and Structure: The document must be exceptionally detailed, exhaustive, and massive. Split the topic into multiple headings (H1, H2, H3, H4) followed by deep, highly comprehensive paragraphs. Each paragraph section must be at least 150-250 words long to ensure deep analytical coverage. Avoid shortcuts, placeholders, or brief summaries. Use 25 to 45 sections of various types: heading, paragraph, list, table, code, math, quote, callout, qa, stat-card, timeline, chart-svg, two-column, highlight-box, badge. Ensure to leverage the advanced widget-like types ("stat-card", "timeline", "chart-svg") to present metrics, steps, comparison charts, and progress segmented metrics cleanly, similar to modern Web3 dashboards.
 4. Tables: Include comprehensive, data-rich comparison tables comparing multiple features, specs, or parameters. Columns should have descriptive headers and rows must contain complete data without placeholders.
 5. Lists & Callouts: Use lists to outline key points, and callouts to highlight warnings, info, success, or errors with appropriate variants.
 6. Q&A Blocks: Use the "qa" section type to construct detailed FAQ or question-and-answer sections (question and answer fields).
