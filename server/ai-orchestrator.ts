@@ -1542,12 +1542,12 @@ export async function processMessage(
   // ── APEX OMNI: Route through full AI pipeline ──────────────────────────────
   if (model === "apex-omni") {
     const OpenAI = (await import("openai")).default;
-    let omniActualModel = process.env.APEX_OMNI_MODEL || "deepseek-reasoner";
+    let omniActualModel = process.env.APEX_OMNI_MODEL || (process.env.OPENROUTER_API_KEY ? "nvidia/nemotron-3-ultra-550b-a55b:free" : "deepseek-reasoner");
     if (omniActualModel.includes("rerank") || omniActualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free") {
-      console.warn(`[Orchestrator] APEX_OMNI_MODEL '${omniActualModel}' is a reranker. Falling back to google/gemini-2.5-flash:free for completions.`);
-      omniActualModel = "google/gemini-2.5-flash:free";
+      console.warn(`[Orchestrator] APEX_OMNI_MODEL '${omniActualModel}' is a reranker. Falling back to nvidia/nemotron-3-ultra-550b-a55b:free for completions.`);
+      omniActualModel = "nvidia/nemotron-3-ultra-550b-a55b:free";
     }
-    const isOpenRouter = omniActualModel.includes("/") || omniActualModel.includes("free") || omniActualModel === "google/gemini-2.5-flash:free";
+    const isOpenRouter = omniActualModel.includes("/") || omniActualModel.includes("free") || omniActualModel === "nvidia/nemotron-3-ultra-550b-a55b:free";
 
     let omniClient: any;
     if (isOpenRouter) {

@@ -113,8 +113,8 @@ export async function runApexOmniPipeline(
   const isOpenRouterModel = actualModel.includes("/") || actualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
   let completionsModel = actualModel;
   if (completionsModel.includes("rerank") || completionsModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free") {
-    console.warn(`[Omni Pipeline] actualModel '${completionsModel}' is a reranker. Falling back to google/gemini-2.5-flash:free.`);
-    completionsModel = "google/gemini-2.5-flash:free";
+    console.warn(`[Omni Pipeline] actualModel '${completionsModel}' is a reranker. Falling back to nvidia/nemotron-3-ultra-550b-a55b:free.`);
+    completionsModel = "nvidia/nemotron-3-ultra-550b-a55b:free";
   }
 
   // Key validation

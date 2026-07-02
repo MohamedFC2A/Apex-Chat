@@ -12,11 +12,6 @@
  *   <|assistant|> (model completes here)
  */
 
-export interface SFTExample {
-  user: string;
-  assistant: string;
-}
-
 export interface SFTPromptConfig {
   domain: "reasoning" | "coding" | "analysis" | "creative" | "research" | "general";
   complexity: number; // 0–10
@@ -24,60 +19,6 @@ export interface SFTPromptConfig {
   requiresStructuredOutput: boolean;
   requiresChainOfThought: boolean;
 }
-
-// ──────────────────────────────────────────────────────────────
-// Domain-specific few-shot SFT examples (bilingual)
-// ──────────────────────────────────────────────────────────────
-
-const SFT_EXAMPLES: Record<SFTPromptConfig["domain"], SFTExample[]> = {
-  reasoning: [
-    {
-      user: "إذا كان لدى أحمد 3 تفاحات وأعطى نصفها لسارة، كم تبقى معه؟",
-      assistant:
-        "<chain_of_thought>\n1. أحمد لديه 3 تفاحات\n2. أعطى نصفها = 3 ÷ 2 = 1.5 تفاحة\n3. تبقى معه: 3 - 1.5 = 1.5 تفاحة\n</chain_of_thought>\n\nتبقى مع أحمد **1.5 تفاحة** (تفاحة ونصف).",
-    },
-    {
-      user: "Explain why the sky is blue using first principles.",
-      assistant:
-        "<chain_of_thought>\n1. Sunlight contains all wavelengths (white light)\n2. Atmosphere contains N₂ and O₂ molecules\n3. Rayleigh scattering: shorter wavelengths scatter more (∝ 1/λ⁴)\n4. Blue light (λ≈450nm) scatters ~5.5× more than red (λ≈700nm)\n5. Scattered blue light reaches our eyes from all directions\n</chain_of_thought>\n\nThe sky appears blue due to **Rayleigh scattering**: atmospheric molecules preferentially scatter shorter (blue) wavelengths of sunlight in all directions, making the sky appear blue from every vantage point.",
-    },
-  ],
-  coding: [
-    {
-      user: "اكتب دالة TypeScript تحسب الـ Fibonacci بطريقة مُحسَّنة.",
-      assistant:
-        "<chain_of_thought>\n- الطريقة العادية: O(2^n) — بطيئة جداً\n- Memoization: O(n) زمناً، O(n) ذاكرة\n- Iterative DP: O(n) زمناً، O(1) ذاكرة — الأفضل\n</chain_of_thought>\n\n```typescript\nfunction fibonacci(n: number): bigint {\n  if (n < 0) throw new RangeError('n must be non-negative');\n  if (n <= 1) return BigInt(n);\n  \n  let prev = 0n, curr = 1n;\n  for (let i = 2; i <= n; i++) {\n    [prev, curr] = [curr, prev + curr];\n  }\n  return curr;\n}\n```\n\n**التعقيد:** زمن O(n) | ذاكرة O(1) | يدعم أعداداً كبيرة جداً عبر `BigInt`.",
-    },
-  ],
-  analysis: [
-    {
-      user: "حلّل مزايا وعيوب الذكاء الاصطناعي التوليدي في التعليم.",
-      assistant:
-        "<chain_of_thought>\nأبعاد التحليل:\n1. جودة التعلم الشخصي\n2. التحقق من الدقة\n3. الاعتماد المفرط\n4. الخصوصية والأمان\n5. الوصول والعدالة\n</chain_of_thought>\n\n### المزايا\n- **تخصيص فوري:** يكيّف المحتوى لمستوى كل طالب\n- **توافر 24/7:** دعم بلا توقف خارج ساعات الدراسة\n- **تنوع أساليب الشرح:** يقدّم نفس المفهوم بطرق متعددة\n\n### العيوب\n- **دقة المعلومات:** قد يولّد معلومات خاطئة بثقة (Hallucination)\n- **الاعتماد المفرط:** يُضعف التفكير النقدي المستقل\n- **الخصوصية:** بيانات الطلاب عرضة للاستغلال",
-    },
-  ],
-  creative: [
-    {
-      user: "اكتب مقدمة قصيدة عن الذكاء الاصطناعي بأسلوب عربي كلاسيكي.",
-      assistant:
-        "يا آلةً تُدرك ما يخفى على البشرِ\nوتنسج الفكر من صمتٍ ومن حجرِ\nأُعجبتُ منك فما عقلٌ يُقاس بها\nوما زمانٌ مضى إلا ورحتِ به",
-    },
-  ],
-  research: [
-    {
-      user: "ما هي أحدث الأبحاث في مجال الحوسبة الكمية لعام 2024؟",
-      assistant:
-        "<chain_of_thought>\nمصادر يجب مراجعتها: Nature, Science, arXiv quant-ph, IBM Research, Google Quantum AI\nمحاور رئيسية: Error Correction, Quantum Advantage, NISQ devices\n</chain_of_thought>\n\nمن أبرز التطورات في 2024:\n\n1. **تصحيح الأخطاء الكمية:** حقّق Google نقطة تحوّل في Logical Qubit stability بمعالج Willow\n2. **تفوّق كمي موسّع:** أُعلن عن مهام تستغرق مليار سنة حاسوبياً أُنجزت في دقائق\n3. **دوائر NISQ:** تطور البوابات المنطقية لـ 100+ qubit مع معدلات خطأ < 0.1%\n\n*المصادر: Nature 2024, Google Quantum AI Blog, IBM Quantum Network*",
-    },
-  ],
-  general: [
-    {
-      user: "ما الفرق بين ML و DL و AI؟",
-      assistant:
-        "<chain_of_thought>\nعلاقة تضمين: AI ⊃ ML ⊃ DL\n</chain_of_thought>\n\n| المصطلح | التعريف | مثال |\n|---|---|---|\n| **AI** | أي نظام يُحاكي الذكاء | محرك شطرنج |\n| **ML** | أنظمة تتعلم من البيانات | توصيات Netflix |\n| **DL** | ML بشبكات عصبية عميقة | ChatGPT, Stable Diffusion |\n\n**الخلاصة:** كل Deep Learning هو Machine Learning، وكل ML هو AI، لكن ليس العكس.",
-    },
-  ],
-};
 
 // ──────────────────────────────────────────────────────────────
 // Complexity & Domain Detection
