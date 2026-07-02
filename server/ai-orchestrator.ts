@@ -545,7 +545,7 @@ async function optimizeSearchQueries(message: string): Promise<{ textQuery: stri
     });
 
     const response = await client.chat.completions.create({
-      model: "deepseek-chat",
+      model: "deepseek-v4-flash",
       messages: [
         {
           role: "system",
@@ -1585,7 +1585,7 @@ export async function processMessage(
       baseURL: "https://api.deepseek.com/v1",
     });
 
-    const pdfModel = "deepseek-reasoner";
+    const pdfModel = "deepseek-v4-pro";
     return await generateDedicatedPdfResponse(pdfClient, pdfModel, request, onChunk);
   }
 
@@ -1609,7 +1609,7 @@ export async function processMessage(
   // ── APEX OMNI: Route through full AI pipeline ──────────────────────────────
   if (model === "apex-omni") {
     const OpenAI = (await import("openai")).default;
-    let omniActualModel = "deepseek-chat";
+    let omniActualModel = "deepseek-v4-flash";
     const isOpenRouter = false;
 
     let omniClient: any;
@@ -1654,8 +1654,8 @@ export async function processMessage(
     // Level 1 Stream: Direct Token Return (Complexity <= 3)
     if (complexity <= 3) {
       console.log(`[Orchestrator] Level 1 Stream: Direct Token Return (Complexity ${complexity} <= 3)`);
-      const fastModel = isOpenRouter ? omniActualModel : "deepseek-reasoner";
-      const fastModelParams = fastModel === "deepseek-reasoner" ? {} : { temperature: 0.5 };
+      const fastModel = isOpenRouter ? omniActualModel : "deepseek-v4-pro";
+      const fastModelParams = getDeepSeekRequestParams(fastModel, 0.5);
       const messages = [
         { role: "system" as const, content: buildCerebrasSystemPrompt("apex-omni", mode, features, request.clientLocalTime) },
         ...(request.conversationHistory || []).map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
@@ -1709,8 +1709,8 @@ export async function processMessage(
         { role: "user" as const, content: buildMultimodalUserMessage(request.message) }
       ];
 
-      const focusedModel = isOpenRouter ? omniActualModel : "deepseek-reasoner";
-      const focusedModelParams = focusedModel === "deepseek-reasoner" ? {} : { temperature: 0.6 };
+      const focusedModel = isOpenRouter ? omniActualModel : "deepseek-v4-pro";
+      const focusedModelParams = getDeepSeekRequestParams(focusedModel, 0.6);
       let content = "";
       if (onChunk) {
         const stream = await omniClient.chat.completions.create({
@@ -2167,12 +2167,12 @@ ${prompt}`;
 
   try {
     const response = await client.chat.completions.create({
-      model: "deepseek-reasoner",
+      model: "deepseek-v4-pro",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
       ],
-      ...getDeepSeekRequestParams("deepseek-reasoner"),
+      ...getDeepSeekRequestParams("deepseek-v4-pro"),
     });
 
     const content = response.choices[0]?.message?.content || "";
@@ -2242,12 +2242,12 @@ Generate a cohesive title and cover page config. Respond ONLY with the \`\`\`pdf
 
   try {
     const response = await client.chat.completions.create({
-      model: "deepseek-reasoner",
+      model: "deepseek-v4-pro",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: text }
       ],
-      ...getDeepSeekRequestParams("deepseek-reasoner"),
+      ...getDeepSeekRequestParams("deepseek-v4-pro"),
     });
 
     const content = response.choices[0]?.message?.content || "";

@@ -268,7 +268,7 @@ export async function runApexOmniPipeline(
   const logitBias = getLogitBiasProfile(queryConfig.domain, true);
   const constraintParams = buildConstrainedAPIParams({
     logitBias: Object.keys(logitBias).length > 0 ? logitBias : undefined,
-    maxTokens: completionsModel === "deepseek-reasoner" ? 8192 : 4096,
+    maxTokens: completionsModel === "deepseek-v4-pro" ? 8192 : 4096,
   });
 
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [

@@ -29,11 +29,11 @@ const DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions";
 
 // Model mapping: ApexChat model → DeepSeek model ID
 const MODEL_MAP: Record<string, string> = {
-  "apex-flash": "deepseek-chat",
-  "apex-pro": "deepseek-reasoner",
-  "apex-elite": "deepseek-reasoner",
-  "apex-omni": "deepseek-chat",
-  "apex-unbound": "deepseek-reasoner",
+  "apex-flash": "deepseek-v4-flash",
+  "apex-pro": "deepseek-v4-pro",
+  "apex-elite": "deepseek-v4-pro",
+  "apex-omni": "deepseek-v4-flash",
+  "apex-unbound": "deepseek-v4-pro",
 };
 
 type DeepSeekTask = "reasoning" | "generation";
@@ -43,15 +43,45 @@ type LightweightMessage = Pick<Message, "role" | "content">;
 // - deepseek-chat    (fast, non-reasoning, gpt-4o equivalent)
 // - deepseek-reasoner (slow, CoT reasoning model)
 function mapDeepSeekModelForClient(model: AIModel, _task: DeepSeekTask): string {
-  return MODEL_MAP[model] || "deepseek-chat";
+  return MODEL_MAP[model] || "deepseek-v4-flash";
 }
 
-function getDeepSeekRequestParams(model: string): Record<string, any> {
-  // deepseek-reasoner does NOT accept temperature or top_p
-  if (model === "deepseek-reasoner") {
-    return {};
+function getDeepSeekRequestParams(model: string, enableThinking = false): Record<string, any> {
+  // deepseek-v4-pro: Chain of Thought is always enabled by default
+  if (model === "deepseek-v4-pro") {
+    return {
+      reasoning_effort: "max",
+      extra_body: {
+        thinking: {
+          type: "enabled",
+        },
+      },
+    };
   }
-  // deepseek-chat accepts temperature
+
+  // deepseek-v4-flash: supports standard parameters and optional thinking mode
+  if (model === "deepseek-v4-flash") {
+    if (enableThinking) {
+      return {
+        reasoning_effort: "high",
+        extra_body: {
+          thinking: {
+            type: "enabled",
+          },
+        },
+      };
+    } else {
+      return {
+        temperature: 0.7,
+        extra_body: {
+          thinking: {
+            type: "disabled",
+          },
+        },
+      };
+    }
+  }
+
   return {
     temperature: 0.7,
   };
@@ -581,7 +611,7 @@ async function clientOptimizeSearchQueries(message: string, apiKey: string): Pro
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
+        model: "deepseek-v4-flash",
         messages: [
           {
             role: "system",
@@ -1090,11 +1120,13 @@ Do not repeat or generate another markdown image for this URL in your response c
 
   console.log(`☁️ Directly calling DeepSeek Cloud (${actualModel}) from browser...`);
 
+  const shouldEnableThinking = model === "apex-omni" || features.thinking || features.deepResearch || reasoningLevel !== "none";
+
   const requestBody: any = {
     model: actualModel,
     messages,
     stream: !!onChunk,
-    ...getDeepSeekRequestParams(actualModel),
+    ...getDeepSeekRequestParams(actualModel, shouldEnableThinking),
   };
 
   const response = await fetch(DEEPSEEK_URL, {

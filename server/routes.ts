@@ -588,7 +588,7 @@ JSON structure:
 }`;
 
       const response = await client.chat.completions.create({
-        model: "deepseek-chat",
+        model: "deepseek-v4-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Generate a question and 3 choices for: "${prompt}"` },

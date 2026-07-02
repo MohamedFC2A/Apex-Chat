@@ -185,7 +185,7 @@ Be strict and differentiate scores.`;
 
     const isOpenRouter = actualModel.includes("/") || actualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
     const evalResponse = await client.chat.completions.create({
-      model: isOpenRouter ? actualModel : "deepseek-chat", // Use fast model for evaluation unless OpenRouter
+      model: isOpenRouter ? actualModel : "deepseek-v4-flash", // Use fast model for evaluation unless OpenRouter
       messages: [
         { role: "system", content: "You are a strict AI response evaluator. Output only valid JSON." },
         { role: "user", content: evaluationPrompt },
