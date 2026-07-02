@@ -17,6 +17,8 @@ import { PDFLoadingCard } from "@/components/pdf-loading-card";
 import type { OmniState } from "@/lib/omni-service";
 import type { UnboundState } from "@/lib/unbound-service";
 import { ThinkingBubble } from "@/components/chat-message";
+import { detectQuizIntent } from "@shared/mcq";
+import { detectPdfIntent } from "@shared/pdf";
 import type { AgentMaskConfiguration } from "@shared/types/v2";
 import ReactMarkdown from "react-markdown";
 import katex from "katex";
@@ -2001,17 +2003,13 @@ export function ChatMessages({
   }, [messages]);
 
   const isQuizRequest = useMemo(() => {
-    return !!(
-      lastUserMessage &&
-      /(?:^|\s)(mcq|msq|quiz|exam|test)(?:\s|$)|اختبار|امتحان|اسئلة اختيار|اختيار من متعدد/i.test(lastUserMessage.content)
-    );
+    if (!lastUserMessage) return false;
+    return detectQuizIntent(lastUserMessage.content);
   }, [lastUserMessage]);
 
   const isPdfRequest = useMemo(() => {
-    return !!(
-      lastUserMessage &&
-      /(?:^|\s)(?:pdf|document|report|export\s+pdf|generate\s+(?:a\s+)?(?:pdf|document|report)|create\s+(?:a\s+)?(?:pdf|document|report))(?:\s|$)|(?:ملف\s*pdf|وثيقة|مستند|تقرير|حول(?:ه|ها)?\s*(?:ل|إلى)?\s*pdf|اعمل(?:ي|لي)?\s*pdf|صد[ّ]?ر)/i.test(lastUserMessage.content)
-    );
+    if (!lastUserMessage) return false;
+    return detectPdfIntent(lastUserMessage.content);
   }, [lastUserMessage]);
 
   useEffect(() => {
@@ -2182,7 +2180,7 @@ export function ChatMessages({
         ))}
 
         {isStreaming && !streamingContent && !streamingReasoning &&
-          selectedModel !== "apex-omni" && selectedModel !== "apex-unbound" && (
+          selectedModel !== "apex-unbound" && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

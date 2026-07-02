@@ -25,6 +25,8 @@ import type { OmniState } from "@/lib/omni-service";
 import { runUnboundService, type UnboundState } from "@/lib/unbound-service";
 import { buildCompactConversationHistory, buildRelevantMemoryContext } from "@/lib/context-engine";
 import type { Message, ChatResponse, AIModel } from "@shared/schema";
+import { detectQuizIntent } from "@shared/mcq";
+import { detectPdfIntent } from "@shared/pdf";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ChatPage() {
@@ -259,6 +261,26 @@ export default function ChatPage() {
       setLastError(null);
       setStreamingContentForConv(thisConvId, "");
       setStreamingReasoningForConv(thisConvId, "");
+
+      const isQuiz = detectQuizIntent(content);
+      const isPdf = detectPdfIntent(content);
+      let progressInterval: any;
+
+      if (isQuiz) {
+        store.setActiveQuizProgress({ current: 5, total: 100 });
+        let currentProgress = 5;
+        progressInterval = window.setInterval(() => {
+          currentProgress = currentProgress >= 92 ? currentProgress : currentProgress + Math.floor(Math.random() * 4) + 1;
+          store.setActiveQuizProgress({ current: currentProgress, total: 100 });
+        }, 400);
+      } else if (isPdf) {
+        store.setActivePdfProgress({ current: 5, total: 100 });
+        let currentProgress = 5;
+        progressInterval = window.setInterval(() => {
+          currentProgress = currentProgress >= 92 ? currentProgress : currentProgress + Math.floor(Math.random() * 4) + 1;
+          store.setActivePdfProgress({ current: currentProgress, total: 100 });
+        }, 400);
+      }
 
       try {
         const compactHistory = buildCompactConversationHistory(existingMessages);
@@ -532,6 +554,12 @@ export default function ChatPage() {
         } else {
           toast({ title: "Error", description: error.message || "Failed to process message. Please try again.", variant: "destructive" });
         }
+      } finally {
+        if (progressInterval) {
+          window.clearInterval(progressInterval);
+        }
+        store.setActiveQuizProgress(null);
+        store.setActivePdfProgress(null);
       }
     },
     [activeConversationId, createConversation, addMessage, selectedModel, serviceMode, tier, features, setIsGenerating, toast, setLocation, reasoningLevel, setOmniStateForConv, setUnboundStateForConv, setStreamingContentForConv, setStreamingReasoningForConv, streamingContentMap]

@@ -209,22 +209,46 @@ export function ChatInput({
       >
         {/* Progress Bar during PDF/Quiz generation */}
         {(activeQuizProgress || activePdfProgress) && (
-          <div 
-            className={cn(
-              "absolute top-0 h-[2px] rounded-t-xl z-10 transition-all duration-300 ease-out bg-zinc-400", 
-              typeof document !== "undefined" && (document.documentElement.dir === "rtl" || document.dir === "rtl")
-                ? "right-0 left-auto" 
-                : "left-0 right-auto"
-            )} 
-            style={{ 
-              width: `${Math.max(
-                activeQuizProgress 
-                  ? (activeQuizProgress.current / activeQuizProgress.total) * 100 
-                  : (activePdfProgress!.current / activePdfProgress!.total) * 100, 
-                5
-              )}%` 
-            }}
-          />
+          <div className="w-full flex flex-col gap-1.5 px-1 py-1.5 border-b border-zinc-900 mb-2">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-zinc-400 font-arabic flex items-center gap-1.5">
+                {activeQuizProgress ? (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                    <span>جاري إنشاء الاختبار التفاعلي (MSQ)...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse shrink-0" />
+                    <span>جاري بناء مستند الـ PDF...</span>
+                  </>
+                )}
+              </span>
+              <span className="text-zinc-400 font-mono text-[10px]">
+                {Math.round(
+                  activeQuizProgress 
+                    ? (activeQuizProgress.current / activeQuizProgress.total) * 100 
+                    : (activePdfProgress!.current / activePdfProgress!.total) * 100
+                )}%
+              </span>
+            </div>
+            <div className="relative w-full h-[3px] bg-zinc-900 rounded-full overflow-hidden">
+              <div 
+                className={cn(
+                  "absolute top-0 h-full rounded-full transition-all duration-300 ease-out",
+                  activeQuizProgress ? "bg-emerald-500" : "bg-violet-500"
+                )}
+                style={{ 
+                  width: `${Math.max(
+                    activeQuizProgress 
+                      ? (activeQuizProgress.current / activeQuizProgress.total) * 100 
+                      : (activePdfProgress!.current / activePdfProgress!.total) * 100, 
+                    5
+                  )}%` 
+                }}
+              />
+            </div>
+          </div>
         )}
 
         {/* File Attachments Preview Row */}
