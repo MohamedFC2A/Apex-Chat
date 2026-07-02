@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/drawer";
 import { extractSourcesAndClean } from "@/lib/sources-helper";
 import { motion, AnimatePresence } from "framer-motion";
-import { sendAIMessage, getAIClientStatus } from "@/lib/ai-client";
+import { sendAIMessage, getAIClientStatus, clientPerformSerperSearch } from "@/lib/ai-client";
 import type { OmniState } from "@/lib/omni-service";
 import { runUnboundService, type UnboundState } from "@/lib/unbound-service";
 import { buildCompactConversationHistory, buildRelevantMemoryContext } from "@/lib/context-engine";
@@ -268,6 +268,29 @@ export default function ChatPage() {
         const isGodModeModel = selectedModel === "apex-unbound";
 
         if (selectedModel === "apex-omni") {
+          // Perform client-side serper search first for Apex Omni Deep Research
+          let searchData: any = { organic: [] };
+          try {
+            const deepseekKey = import.meta.env.VITE_DEEPSEEK_API_KEY || "";
+            searchData = await clientPerformSerperSearch(content, deepseekKey);
+          } catch (err) {
+            console.error("Client search failed:", err);
+          }
+
+          const parsedSources = (searchData.organic || []).map((item: any) => {
+            let domain = "";
+            try {
+              domain = new URL(item.link).hostname.replace("www.", "");
+            } catch {
+              domain = item.link;
+            }
+            return {
+              title: item.title || domain,
+              url: item.link,
+              domain
+            };
+          });
+
           setOmniStateForConv(thisConvId, {
             step: "dispatch",
             agents: {
@@ -282,6 +305,7 @@ export default function ChatPage() {
               futurist:     { model: "futurist",      status: "loading", draft: "" },
               optimizer:    { model: "optimizer",     status: "loading", draft: "" },
             },
+            sources: parsedSources,
           });
 
           setOmniStateForConv(thisConvId, {
@@ -298,6 +322,7 @@ export default function ChatPage() {
               futurist:     { model: "futurist",      status: "complete", draft: "Server reasoning pipeline" },
               optimizer:    { model: "optimizer",     status: "complete", draft: "Server reasoning pipeline" },
             },
+            sources: parsedSources,
           });
 
           response = await sendAIMessage(
@@ -326,6 +351,7 @@ export default function ChatPage() {
                   optimizer:    { model: "optimizer",     status: "complete", draft: "Server reasoning pipeline" },
                 },
                 finalResponse: chunkText,
+                sources: parsedSources,
               });
             },
             userMemoryContext
@@ -349,6 +375,8 @@ export default function ChatPage() {
               optimizer:    { model: "optimizer",     status: "complete", draft: "Server reasoning pipeline" },
             },
             finalResponse: response.content,
+            totalDuration: (response as any).totalDuration || undefined,
+            sources: parsedSources,
           });
         } else if (selectedModel === "apex-unbound") {
           // ── APEX Unbound: route through the new multi-agent pipeline ──

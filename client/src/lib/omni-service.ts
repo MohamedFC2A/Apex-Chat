@@ -13,6 +13,8 @@ export interface OmniState {
   step: "dispatch" | "drafting" | "synthesizing" | "complete";
   agents: Record<string, AgentDraft>;
   finalResponse?: string;
+  totalDuration?: number;
+  sources?: Array<{ title: string; url: string; domain: string }>;
 }
 
 const AGENT_CONFIGS = {

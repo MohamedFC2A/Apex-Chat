@@ -2241,7 +2241,7 @@ function UserMessage({ content }: { content: string }) {
     >
       <div className="max-w-[85%] md:max-w-[78%] relative">
         {/* Gradient border via pseudo-element using box-shadow */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl rounded-tr-md px-4 py-3 shadow-md shadow-black/30 backdrop-blur-sm">
+        <div className="bg-neutral-950 border border-zinc-900 rounded-2xl rounded-tr-md px-4 py-3 shadow-md shadow-black/30">
           <p className="text-[14.5px] text-foreground leading-relaxed whitespace-pre-wrap break-words">{content}</p>
         </div>
       </div>
@@ -2682,8 +2682,8 @@ function AssistantMessage({
   return (
     <motion.div
       className={cn(
-        "flex gap-3 md:gap-4 group p-3.5 md:p-4 rounded-2xl border border-zinc-800/40 bg-zinc-800/25 dark:bg-zinc-800/20 backdrop-blur-md transition-all duration-500 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15)]",
-        isStreaming && "bg-zinc-800/40 border-violet-500/20 shadow-[0_0_25px_rgba(139,92,246,0.04)]"
+        "flex gap-3 md:gap-4 group p-3.5 md:p-4 rounded-2xl border border-zinc-900 bg-neutral-950 transition-all duration-500 shadow-2xl",
+        isStreaming && "bg-neutral-950 border-zinc-800"
       )}
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
@@ -2692,8 +2692,7 @@ function AssistantMessage({
       {/* Per-model gradient avatar */}
       <Avatar className={cn(
         "w-8 h-8 flex-shrink-0 shadow-lg transition-all duration-500",
-        isStreaming && "scale-105 ring-2 ring-violet-500/30",
-        glowColor
+        isStreaming && "scale-105 ring-2 ring-zinc-800"
       )}>
         <AvatarFallback className={`avatar-gradient ${model ? `avatar-${model.replace("apex-", "")}` : "avatar-flash"} border-0`}>
           <ModelIcon className="w-4 h-4 text-white" />

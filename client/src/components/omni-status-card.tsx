@@ -197,7 +197,9 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
   };
 
   const researcherResponse = state.agents.researcher?.response;
-  const sources = extractSources(state.finalResponse, researcherResponse);
+  const sources = state.sources && state.sources.length > 0
+    ? state.sources
+    : extractSources(state.finalResponse, researcherResponse);
 
   // Pixel blocks configuration
   const totalBlocks = 40;
@@ -211,7 +213,7 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
       transition={{ duration: 0.25, ease: "easeOut" }}
     >
       {/* Premium retro terminal card block */}
-      <div className="w-full rounded-xl border border-zinc-800 bg-neutral-950 p-6 shadow-2xl relative overflow-hidden bg-[radial-gradient(#e5e7eb03_1px,transparent_1px)] [background-size:16px_16px]">
+      <div className="w-full rounded-xl border border-zinc-900 bg-black p-6 shadow-2xl relative overflow-hidden">
         
         {/* Flat colored status header accent */}
         <div className={cn(
@@ -269,16 +271,23 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
           </div>
 
           {/* Section 4: Action button and bottom descriptive warning text */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-zinc-800/60 pt-4">
-            <div className={cn(
-              "text-[9px] font-bold tracking-widest uppercase font-mono leading-relaxed",
-              isComplete ? "text-emerald-500" : "text-amber-500"
-            )}>
-              {isComplete
-                ? "COGNITIVE SYNTHESIS COMPLETE / APEX OMNI PIPELINE SHUTDOWN SUCCESSFUL"
-                : isSynthesizing
-                  ? "AGGREGATING COGNITIVE INPUTS / FINAL RESPONSE SYNTHESIS IN PROGRESS"
-                  : "SCALING COMPUTE AT INFERENCE TIME / PARALLEL COGNITIVE AGENTS ACTIVE"}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-zinc-900 pt-4">
+            <div className="flex flex-col gap-1">
+              <div className={cn(
+                "text-[9px] font-bold tracking-widest uppercase font-mono leading-relaxed",
+                isComplete ? "text-emerald-500" : "text-amber-500"
+              )}>
+                {isComplete
+                  ? "COGNITIVE SYNTHESIS COMPLETE / APEX OMNI PIPELINE SHUTDOWN SUCCESSFUL"
+                  : isSynthesizing
+                    ? "AGGREGATING COGNITIVE INPUTS / FINAL RESPONSE SYNTHESIS IN PROGRESS"
+                    : "SCALING COMPUTE AT INFERENCE TIME / PARALLEL COGNITIVE AGENTS ACTIVE"}
+              </div>
+              {state.totalDuration && (
+                <div className="text-[9px] font-bold tracking-widest uppercase font-mono text-zinc-500">
+                  THINKING TIME: <span className="text-zinc-300">{(state.totalDuration / 1000).toFixed(1)}s</span>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2 items-center">
@@ -295,7 +304,7 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
           </div>
 
           {/* Section 5: Agent Grid Track */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2 p-3 bg-black/40 border border-zinc-800/80 rounded-lg">
+          <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2 p-3 bg-black border border-zinc-900 rounded-lg">
             {agents.map(({ key, agent }) => {
               const meta = agentMeta[key];
               const AgentIcon = meta.icon;
@@ -406,25 +415,25 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 12 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-md bg-neutral-950 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden font-mono"
+              className="relative w-full max-w-md bg-black border border-zinc-900 rounded shadow-2xl overflow-hidden font-mono"
             >
               {/* Modal top header accent */}
-              <div className="h-[2px] bg-violet-500" />
+              <div className="h-[2px] bg-zinc-800" />
 
               <div className="p-5">
-                <div className="flex items-center justify-between mb-4 border-b border-zinc-800 pb-3">
+                <div className="flex items-center justify-between mb-4 border-b border-zinc-900 pb-3">
                   <div className="flex items-center gap-2">
-                    <Globe className="w-3.5 h-3.5 text-violet-400" />
+                    <Globe className="w-3.5 h-3.5 text-zinc-400" />
                     <span className="text-[10px] font-extrabold text-white uppercase tracking-widest">
                       Research Sources
                     </span>
-                    <span className="text-[9px] text-violet-400 bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 rounded-full font-bold">
+                    <span className="text-[9px] text-zinc-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded font-bold">
                       {sources.length}
                     </span>
                   </div>
                   <button
                     onClick={() => setShowSources(false)}
-                    className="p-1 rounded-lg hover:bg-zinc-900 text-zinc-400 hover:text-white transition-colors"
+                    className="p-1 rounded hover:bg-zinc-900 text-zinc-400 hover:text-white transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -435,20 +444,20 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
                 </p>
 
                 <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                  {sources.map((source, idx) => (
+                  {sources.map((source: any, idx: number) => (
                     <a
                       key={idx}
                       href={source.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between p-3 rounded bg-zinc-900 border border-zinc-850 hover:border-violet-500/40 hover:bg-zinc-850 group transition-all"
+                      className="flex items-center justify-between p-3 rounded bg-black border border-zinc-900 hover:border-zinc-800 hover:bg-zinc-900/40 group transition-all"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-[8px] text-violet-400 font-bold bg-violet-500/10 border border-violet-500/25 px-1.5 py-0.5 rounded font-mono flex-shrink-0">
+                        <span className="text-[8px] text-zinc-400 font-bold bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded font-mono flex-shrink-0">
                           {String(idx + 1).padStart(2, "0")}
                         </span>
                         <span className="text-[10px] text-zinc-300 group-hover:text-white transition-colors truncate font-semibold">
-                          {source.name}
+                          {source.title || source.name}
                         </span>
                       </div>
                       <ExternalLink className="w-3 h-3 text-zinc-500 group-hover:text-white transition-colors flex-shrink-0" />
@@ -456,10 +465,10 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
                   ))}
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-zinc-800 flex justify-end">
+                <div className="mt-5 pt-3 border-t border-zinc-900 flex justify-end">
                   <button
                     onClick={() => setShowSources(false)}
-                    className="text-[9px] uppercase tracking-widest font-extrabold text-zinc-400 hover:text-white px-4 py-2 rounded border border-zinc-800 hover:border-zinc-650 transition-all font-mono"
+                    className="text-[9px] uppercase tracking-widest font-extrabold text-zinc-400 hover:text-white px-4 py-2 rounded border border-zinc-900 hover:border-zinc-800 transition-all font-mono"
                   >
                     Close
                   </button>

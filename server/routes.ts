@@ -141,7 +141,7 @@ export async function registerRoutes(
         res.setHeader("Connection", "keep-alive");
 
         try {
-          await processMessage({
+          const processResponse = await processMessage({
             message,
             model: targetModel,
             mode,
@@ -160,6 +160,15 @@ export async function registerRoutes(
               conversationId: conversationId || randomUUID()
             })}\n\n`);
           });
+
+          if (processResponse && processResponse.totalDuration) {
+            res.write(`data: ${JSON.stringify({
+              id: randomUUID(),
+              totalDuration: processResponse.totalDuration,
+              model,
+              conversationId: conversationId || randomUUID()
+            })}\n\n`);
+          }
         } catch (err: any) {
           console.error("Streaming error:", err);
           res.write(`data: ${JSON.stringify({ error: err.message || "Failed to process message" })}\n\n`);
@@ -185,6 +194,7 @@ export async function registerRoutes(
         id: randomUUID(),
         content: response.content,
         reasoningContent: response.reasoningContent,
+        totalDuration: response.totalDuration,
         model, // echo the requested model to the client
         conversationId: conversationId || randomUUID(),
       });

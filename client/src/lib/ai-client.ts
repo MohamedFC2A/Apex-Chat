@@ -667,14 +667,14 @@ export async function clientPerformSerperSearch(query: string, deepseekKey: stri
     const { textQuery, imageQuery } = await clientOptimizeSearchQueries(query, deepseekKey);
     console.log(`[Client Serper API] Performing full search: textQuery="${textQuery}", imageQuery="${imageQuery}"...`);
     
-    // 1. Text Search request (fetch 25 results to filter and deduplicate down to top 12)
+    // 1. Text Search request (fetch 100 results to filter and deduplicate down to top 60)
     const searchPromise = fetch("https://google.serper.dev/search", {
       method: "POST",
       headers: {
         "X-API-KEY": SERPER_API_KEY,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ q: textQuery, num: 25 })
+      body: JSON.stringify({ q: textQuery, num: 100 })
     }).then(res => {
       if (!res.ok) throw new Error(`Serper text search failed with status ${res.status}`);
       return res.json();
@@ -787,8 +787,8 @@ export async function clientPerformSerperSearch(query: string, deepseekKey: stri
       });
     }
 
-    // Slice to top 12 to ensure robust context containing at least 10 sources
-    const organic = deduplicatedResults.slice(0, 12);
+    // Slice to top 60 to ensure robust context containing at least 50 sources
+    const organic = deduplicatedResults.slice(0, 60);
 
     const images = imageData.images || [];
     let selectedImage = undefined;
@@ -1321,6 +1321,7 @@ export async function sendAIMessage(
       let fullContent = "";
       let fullReasoning = "";
       let buffer = "";
+      let totalDuration: number | undefined = undefined;
 
       try {
         while (true) {
@@ -1345,6 +1346,10 @@ export async function sendAIMessage(
                   throw new Error(parsed.message || parsed.error);
                 }
 
+                if (parsed.totalDuration) {
+                  totalDuration = parsed.totalDuration;
+                }
+
                 const contentChunk = parsed.content || "";
                 const reasoningChunk = parsed.reasoningContent || "";
 
@@ -1366,9 +1371,10 @@ export async function sendAIMessage(
         id: crypto.randomUUID(),
         content: fullContent,
         reasoningContent: fullReasoning || undefined,
+        totalDuration,
         model,
         conversationId: crypto.randomUUID()
-      };
+      } as any;
     } else {
       const data = await response.json();
       return data;

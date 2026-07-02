@@ -303,7 +303,7 @@ export async function runApexSearch(message: string, options: ApexSearchOptions 
     console.log(`[Apex Search] text="${searchPlan.textQuery}" imageRoles=${searchPlan.imageQueries.length}`);
 
     const [textData, ...imageData] = await Promise.all([
-      serperPost("search", { q: searchPlan.textQuery, num: 20 }, apiKey),
+      serperPost("search", { q: searchPlan.textQuery, num: 100 }, apiKey),
       ...searchPlan.imageQueries.map((imageQuery) => serperPost("images", { q: imageQuery.query, num: 20 }, apiKey)),
     ]);
 
@@ -330,7 +330,7 @@ export async function runApexSearch(message: string, options: ApexSearchOptions 
         seenDomains[item.domain || ""] = count + 1;
         return true;
       })
-      .slice(0, 12);
+      .slice(0, 60);
 
     const usedImageUrls = new Set<string>();
     const imageAssets: ApexImageAsset[] = [];

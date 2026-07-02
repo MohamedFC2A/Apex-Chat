@@ -41,6 +41,7 @@ interface OrchestratorRequest {
 interface OrchestratorResponse {
   content: string;
   reasoningContent?: string;
+  totalDuration?: number;
 }
 
 interface SerperSearchResult {
@@ -1700,6 +1701,7 @@ export async function processMessage(
       return {
         content: omniResult.content,
         reasoningContent: omniResult.reasoningContent,
+        totalDuration: omniResult.pipelineMetadata.totalDuration,
       };
     } catch (pipelineError: any) {
       console.error("[Orchestrator] Apex Omni Restructured Pipeline failed, falling back to standard DeepSeek:", pipelineError.message);

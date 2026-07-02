@@ -1,0 +1,15 @@
+
+> rest-express@1.0.0 dev
+> cross-env NODE_ENV=development tsx server/index.ts
+
+[dotenv@17.2.3] injecting env (8) from .env.local -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+🚀 Server starting...
+📂 Environment file: .env.local
+🔑 CEREBRAS_API_KEY Status: ✅ Loaded
+--------------------
+8:54:31 PM [express] serving on port 5000
+8:54:56 PM [express] GET /api/health 200 in 2ms :: {"status":"ok","provider":"cerebras","apiConfigured":true}
+[V2 Intent Gateway] Widget blocked — no explicit operational command detected
+[Complexity Profiler] Score: 1/10
+[Orchestrator] Level 1 Stream: Direct Token Return (Complexity 1 <= 3)
+8:55:26 PM [express] POST /api/chat 200 in 4996ms :: {"id":"678e84cf-769f-487f-92dd-022d46687a8a","content":"السلام عليكم. ناتج جمع 2 + 2 هو **4**.","model":"apex-omni","conversationId":"7f7f7544-b9e2-4bd2-843a-657228170f68"}
