@@ -24,6 +24,22 @@
 import OpenAI from "openai";
 import { analyzeQuery, buildSFTPrompt, type SFTPromptConfig } from "./sft-prompt-builder.js";
 import { buildConstrainedAPIParams, getLogitBiasProfile } from "./constraint-engine.js";
+import { extractBase64Images } from "../apex-search-engine.js";
+
+function buildMultimodalContent(text: string): any {
+  const base64Images = extractBase64Images(text);
+  if (base64Images.length === 0) {
+    return text;
+  }
+  const cleanText = text.replace(/data:image\/[a-zA-Z+.-]+;base64,[a-zA-Z0-9+/=]+/g, "").replace(/\[Attached Image: [^\]]+\]/g, "").trim();
+  return [
+    { type: "text", text: cleanText || "Describe this image." },
+    ...base64Images.map(img => ({
+      type: "image_url",
+      image_url: { url: img }
+    }))
+  ];
+}
 
 // Helper function to identify network, auth (401), or rate-limit (429) errors
 export function isAuthOrRateLimitError(err: any): boolean {
@@ -179,7 +195,7 @@ export async function runApexOmniPipeline(
         role: m.role as "user" | "assistant",
         content: m.content,
       })),
-      { role: "user", content: userMessage },
+      { role: "user", content: buildMultimodalContent(userMessage) },
     ];
 
     try {
@@ -261,7 +277,7 @@ export async function runApexOmniPipeline(
       role: m.role as "user" | "assistant",
       content: m.content,
     })),
-    { role: "user", content: userMessage },
+    { role: "user", content: buildMultimodalContent(userMessage) },
   ];
 
   try {
@@ -396,7 +412,7 @@ Corrected Response:`;
             role: m.role as "user" | "assistant",
             content: m.content,
           })),
-          { role: "user", content: request.message },
+          { role: "user", content: buildMultimodalContent(request.message) },
         ],
         stream: true,
       } as any);
@@ -417,7 +433,7 @@ Corrected Response:`;
             role: m.role as "user" | "assistant",
             content: m.content,
           })),
-          { role: "user", content: request.message },
+          { role: "user", content: buildMultimodalContent(request.message) },
         ],
         stream: false,
       } as any);

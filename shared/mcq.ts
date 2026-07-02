@@ -133,6 +133,9 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 export function detectQuizIntent(message: string): boolean {
+  if (message.includes("SYSTEM DIRECTIVE: You must output a structured MCQ/MSQ quiz block")) {
+    return true;
+  }
   return QUIZ_INTENT_REGEX.test(message);
 }
 

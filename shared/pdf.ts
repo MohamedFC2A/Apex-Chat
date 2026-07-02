@@ -384,6 +384,9 @@ function detectSectionDirection(text: string): "rtl" | "ltr" {
 }
 
 export function detectPdfIntent(message: string): boolean {
+  if (message.includes("SYSTEM DIRECTIVE: You must output a structured PDF document block")) {
+    return true;
+  }
   return PDF_INTENT_REGEX.test(message);
 }
 

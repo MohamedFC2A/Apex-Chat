@@ -19,7 +19,7 @@ import {
 } from "@shared/pdf";
 import { runApexOmniPipeline } from "./apex-omni/pipeline.js";
 import { getDeepSeekRequestParams, mapDeepSeekModelForTask } from "./deepseek-model-router.js";
-import { runApexSearch, buildApexSearchContext } from "./apex-search-engine.js";
+import { runApexSearch, buildApexSearchContext, extractBase64Images } from "./apex-search-engine.js";
 import { buildApexFootballContext } from "./apex-football-engine.js";
 import { sanitizeContextPayload } from "./context-sanitizer.js";
 
@@ -1440,6 +1440,12 @@ Please review the assembled code and write the "✅ Architecture Notes" explaini
  *   0.95 — Explicit operational cmd  → trigger widget rendering
  */
 export function verifyWidgetGenerationIntent(prompt: string): { triggerQuiz: boolean; triggerPDF: boolean } {
+  if (prompt.includes("SYSTEM DIRECTIVE: You must output a structured MCQ/MSQ quiz block")) {
+    return { triggerQuiz: true, triggerPDF: false };
+  }
+  if (prompt.includes("SYSTEM DIRECTIVE: You must output a structured PDF document block")) {
+    return { triggerQuiz: false, triggerPDF: true };
+  }
   const cleanPrompt = prompt.trim();
 
   // ── Explicit Operational Commands (confidence ≥ 0.95) ──
@@ -1474,6 +1480,20 @@ export function verifyWidgetGenerationIntent(prompt: string): { triggerQuiz: boo
   return { triggerQuiz, triggerPDF };
 }
 
+function buildMultimodalUserMessage(text: string): any {
+  const base64Images = extractBase64Images(text);
+  if (base64Images.length === 0) {
+    return text;
+  }
+  const cleanText = text.replace(/data:image\/[a-zA-Z+.-]+;base64,[a-zA-Z0-9+/=]+/g, "").replace(/\[Attached Image: [^\]]+\]/g, "").trim();
+  return [
+    { type: "text", text: cleanText || "Describe this image." },
+    ...base64Images.map(img => ({
+      type: "image_url",
+      image_url: { url: img }
+    }))
+  ];
+}
 
 export async function processMessage(
   request: OrchestratorRequest,
@@ -1597,7 +1617,7 @@ export async function processMessage(
       const messages = [
         { role: "system" as const, content: buildCerebrasSystemPrompt("apex-omni", mode, features, request.clientLocalTime) },
         ...(request.conversationHistory || []).map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
-        { role: "user" as const, content: request.message }
+        { role: "user" as const, content: buildMultimodalUserMessage(request.message) }
       ];
 
       let content = "";
@@ -1644,7 +1664,7 @@ export async function processMessage(
       const messages = [
         { role: "system" as const, content: systemPrompt },
         ...(request.conversationHistory || []).map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
-        { role: "user" as const, content: request.message }
+        { role: "user" as const, content: buildMultimodalUserMessage(request.message) }
       ];
 
       const focusedModel = isOpenRouter ? omniActualModel : "deepseek-reasoner";
@@ -1930,7 +1950,7 @@ Do not repeat or generate another markdown image for this URL in your response c
       role: m.role as "user" | "assistant",
       content: m.content,
     })),
-    { role: "user" as const, content: effectiveUserMessage },
+    { role: "user" as const, content: buildMultimodalUserMessage(effectiveUserMessage) },
   ];
 
   const task = request.model === "apex-unbound" || request.model === "apex-omni" ? "reasoning" : "generation";

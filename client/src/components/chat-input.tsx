@@ -11,9 +11,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { 
-  ArrowUp, Square, Brain, Search, Code2, Lock, Mic, Globe
+  ArrowUp, Square, Brain, Search, Code2, Lock, Mic, Globe, X, FileText, FileDown, BookOpen
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import type { UnboundState } from "@/lib/unbound-service";
 import type { OmniState } from "@/lib/omni-service";
 
@@ -52,6 +52,13 @@ export function ChatInput({
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // File Upload State
+  const [attachments, setAttachments] = useState<Array<{ name: string; type: string; content: string; size: number }>>([]);
+
+  // MCQ/MSQ or PDF Generation Type Toggle State (Mutually Exclusive)
+  const [selectedGenType, setSelectedGenType] = useState<"quiz" | "pdf" | null>(null);
   
   // Loaded reasoningLevel and setReasoningLevel from store
   const { 
@@ -90,10 +97,85 @@ export function ChatInput({
     }
   }, [message]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      
+      if (file.type.startsWith("image/")) {
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            setAttachments((prev) => [
+              ...prev,
+              {
+                name: file.name,
+                type: file.type,
+                content: event.target!.result as string, // base64 data URL
+                size: file.size,
+              },
+            ]);
+          }
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // Read text files
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            setAttachments((prev) => [
+              ...prev,
+              {
+                name: file.name,
+                type: file.type,
+                content: event.target!.result as string, // text content
+                size: file.size,
+              },
+            ]);
+          }
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    // Reset file input value so same file can be uploaded again
+    e.target.value = "";
+  };
+
   const handleSubmit = () => {
-    if (isGenerating || message.trim() === "") return;
-    onSendMessage(message);
+    if (isGenerating || (message.trim() === "" && attachments.length === 0)) return;
+    
+    let finalMessage = message;
+
+    // Append Generator Directives if selected
+    if (selectedGenType === "quiz") {
+      finalMessage += "\n\n[SYSTEM DIRECTIVE: You must output a structured MCQ/MSQ quiz block using the markdown code block format:\n```mcq-quiz\n{\n  \"quizTitle\": \"...\",\n  \"questions\": [\n    {\n      \"question\": \"...\",\n      \"options\": [\"...\", \"...\"],\n      \"correctAnswer\": \"...\",\n      \"explanation\": \"...\"\n    }\n  ]\n}\n```. Make sure the JSON is completely valid.]";
+    } else if (selectedGenType === "pdf") {
+      finalMessage += "\n\n[SYSTEM DIRECTIVE: You must output a structured PDF document block using the markdown code block format:\n```pdf-document\n# Document Title\n\n## Section 1\n...\n```. Make sure the content is highly detailed and professional.]";
+    }
+
+    // Append file attachments to context content
+    if (attachments.length > 0) {
+      attachments.forEach((att) => {
+        if (att.type.startsWith("image/")) {
+          // Vision input embedding
+          finalMessage += `\n\n[Attached Image: ${att.name}]\n${att.content}`;
+        } else {
+          // Document context embedding
+          finalMessage += `\n\n=== ATTACHMENT: ${att.name} ===\n${att.content}\n=============================`;
+        }
+      });
+    }
+
+    // Send final message with directives + context as internal content, but display original message in chat bubble
+    const displayMsg = message.trim() || `Sent ${attachments.length} attachment(s)`;
+    onSendMessage(finalMessage, displayMsg);
+
+    // Reset state
     setMessage("");
+    setAttachments([]);
+    setSelectedGenType(null);
+
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
@@ -106,12 +188,21 @@ export function ChatInput({
     }
   };
 
-  const hasText = message.trim().length > 0;
+  const hasText = message.trim().length > 0 || attachments.length > 0;
   const isArabic = /[\u0600-\u06FF]/.test(message);
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 pb-4 md:pb-6 relative z-10">
       
+      {/* Hidden File Input */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        multiple 
+        className="hidden" 
+      />
+
       {/* ── Main Chat Input Area ── */}
       <div 
         className="relative flex flex-col gap-2.5 p-3.5 rounded-xl bg-neutral-950 border border-zinc-900 focus-within:border-zinc-800 transition-all duration-200"
@@ -134,6 +225,47 @@ export function ChatInput({
               )}%` 
             }}
           />
+        )}
+
+        {/* File Attachments Preview Row */}
+        {attachments.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-2 p-1.5 bg-black border border-zinc-900 rounded-lg max-h-40 overflow-y-auto">
+            {attachments.map((file, index) => (
+              <div 
+                key={index} 
+                className="relative flex items-center gap-2 p-2 rounded bg-zinc-900 border border-zinc-850 group hover:border-zinc-800 transition-all max-w-[200px]"
+              >
+                {file.type.startsWith("image/") ? (
+                  <img 
+                    src={file.content} 
+                    alt={file.name} 
+                    className="w-8 h-8 rounded object-cover flex-shrink-0 bg-black border border-zinc-800"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded bg-black border border-zinc-800 flex items-center justify-center flex-shrink-0 text-zinc-450">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                )}
+                
+                <div className="flex-1 min-w-0 pr-4">
+                  <p className="text-[10px] font-mono text-zinc-300 truncate font-semibold">
+                    {file.name}
+                  </p>
+                  <p className="text-[8px] font-mono text-zinc-550">
+                    {(file.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== index))}
+                  className="absolute top-1 right-1 p-0.5 rounded bg-black text-zinc-400 hover:text-white transition-all border border-zinc-900"
+                >
+                  <X className="w-2.5 h-2.5" />
+                </button>
+              </div>
+            ))}
+          </div>
         )}
 
         {/* Input text box row */}
@@ -204,9 +336,9 @@ export function ChatInput({
         </div>
 
         {/* Embedded Capsule Toolbar */}
-        <div className="flex items-center justify-between border-t border-zinc-900/80 pt-2 mt-1">
+        <div className="flex flex-wrap items-center justify-between border-t border-zinc-900/80 pt-2 mt-1 gap-2">
           <TooltipProvider>
-            <div className="flex items-center gap-1.5 py-0.5">
+            <div className="flex flex-wrap items-center gap-1.5 py-0.5">
               
               {/* Capsule: Attach (+) */}
               <Tooltip>
@@ -214,6 +346,7 @@ export function ChatInput({
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={() => fileInputRef.current?.click()}
                     className="w-8 h-8 rounded-full border border-zinc-900 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 hover:border-zinc-800 transition-all duration-200"
                     disabled={isGenerating}
                   >
@@ -221,7 +354,7 @@ export function ChatInput({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Attach file</p>
+                  <p>Attach file (Text or Image)</p>
                 </TooltipContent>
               </Tooltip>
 
@@ -277,6 +410,56 @@ export function ChatInput({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Chain of Thought / System Reasoning</p>
+                </TooltipContent>
+              </Tooltip>
+
+              {/* Capsule: Quiz */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedGenType((prev) => (prev === "quiz" ? null : "quiz"));
+                    }}
+                    className={cn(
+                      "h-8 px-3.5 rounded-full border text-[11px] font-bold transition-all duration-200 flex items-center gap-1.5 font-mono uppercase tracking-wider",
+                      selectedGenType === "quiz"
+                        ? "border-amber-500 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+                        : "border-zinc-900 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 hover:border-zinc-800"
+                    )}
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>Quiz</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Generate Interactive MCQ/MSQ Quiz</p>
+                </TooltipContent>
+              </Tooltip>
+
+              {/* Capsule: PDF */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedGenType((prev) => (prev === "pdf" ? null : "pdf"));
+                    }}
+                    className={cn(
+                      "h-8 px-3.5 rounded-full border text-[11px] font-bold transition-all duration-200 flex items-center gap-1.5 font-mono uppercase tracking-wider",
+                      selectedGenType === "pdf"
+                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                        : "border-zinc-900 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 hover:border-zinc-800"
+                    )}
+                  >
+                    <FileDown className="w-3.5 h-3.5" />
+                    <span>PDF</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Generate Styled PDF Document</p>
                 </TooltipContent>
               </Tooltip>
 
