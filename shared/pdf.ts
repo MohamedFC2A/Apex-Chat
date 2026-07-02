@@ -462,55 +462,65 @@ function extractQuestionCount(message: string): number {
   return 10; // default
 }
 
+export function cleanMessageOfDirectives(message: string): string {
+  if (!message) return "";
+  const index = message.indexOf("[SYSTEM DIRECTIVE:");
+  if (index !== -1) {
+    return message.substring(0, index).trim();
+  }
+  return message.trim();
+}
+
 export function parsePdfRequest(message: string): ParsedPdfRequest {
-  const anchoredTopic = extractTopicByAnchor(message);
-  const cleanedTopic = cleanupTopic(message);
-  const language = detectPdfLanguage(message);
-  const lowered = message.toLowerCase();
-  const mode = detectPdfMode(message);
+  const cleanMessage = cleanMessageOfDirectives(message);
+  const anchoredTopic = extractTopicByAnchor(cleanMessage);
+  const cleanedTopic = cleanupTopic(cleanMessage);
+  const language = detectPdfLanguage(cleanMessage);
+  const lowered = cleanMessage.toLowerCase();
+  const mode = detectPdfMode(cleanMessage);
 
   const includeCode =
-    /(?:code|snippet|example|implementation|كود|أمثلة برمجية|برمجي)/i.test(message) ||
+    /(?:code|snippet|example|implementation|كود|أمثلة برمجية|برمجي)/i.test(cleanMessage) ||
     lowered.includes("code") ||
-    message.includes("كود");
+    cleanMessage.includes("كود");
   const includeMath =
-    /(?:math|equation|formula|latex|معادلات|معادلة|رياضيات|صيغة)/i.test(message) ||
+    /(?:math|equation|formula|latex|معادلات|معادلة|رياضيات|صيغة)/i.test(cleanMessage) ||
     lowered.includes("math") ||
-    message.includes("معادلة") ||
-    message.includes("معادلات");
+    cleanMessage.includes("معادلة") ||
+    cleanMessage.includes("معادلات");
 
   let theme: PDFDocumentTheme | undefined;
-  if (/(?:light theme|light mode|ثيم فاتح|خلفية بيضاء|خلفية فاتحة|وضع فاتح)/i.test(message)) {
+  if (/(?:light theme|light mode|ثيم فاتح|خلفية بيضاء|خلفية فاتحة|وضع فاتح)/i.test(cleanMessage)) {
     theme = "light";
-  } else if (/(?:dark theme|dark mode|ثيم داكن|خلفية سوداء|خلفية داكنة|وضع داكن)/i.test(message)) {
+  } else if (/(?:dark theme|dark mode|ثيم داكن|خلفية سوداء|خلفية داكنة|وضع داكن)/i.test(cleanMessage)) {
     theme = "dark";
   }
 
   let pageSize: PDFPageSize | undefined;
-  if (/(?:letter size|letter format|حجم letter|حجم ليتر|امريكي|مقاس ليتر)/i.test(message)) {
+  if (/(?:letter size|letter format|حجم letter|حجم ليتر|امريكي|مقاس ليتر)/i.test(cleanMessage)) {
     pageSize = "letter";
-  } else if (/(?:a4 size|a4 format|حجم a4|مقاس a4)/i.test(message)) {
+  } else if (/(?:a4 size|a4 format|حجم a4|مقاس a4)/i.test(cleanMessage)) {
     pageSize = "a4";
   }
 
   const questionCount = (mode === "exam" || mode === "quiz" || mode === "worksheet")
-    ? extractQuestionCount(message)
+    ? extractQuestionCount(cleanMessage)
     : undefined;
 
   // exam mode: answer key at the end, answers hidden from questions
   // quiz mode: answers shown inline
-  const includeAnswerKey = mode === "exam" || /(?:answer\s*key|مفتاح\s*الإجابات|إجابات\s*نموذجية|جدول\s*الإجابات)/i.test(message);
+  const includeAnswerKey = mode === "exam" || /(?:answer\s*key|مفتاح\s*الإجابات|إجابات\s*نموذجية|جدول\s*الإجابات)/i.test(cleanMessage);
   const showAnswersInline = mode === "quiz" || mode === "worksheet" || mode === "flashcard";
 
   return {
     rawMessage: message,
     topic: anchoredTopic || cleanedTopic || (language === "ar" ? "موضوع احترافي" : "professional topic"),
     language,
-    requestedSections: extractRequestedSections(message),
+    requestedSections: extractRequestedSections(cleanMessage),
     includeCode,
     includeMath,
-    includeTableOfContents: mode === "study" && (/(?:table of contents|contents|toc|فهرس|المحتويات)/i.test(message) || /(?:report|document|تقرير|مستند)/i.test(message)),
-    includeCoverPage: mode === "study" && !/(?:without cover|no cover|بدون غلاف)/i.test(message),
+    includeTableOfContents: mode === "study" && (/(?:table of contents|contents|toc|فهرس|المحتويات)/i.test(cleanMessage) || /(?:report|document|تقرير|مستند)/i.test(cleanMessage)),
+    includeCoverPage: mode === "study" && !/(?:without cover|no cover|بدون غلاف)/i.test(cleanMessage),
     theme,
     pageSize,
     mode,

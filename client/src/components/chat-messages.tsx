@@ -1749,6 +1749,9 @@ function CodeBlockWrapper({ language, code, parentContent }: { language: string;
   const intentVerified = useMemo(() => {
     const normalizedPrompt = lastUserPrompt.toLowerCase().trim();
     if (language === "mcq-quiz") {
+      if (normalizedPrompt.includes("system directive: you must output a structured mcq/msq")) {
+        return true;
+      }
       const explicitQuizIntents = [
         "اعملي اختبار", "انشئ امتحان", "create a quiz", "test me on", 
         "generate mcq", "امتحنني", "اسألني في", "سوي اختبار"
@@ -1756,6 +1759,9 @@ function CodeBlockWrapper({ language, code, parentContent }: { language: string;
       return explicitQuizIntents.some(intent => normalizedPrompt.includes(intent));
     }
     if (language === "pdf-document") {
+      if (normalizedPrompt.includes("system directive: you must output a structured pdf")) {
+        return true;
+      }
       const explicitPDFIntents = [
         "صمم ملف pdf", "حمل الاجابة pdf", "export to pdf", "generate document",
         "نزلي ملف pdf", "اطبع pdf"

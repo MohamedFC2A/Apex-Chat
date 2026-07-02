@@ -234,16 +234,26 @@ export function isGenericTopic(topic: string): boolean {
   return false;
 }
 
+export function cleanMessageOfDirectives(message: string): string {
+  if (!message) return "";
+  const index = message.indexOf("[SYSTEM DIRECTIVE:");
+  if (index !== -1) {
+    return message.substring(0, index).trim();
+  }
+  return message.trim();
+}
+
 export function extractQuizTopic(
   message: string,
   conversationHistory?: Array<{ role: string; content: string }>
 ): string {
-  const anchoredTopic = extractTopicByAnchor(message);
+  const cleanMessage = cleanMessageOfDirectives(message);
+  const anchoredTopic = extractTopicByAnchor(cleanMessage);
   if (anchoredTopic && !isGenericTopic(anchoredTopic)) {
     return anchoredTopic;
   }
 
-  const cleaned = cleanupTopic(message);
+  const cleaned = cleanupTopic(cleanMessage);
   if (cleaned && !isGenericTopic(cleaned)) {
     return cleaned;
   }
@@ -254,7 +264,8 @@ export function extractQuizTopic(
     for (let i = conversationHistory.length - 1; i >= 0; i--) {
       const hist = conversationHistory[i];
       if (hist.role === "user" && hist.content && !detectQuizIntent(hist.content)) {
-        const histTopic = extractTopicByAnchor(hist.content) || cleanupTopic(hist.content);
+        const histCleanedContent = cleanMessageOfDirectives(hist.content);
+        const histTopic = extractTopicByAnchor(histCleanedContent) || cleanupTopic(histCleanedContent);
         if (histTopic && !isGenericTopic(histTopic)) {
           return histTopic;
         }
@@ -285,20 +296,21 @@ export function extractQuizTopic(
     }
   }
 
-  return cleaned || (containsArabic(message) ? "المعرفة العامة" : "general knowledge");
+  return cleaned || (containsArabic(cleanMessage) ? "المعرفة العامة" : "general knowledge");
 }
 
 export function parseQuizRequest(
   message: string,
   conversationHistory?: Array<{ role: string; content: string }>
 ): ParsedQuizRequest {
+  const cleanMessage = cleanMessageOfDirectives(message);
   return {
     rawMessage: message,
-    topic: extractQuizTopic(message, conversationHistory),
-    requestedQuestionCount: parseRequestedQuestionCount(message),
-    mode: parseRequestedMode(message),
-    difficulty: parseRequestedDifficulty(message),
-    language: detectQuizLanguage(message),
+    topic: extractQuizTopic(cleanMessage, conversationHistory),
+    requestedQuestionCount: parseRequestedQuestionCount(cleanMessage),
+    mode: parseRequestedMode(cleanMessage),
+    difficulty: parseRequestedDifficulty(cleanMessage),
+    language: detectQuizLanguage(cleanMessage),
   };
 }
 
