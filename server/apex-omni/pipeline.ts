@@ -32,6 +32,24 @@ import {
   getLogitBiasProfile,
 } from "./constraint-engine.js";
 
+// Helper function to identify network, auth (401), or rate-limit (429) errors
+export function isAuthOrRateLimitError(err: any): boolean {
+  if (!err) return false;
+  const status = err.status || err.statusCode || err.response?.status;
+  if (status === 401 || status === 429) return true;
+  const errMsg = String(err.message || "").toLowerCase();
+  if (
+    errMsg.includes("401") ||
+    errMsg.includes("429") ||
+    errMsg.includes("unauthorized") ||
+    errMsg.includes("rate limit") ||
+    errMsg.includes("too many requests")
+  ) {
+    return true;
+  }
+  return false;
+}
+
 // Asynchronous Swarm worker matrix sweeps (Mocked I/O tasks)
 async function fetchCryptoWalletState(): Promise<any> {
   await new Promise(resolve => setTimeout(resolve, 80));
@@ -191,37 +209,45 @@ GENERATION INSTRUCTIONS:
   let content = "";
   let reasoningContent = "";
 
-  if (onChunk) {
-    const stream = await client.chat.completions.create({
-      model: actualModel,
-      messages,
-      max_tokens: constraintParams.max_tokens,
-      stream: true,
-      ...(constraintParams.logit_bias ? { logit_bias: constraintParams.logit_bias } : {}),
-    } as any);
+  try {
+    if (onChunk) {
+      const stream = await client.chat.completions.create({
+        model: actualModel,
+        messages,
+        max_tokens: constraintParams.max_tokens,
+        stream: true,
+        ...(constraintParams.logit_bias ? { logit_bias: constraintParams.logit_bias } : {}),
+      } as any);
 
-    for await (const chunk of stream as any) {
-      const text = chunk.choices[0]?.delta?.content || "";
-      const reasoning = (chunk.choices[0]?.delta as any)?.reasoning_content || "";
-      if (text) {
-        content += text;
-        onChunk({ content: text });
+      for await (const chunk of stream as any) {
+        const text = chunk.choices[0]?.delta?.content || "";
+        const reasoning = (chunk.choices[0]?.delta as any)?.reasoning_content || "";
+        if (text) {
+          content += text;
+          onChunk({ content: text });
+        }
+        if (reasoning) {
+          reasoningContent += reasoning;
+          onChunk({ reasoningContent: reasoning });
+        }
       }
-      if (reasoning) {
-        reasoningContent += reasoning;
-        onChunk({ reasoningContent: reasoning });
-      }
+    } else {
+      const response = await client.chat.completions.create({
+        model: actualModel,
+        messages,
+        max_tokens: constraintParams.max_tokens,
+        stream: false,
+        ...(constraintParams.logit_bias ? { logit_bias: constraintParams.logit_bias } : {}),
+      } as any);
+      content = response.choices[0]?.message?.content || "";
+      reasoningContent = (response.choices[0]?.message as any)?.reasoning_content || "";
     }
-  } else {
-    const response = await client.chat.completions.create({
-      model: actualModel,
-      messages,
-      max_tokens: constraintParams.max_tokens,
-      stream: false,
-      ...(constraintParams.logit_bias ? { logit_bias: constraintParams.logit_bias } : {}),
-    } as any);
-    content = response.choices[0]?.message?.content || "";
-    reasoningContent = (response.choices[0]?.message as any)?.reasoning_content || "";
+  } catch (err: any) {
+    if (onChunk) {
+      onChunk({ content: "\n\n⚠️ **OpenRouter Error:** " + err.message });
+    }
+    err._isAuthOrRateLimitHandled = true;
+    throw err;
   }
 
   return { content, reasoningContent };
@@ -241,6 +267,41 @@ export async function runApexOmniPipeline(
   request: ApexOmniRequest,
   onChunk?: (chunk: { content?: string; reasoningContent?: string }) => void
 ): Promise<ApexOmniResponse> {
+  const isOpenRouterModel = actualModel.includes("/") || actualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
+
+  // Pre-flight key validation contract
+  if (isOpenRouterModel) {
+    const key = process.env.OPENROUTER_API_KEY;
+    if (!key || key.trim() === "") {
+      if (onChunk) {
+        onChunk({ content: "⚠️ **خطأ في النظام:** مفتاح OpenRouter API Key غير متاح في ملفات البيئة (.env)." });
+      }
+      throw new Error("OpenRouter API key configuration is missing.");
+    }
+  } else {
+    // If not OpenRouter, verify DeepSeek key exists
+    const key = process.env.DEEPSEEK_API_KEY || client.apiKey;
+    if (!key || key.trim() === "") {
+      if (onChunk) {
+        onChunk({ content: "⚠️ **خطأ في النظام:** مفتاح DeepSeek API Key غير متاح في ملفات البيئة (.env)." });
+      }
+      throw new Error("DeepSeek API key configuration is missing.");
+    }
+  }
+
+  // Active client setup
+  let activeClient = client;
+  if (isOpenRouterModel) {
+    activeClient = new OpenAI({
+      apiKey: process.env.OPENROUTER_API_KEY || "",
+      baseURL: "https://openrouter.ai/api/v1",
+      defaultHeaders: {
+        "HTTP-Referer": "https://apex-chat.vercel.app",
+        "X-Title": "Apex Chat",
+      }
+    });
+  }
+
   const pipelineStart = Date.now();
   const techniquesUsed: string[] = [];
 
@@ -248,113 +309,128 @@ export async function runApexOmniPipeline(
   console.log("║       APEX OMNI PIPELINE STARTING      ║");
   console.log("╚════════════════════════════════════════╝");
 
-  // ── [1] Query Analysis + SFT Config ──────────────────────────
-  console.log("\n[1/6] 🔍 SFT Query Analysis...");
-  const queryConfig = analyzeQuery(request.message);
-  techniquesUsed.push("SFT Prompt Engineering");
-  console.log(`      Domain: ${queryConfig.domain} | Complexity: ${queryConfig.complexity}/10 | Lang: ${queryConfig.language}`);
+  try {
+    // ── [1] Query Analysis + SFT Config ──────────────────────────
+    console.log("\n[1/6] 🔍 SFT Query Analysis...");
+    const queryConfig = analyzeQuery(request.message);
+    techniquesUsed.push("SFT Prompt Engineering");
+    console.log(`      Domain: ${queryConfig.domain} | Complexity: ${queryConfig.complexity}/10 | Lang: ${queryConfig.language}`);
 
-  // ── [V2] Cognitive Agent Masking ─────────────────────────────
-  console.log("\n[V2] 🎭 Applying Cognitive Agent Mask...");
-  const agentMask = generateCognitiveMask(request.message);
-  // For non-technical queries, skip GRPO multi-sampling by raising threshold above max reward
-  // This prevents redundant code/security parallel sampling on sports or general queries.
-  const v2GrpoThresholdOverride = agentMask.codeImplementation ? undefined : 1.1;
+    // ── [V2] Cognitive Agent Masking ─────────────────────────────
+    console.log("\n[V2] 🎭 Applying Cognitive Agent Mask...");
+    const agentMask = generateCognitiveMask(request.message);
+    // For non-technical queries, skip GRPO multi-sampling by raising threshold above max reward
+    // This prevents redundant code/security parallel sampling on sports or general queries.
+    const v2GrpoThresholdOverride = agentMask.codeImplementation ? undefined : 1.1;
 
-  // ── [2] & [3] Parallel MCTS + ToT/GoT Swarms & Background Worker Sweeps ──
-  console.log("\n[2/6] 🌲 Running MCTS, ToT/GoT and background worker sweeps concurrently...");
-  if (onChunk) {
-    onChunk({ content: `**[Phase 1] Speculative Compilation Swarm starting**\n` });
-    onChunk({ content: `> Spawning Speculative MCTS agent...\n` });
-    onChunk({ content: `> Spawning Speculative ToT/GoT agent...\n` });
-    onChunk({ content: `> Spawning Concurrent background workers...\n` });
-  }
-
-  const [mctsResult, totResult, batchJobs] = await Promise.all([
-    (async () => {
-      const mctsConfig = getAdaptiveMCTSConfig(queryConfig.complexity);
-      try {
-        const res = await runMCTS(client, actualModel, request.message, queryConfig.domain, mctsConfig);
-        techniquesUsed.push(`MCTS (${mctsConfig.iterations} iterations)`);
-        console.log(`      ✓ MCTS best plan found in ${res.totalNodes} nodes`);
-        return res;
-      } catch (err) {
-        console.warn("[MCTS] Failed, using default plan:", err);
-        return {
-          bestPlan: "Provide a comprehensive, well-structured response addressing all aspects of the query.",
-          root: { id: "root", content: "", totalReward: 0, visits: 1, qualityScore: 0.5, expansionPotential: 0.5, children: [], depth: 0 },
-          totalNodes: 1,
-          iterations: 0,
-          bestNode: { id: "root", content: "", totalReward: 0, visits: 1, qualityScore: 0.5, expansionPotential: 0.5, children: [], depth: 0 },
-        };
-      }
-    })(),
-    (async () => {
-      const totConfig = getAdaptiveToTConfig(queryConfig.complexity);
-      try {
-        const res = await runToTGoT(client, actualModel, request.message, totConfig);
-        const technique = totConfig.enableGoTMerging ? "ToT + GoT Merge" : "ToT";
-        techniquesUsed.push(`${technique} (${totConfig.numBranches} branches)`);
-        console.log(`      ✓ ToT/GoT synthesized ${res.allNodes.length} thought nodes`);
-        return res;
-      } catch (err) {
-        console.warn("[ToT/GoT] Failed, continuing without thought context:", err);
-        return {
-          synthesizedThought: "Apply deep analytical reasoning to provide a comprehensive answer.",
-          allNodes: [],
-          selectedNodes: [],
-        };
-      }
-    })(),
-    Promise.allSettled([
-      fetchCryptoWalletState(),
-      parseRepositoryTreeStructure(),
-      queryActiveDatabaseNodes()
-    ])
-  ]);
-
-  console.log(`[Concurrent Sweeps] Worker matrix checks completed.`);
-  if (onChunk) {
-    onChunk({ content: `> Concurrent background worker matrix checks completed successfully.\n` });
-  }
-
-  // Speculative Client Pushing
-  const hasHtml = (text: string) => /```html([\s\S]*?)```/i.test(text);
-  let speculativeCodePush = "";
-  let confidenceScore = 0;
-  let sourceTechnique = "";
-
-  if (mctsResult.bestNode && mctsResult.bestNode.qualityScore >= 0.85 && hasHtml(mctsResult.bestNode.content)) {
-    const match = mctsResult.bestNode.content.match(/```html([\s\S]*?)```/i);
-    if (match) {
-      speculativeCodePush = match[0];
-      confidenceScore = mctsResult.bestNode.qualityScore;
-      sourceTechnique = "MCTS";
+    // ── [2] & [3] Parallel MCTS + ToT/GoT Swarms & Background Worker Sweeps ──
+    console.log("\n[2/6] 🌲 Running MCTS, ToT/GoT and background worker sweeps concurrently...");
+    if (onChunk) {
+      onChunk({ content: `**[Phase 1] Speculative Compilation Swarm starting**\n` });
+      onChunk({ content: `> Spawning Speculative MCTS agent...\n` });
+      onChunk({ content: `> Spawning Speculative ToT/GoT agent...\n` });
+      onChunk({ content: `> Spawning Concurrent background workers...\n` });
     }
-  } else if (totResult.mergedNode && totResult.mergedNode.valueScore >= 0.85 && hasHtml(totResult.mergedNode.content)) {
-    const match = totResult.mergedNode.content.match(/```html([\s\S]*?)```/i);
-    if (match) {
-      speculativeCodePush = match[0];
-      confidenceScore = totResult.mergedNode.valueScore;
-      sourceTechnique = "ToT/GoT";
+
+    const [mctsResult, totResult, batchJobs] = await Promise.all([
+      (async () => {
+        const mctsConfig = getAdaptiveMCTSConfig(queryConfig.complexity);
+        try {
+          const res = await runMCTS(activeClient, actualModel, request.message, queryConfig.domain, mctsConfig);
+          techniquesUsed.push(`MCTS (${mctsConfig.iterations} iterations)`);
+          console.log(`      ✓ MCTS best plan found in ${res.totalNodes} nodes`);
+          return res;
+        } catch (err: any) {
+          if (isAuthOrRateLimitError(err)) {
+            if (onChunk) {
+              onChunk({ content: "\n\n⚠️ **OpenRouter Error:** " + err.message });
+            }
+            err._isAuthOrRateLimitHandled = true;
+            throw err;
+          }
+          console.warn("[MCTS] Failed, using default plan:", err);
+          return {
+            bestPlan: "Provide a comprehensive, well-structured response addressing all aspects of the query.",
+            root: { id: "root", content: "", totalReward: 0, visits: 1, qualityScore: 0.5, expansionPotential: 0.5, children: [], depth: 0 },
+            totalNodes: 1,
+            iterations: 0,
+            bestNode: { id: "root", content: "", totalReward: 0, visits: 1, qualityScore: 0.5, expansionPotential: 0.5, children: [], depth: 0 },
+          };
+        }
+      })(),
+      (async () => {
+        const totConfig = getAdaptiveToTConfig(queryConfig.complexity);
+        try {
+          const res = await runToTGoT(activeClient, actualModel, request.message, totConfig);
+          const technique = totConfig.enableGoTMerging ? "ToT + GoT Merge" : "ToT";
+          techniquesUsed.push(`${technique} (${totConfig.numBranches} branches)`);
+          console.log(`      ✓ ToT/GoT synthesized ${res.allNodes.length} thought nodes`);
+          return res;
+        } catch (err: any) {
+          if (isAuthOrRateLimitError(err)) {
+            if (onChunk) {
+              onChunk({ content: "\n\n⚠️ **OpenRouter Error:** " + err.message });
+            }
+            err._isAuthOrRateLimitHandled = true;
+            throw err;
+          }
+          console.warn("[ToT/GoT] Failed, continuing without thought context:", err);
+          return {
+            synthesizedThought: "Apply deep analytical reasoning to provide a comprehensive answer.",
+            allNodes: [],
+            selectedNodes: [],
+          };
+        }
+      })(),
+      Promise.allSettled([
+        fetchCryptoWalletState(),
+        parseRepositoryTreeStructure(),
+        queryActiveDatabaseNodes()
+      ])
+    ]);
+
+    console.log(`[Concurrent Sweeps] Worker matrix checks completed.`);
+    if (onChunk) {
+      onChunk({ content: `> Concurrent background worker matrix checks completed successfully.\n` });
     }
-  }
 
-  if (speculativeCodePush && onChunk) {
-    console.log(`[Speculative Push] Pushing speculative code block to client layout (confidence: ${confidenceScore}, source: ${sourceTechnique})...`);
-    onChunk({ content: `\n**[Phase 2] Speculative Client Pushing**\n` });
-    onChunk({ content: `> High-confidence layout code block detected from ${sourceTechnique} (Confidence: ${(confidenceScore * 100).toFixed(0)}%)\n` });
-    onChunk({ content: `> Pushing speculative UI component to the client layout immediately...\n` });
-    onChunk({ content: speculativeCodePush + "\n\n" });
-    onChunk({ content: `> Rendered speculative visual application layout elements. Formulating text analysis explanations...\n` });
-  }
+    // Speculative Client Pushing
+    const hasHtml = (text: string) => /```html([\s\S]*?)```/i.test(text);
+    let speculativeCodePush = "";
+    let confidenceScore = 0;
+    let sourceTechnique = "";
 
-  // ── [4] GRPO Response Selection ───────────────────────────────
-  console.log("\n[4/6] ⚡ GRPO Response Scoring...");
-  const grpoConfig = getAdaptiveGRPOConfig(queryConfig.complexity);
+    if (mctsResult.bestNode && mctsResult.bestNode.qualityScore >= 0.85 && hasHtml(mctsResult.bestNode.content)) {
+      const match = mctsResult.bestNode.content.match(/```html([\s\S]*?)```/i);
+      if (match) {
+        speculativeCodePush = match[0];
+        confidenceScore = mctsResult.bestNode.qualityScore;
+        sourceTechnique = "MCTS";
+      }
+    } else if (totResult.mergedNode && totResult.mergedNode.valueScore >= 0.85 && hasHtml(totResult.mergedNode.content)) {
+      const match = totResult.mergedNode.content.match(/```html([\s\S]*?)```/i);
+      if (match) {
+        speculativeCodePush = match[0];
+        confidenceScore = totResult.mergedNode.valueScore;
+        sourceTechnique = "ToT/GoT";
+      }
+    }
 
-  // Build the GRPO generation context (inject MCTS + ToT context)
-  const grpoSystemPrompt = `${request.systemPromptBase}
+    if (speculativeCodePush && onChunk) {
+      console.log(`[Speculative Push] Pushing speculative code block to client layout (confidence: ${confidenceScore}, source: ${sourceTechnique})...`);
+      onChunk({ content: `\n**[Phase 2] Speculative Client Pushing**\n` });
+      onChunk({ content: `> High-confidence layout code block detected from ${sourceTechnique} (Confidence: ${(confidenceScore * 100).toFixed(0)}%)\n` });
+      onChunk({ content: `> Pushing speculative UI component to the client layout immediately...\n` });
+      onChunk({ content: speculativeCodePush + "\n\n" });
+      onChunk({ content: `> Rendered speculative visual application layout elements. Formulating text analysis explanations...\n` });
+    }
+
+    // ── [4] GRPO Response Selection ───────────────────────────────
+    console.log("\n[4/6] ⚡ GRPO Response Scoring...");
+    const grpoConfig = getAdaptiveGRPOConfig(queryConfig.complexity);
+
+    // Build the GRPO generation context (inject MCTS + ToT context)
+    const grpoSystemPrompt = `${request.systemPromptBase}
 
 RESPONSE PLAN:
 ${mctsResult.bestPlan}
@@ -364,112 +440,125 @@ ${totResult.synthesizedThought}
 
 Generate a high-quality response following this plan and reasoning context.`;
 
-  const grpoMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
-    { role: "system", content: grpoSystemPrompt },
-    ...((request.conversationHistory || []).map((m) => ({
-      role: m.role as "system" | "user" | "assistant",
-      content: m.content,
-    }))),
-    { role: "user", content: request.message },
-  ];
+    const grpoMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+      { role: "system", content: grpoSystemPrompt },
+      ...((request.conversationHistory || []).map((m) => ({
+        role: m.role as "system" | "user" | "assistant",
+        content: m.content,
+      }))),
+      { role: "user", content: request.message },
+    ];
 
-  let grpoResult: GRPOResult;
-  try {
-    grpoResult = await runGRPO(
-      client,
-      // GRPO uses fast model for parallel sampling
-      actualModel === "deepseek-reasoner" ? "deepseek-chat" : actualModel,
-      grpoMessages,
-      request.message,
-      queryConfig.domain,
-      grpoConfig
-    );
-    techniquesUsed.push(`GRPO (G=${grpoConfig.groupSize}, neural=${grpoConfig.useNeuralReward})`);
-    console.log(`      ✓ Best response selected (reward: ${grpoResult.allOutputs[grpoResult.bestIndex]?.reward.toFixed(3)})`);
-  } catch (err) {
-    console.warn("[GRPO] Failed, falling back to direct generation:", err);
-    grpoResult = {
-      bestOutput: "",
-      allOutputs: [],
-      meanReward: 0,
-      stdReward: 0,
-      bestIndex: 0,
-      config: grpoConfig,
-    };
-  }
-
-  // ── [5] Constraint Engine Application ────────────────────────
-  console.log("\n[5/6] 🎯 Applying Logit Biasing + Grammar Constraints...");
-  techniquesUsed.push("Token-Level Logit Biasing");
-  techniquesUsed.push("Grammar-Guided Generation");
-
-  // ── [6] Final High-Quality Response Generation ────────────────
-  console.log("\n[6/6] ✨ Generating final constrained response...");
-
-  let finalContent: string;
-  let finalReasoning = "";
-
-  // V2: Apply mask override — if non-technical query, bypass GRPO sampling entirely
-  // If GRPO found a good response (reward > threshold), use it directly
-  // Otherwise generate fresh with full context
-  const grpoThreshold = v2GrpoThresholdOverride ?? 0.7;
-  if (v2GrpoThresholdOverride !== undefined) {
-    console.log(`      [V2 Mask] GRPO multi-sampling skipped for non-technical query (mask override threshold: ${v2GrpoThresholdOverride})`);
-  }
-  const grpoBestReward = grpoResult.allOutputs[grpoResult.bestIndex]?.reward ?? 0;
-
-  if (grpoBestReward >= grpoThreshold && grpoResult.bestOutput.length > 100) {
-    // GRPO result is good enough — use it, apply streaming if needed
-    console.log(`      Using GRPO best output (reward: ${grpoBestReward.toFixed(3)} ≥ ${grpoThreshold})`);
-    finalContent = grpoResult.bestOutput;
-
-    // Stream the pre-selected response
-    if (onChunk) {
-      // Simulate streaming for the pre-selected response
-      const chunkSize = 50;
-      for (let i = 0; i < finalContent.length; i += chunkSize) {
-        onChunk({ content: finalContent.slice(i, i + chunkSize) });
-        await new Promise((resolve) => setTimeout(resolve, 10));
+    let grpoResult: GRPOResult;
+    try {
+      grpoResult = await runGRPO(
+        activeClient,
+        // GRPO uses fast model for parallel sampling
+        isOpenRouterModel ? actualModel : (actualModel === "deepseek-reasoner" ? "deepseek-chat" : actualModel),
+        grpoMessages,
+        request.message,
+        queryConfig.domain,
+        grpoConfig
+      );
+      techniquesUsed.push(`GRPO (G=${grpoConfig.groupSize}, neural=${grpoConfig.useNeuralReward})`);
+      console.log(`      ✓ Best response selected (reward: ${grpoResult.allOutputs[grpoResult.bestIndex]?.reward.toFixed(3)})`);
+    } catch (err: any) {
+      if (isAuthOrRateLimitError(err)) {
+        if (onChunk) {
+          onChunk({ content: "\n\n⚠️ **OpenRouter Error:** " + err.message });
+        }
+        err._isAuthOrRateLimitHandled = true;
+        throw err;
       }
+      console.warn("[GRPO] Failed, falling back to direct generation:", err);
+      grpoResult = {
+        bestOutput: "",
+        allOutputs: [],
+        meanReward: 0,
+        stdReward: 0,
+        bestIndex: 0,
+        config: grpoConfig,
+      };
     }
-  } else {
-    // Generate fresh with full MCTS + ToT context injected
-    console.log(`      GRPO reward (${grpoBestReward.toFixed(3)}) below threshold — generating fresh with full context`);
-    const generated = await generateFinalResponse(
-      client,
-      actualModel,
-      request.message,
-      request.systemPromptBase,
-      queryConfig,
-      mctsResult,
-      totResult,
-      request.conversationHistory || [],
-      onChunk
-    );
-    finalContent = generated.content;
-    finalReasoning = generated.reasoningContent;
+
+    // ── [5] Constraint Engine Application ────────────────────────
+    console.log("\n[5/6] 🎯 Applying Logit Biasing + Grammar Constraints...");
+    techniquesUsed.push("Token-Level Logit Biasing");
+    techniquesUsed.push("Grammar-Guided Generation");
+
+    // ── [6] Final High-Quality Response Generation ────────────────
+    console.log("\n[6/6] ✨ Generating final constrained response...");
+
+    let finalContent: string;
+    let finalReasoning = "";
+
+    // V2: Apply mask override — if non-technical query, bypass GRPO sampling entirely
+    // If GRPO found a good response (reward > threshold), use it directly
+    // Otherwise generate fresh with full context
+    const grpoThreshold = v2GrpoThresholdOverride ?? 0.7;
+    if (v2GrpoThresholdOverride !== undefined) {
+      console.log(`      [V2 Mask] GRPO multi-sampling skipped for non-technical query (mask override threshold: ${v2GrpoThresholdOverride})`);
+    }
+    const grpoBestReward = grpoResult.allOutputs[grpoResult.bestIndex]?.reward ?? 0;
+
+    if (grpoBestReward >= grpoThreshold && grpoResult.bestOutput.length > 100) {
+      // GRPO result is good enough — use it, apply streaming if needed
+      console.log(`      Using GRPO best output (reward: ${grpoBestReward.toFixed(3)} ≥ ${grpoThreshold})`);
+      finalContent = grpoResult.bestOutput;
+
+      // Stream the pre-selected response
+      if (onChunk) {
+        // Simulate streaming for the pre-selected response
+        const chunkSize = 50;
+        for (let i = 0; i < finalContent.length; i += chunkSize) {
+          onChunk({ content: finalContent.slice(i, i + chunkSize) });
+          await new Promise((resolve) => setTimeout(resolve, 10));
+        }
+      }
+    } else {
+      // Generate fresh with full MCTS + ToT context injected
+      console.log(`      GRPO reward (${grpoBestReward.toFixed(3)}) below threshold — generating fresh with full context`);
+      const generated = await generateFinalResponse(
+        activeClient,
+        actualModel,
+        request.message,
+        request.systemPromptBase,
+        queryConfig,
+        mctsResult,
+        totResult,
+        request.conversationHistory || [],
+        onChunk
+      );
+      finalContent = generated.content;
+      finalReasoning = generated.reasoningContent;
+    }
+
+    const totalDuration = Date.now() - pipelineStart;
+
+    console.log("\n╔════════════════════════════════════════╗");
+    console.log(`║ APEX OMNI PIPELINE COMPLETE: ${(totalDuration / 1000).toFixed(1)}s`);
+    console.log(`║ Techniques: ${techniquesUsed.length}`);
+    console.log("╚════════════════════════════════════════╝\n");
+
+    return {
+      content: finalContent,
+      reasoningContent: finalReasoning,
+      pipelineMetadata: {
+        queryConfig,
+        mctsIterations: mctsResult.iterations,
+        mctsNodes: mctsResult.totalNodes,
+        totBranches: totResult.allNodes.length,
+        grpoGroupSize: grpoConfig.groupSize,
+        grpoMeanReward: grpoResult.meanReward,
+        grpoBestReward: grpoBestReward,
+        totalDuration,
+        techniquesUsed,
+      },
+    };
+  } catch (err: any) {
+    if (onChunk && !err._isAuthOrRateLimitHandled) {
+      onChunk({ content: "\n\n⚠️ **OpenRouter Error:** " + err.message });
+    }
+    throw err;
   }
-
-  const totalDuration = Date.now() - pipelineStart;
-
-  console.log("\n╔════════════════════════════════════════╗");
-  console.log(`║ APEX OMNI PIPELINE COMPLETE: ${(totalDuration / 1000).toFixed(1)}s`);
-  console.log(`║ Techniques: ${techniquesUsed.length}`);
-  console.log("╚════════════════════════════════════════╝\n");
-
-  return {
-    content: finalContent,
-    reasoningContent: finalReasoning,
-    pipelineMetadata: {
-      queryConfig,
-      mctsIterations: mctsResult.iterations,
-      mctsNodes: mctsResult.totalNodes,
-      totBranches: totResult.allNodes.length,
-      grpoGroupSize: grpoConfig.groupSize,
-      grpoMeanReward: grpoResult.meanReward,
-      grpoBestReward: grpoBestReward,
-      totalDuration,
-      techniquesUsed,
-    },
-  };
 }

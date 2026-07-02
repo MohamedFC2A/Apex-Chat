@@ -183,8 +183,9 @@ Be strict and differentiate scores.`;
       maxTokens: 300,
     });
 
+    const isOpenRouter = actualModel.includes("/") || actualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
     const evalResponse = await client.chat.completions.create({
-      model: "deepseek-chat", // Use fast model for evaluation
+      model: isOpenRouter ? actualModel : "deepseek-chat", // Use fast model for evaluation unless OpenRouter
       messages: [
         { role: "system", content: "You are a strict AI response evaluator. Output only valid JSON." },
         { role: "user", content: evaluationPrompt },

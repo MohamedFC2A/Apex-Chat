@@ -190,9 +190,10 @@ Output a concise but comprehensive response plan (3-7 bullet points):`;
   const proposerSystem = "You are a strategic response planner Proposer. Create structured plans for answering queries.";
 
   let currentPlan = "";
+  const isOpenRouter = actualModel.includes("/") || actualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
   try {
     const response = await client.chat.completions.create({
-      model: actualModel === "deepseek-reasoner" ? "deepseek-chat" : actualModel,
+      model: isOpenRouter ? actualModel : (actualModel === "deepseek-reasoner" ? "deepseek-chat" : actualModel),
       messages: [
         {
           role: "system",
@@ -223,7 +224,7 @@ Check if this plan misses any key aspects of the query, has logical flaws, or ha
     let critique = "";
     try {
       const response = await client.chat.completions.create({
-        model: "deepseek-chat", // Fast critic
+        model: isOpenRouter ? actualModel : "deepseek-chat", // Fast critic unless OpenRouter
         messages: [
           { role: "system", content: "You are a strict, adversarial plan Critic. Output 'PASSED' if there are no flaws in the plan." },
           { role: "user", content: criticPrompt }
@@ -257,7 +258,7 @@ Provide the complete refactored plan.`;
 
     try {
       const response = await client.chat.completions.create({
-        model: actualModel === "deepseek-reasoner" ? "deepseek-chat" : actualModel,
+        model: isOpenRouter ? actualModel : (actualModel === "deepseek-reasoner" ? "deepseek-chat" : actualModel),
         messages: [
           { role: "system", content: proposerSystem },
           { role: "user", content: refactorPrompt },
@@ -288,6 +289,7 @@ Provide the complete refactored plan.`;
  */
 async function simulation(
   client: OpenAI,
+  actualModel: string,
   node: MCTSNode,
   query: string
 ): Promise<number> {
@@ -312,8 +314,9 @@ Rate this plan. Output JSON with:
       maxTokens: 200,
     });
 
+    const isOpenRouter = actualModel.includes("/") || actualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
     const response = await client.chat.completions.create({
-      model: "deepseek-chat",
+      model: isOpenRouter ? actualModel : "deepseek-chat",
       messages: [
         { role: "system", content: "You are a plan quality evaluator. Output only valid JSON." },
         { role: "user", content: simPrompt },
@@ -428,7 +431,7 @@ export async function runMCTS(
     }
 
     // Phase 3: Simulation
-    const reward = await simulation(client, nodeToSimulate, query);
+    const reward = await simulation(client, actualModel, nodeToSimulate, query);
 
     // Phase 4: Backpropagation
     backpropagation(nodeToSimulate, reward);

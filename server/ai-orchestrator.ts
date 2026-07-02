@@ -1534,10 +1534,26 @@ export async function processMessage(
   // ── APEX OMNI: Route through full AI pipeline ──────────────────────────────
   if (model === "apex-omni") {
     const OpenAI = (await import("openai")).default;
-    const deepseekKey = process.env.DEEPSEEK_API_KEY;
-    if (!deepseekKey) throw new Error("DEEPSEEK_API_KEY is not configured.");
+    const omniActualModel = process.env.APEX_OMNI_MODEL || "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
+    const isOpenRouter = omniActualModel.includes("/") || omniActualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
 
-    const omniClient = new OpenAI({ apiKey: deepseekKey, baseURL: "https://api.deepseek.com/v1" });
+    let omniClient: any;
+    if (isOpenRouter) {
+      const openRouterKey = process.env.OPENROUTER_API_KEY;
+      if (!openRouterKey) throw new Error("OPENROUTER_API_KEY is not configured.");
+      omniClient = new OpenAI({
+        apiKey: openRouterKey,
+        baseURL: "https://openrouter.ai/api/v1",
+        defaultHeaders: {
+          "HTTP-Referer": "https://apex-chat.vercel.app",
+          "X-Title": "Apex Chat",
+        }
+      });
+    } else {
+      const deepseekKey = process.env.DEEPSEEK_API_KEY;
+      if (!deepseekKey) throw new Error("DEEPSEEK_API_KEY is not configured.");
+      omniClient = new OpenAI({ apiKey: deepseekKey, baseURL: "https://api.deepseek.com/v1" });
+    }
     
     // Evaluate Prompt Complexity
     const evaluatePromptComplexity = (msg: string, hist: Array<{ role: string; content: string }> = []): number => {
@@ -1567,7 +1583,7 @@ export async function processMessage(
         onChunk({ content: `**[Phase 1] Level 1 Stream: Direct Token Return**\n` });
         onChunk({ content: `> Low complexity detected (${complexity}/10). Initiating direct token stream...\n\n` });
       }
-      const fastModel = "deepseek-chat";
+      const fastModel = isOpenRouter ? omniActualModel : "deepseek-chat";
       const messages = [
         { role: "system" as const, content: buildCerebrasSystemPrompt("apex-flash", mode, features, request.clientLocalTime) },
         ...(request.conversationHistory || []).map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
@@ -1630,7 +1646,7 @@ export async function processMessage(
       let content = "";
       if (onChunk) {
         const stream = await omniClient.chat.completions.create({
-          model: "deepseek-chat",
+          model: isOpenRouter ? omniActualModel : "deepseek-chat",
           messages,
           max_tokens: 3072,
           stream: true,
@@ -1645,7 +1661,7 @@ export async function processMessage(
         }
       } else {
         const response = await omniClient.chat.completions.create({
-          model: "deepseek-chat",
+          model: isOpenRouter ? omniActualModel : "deepseek-chat",
           messages,
           max_tokens: 3072,
           stream: false,
@@ -1658,7 +1674,6 @@ export async function processMessage(
 
     // Level 3 Stream: Full Reasoning Engine (Complexity >= 7)
     console.log(`[Orchestrator] Level 3 Stream: Full Reasoning Engine (Complexity ${complexity} >= 7)`);
-    const omniActualModel = mapDeepSeekModelForTask("apex-omni", "reasoning");
     const omniSystemBase = buildCerebrasSystemPrompt(model, mode, features, request.clientLocalTime);
 
     try {
