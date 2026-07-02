@@ -2418,10 +2418,22 @@ function AssistantMessage({
   const mcqState = getMCQQuizState(cleanContent);
   const pdfState = getPDFDocumentState(mcqState.sanitizedContent);
 
+  const cleanProseAroundWidgets = (txt: string) => {
+    const pdfRegex = /(```pdf-document[\s\S]*?(?:```|$))/i;
+    const quizRegex = /(```mcq-quiz[\s\S]*?(?:```|$))/i;
+    const pdfMatch = txt.match(pdfRegex);
+    if (pdfMatch) return pdfMatch[1];
+    const quizMatch = txt.match(quizRegex);
+    if (quizMatch) return quizMatch[1];
+    return txt;
+  };
+
   const isUnboundModel = model === "apex-unbound";
-  const cleanedMarkdown = isUnboundModel
+  const baseMarkdown = isUnboundModel
     ? cleanStatusMarkers(pdfState.sanitizedContent)
     : pdfState.sanitizedContent;
+
+  const cleanedMarkdown = cleanProseAroundWidgets(baseMarkdown);
 
   // Detect if this message contains a launchable website (can extract as soon as HTML block closes)
   const detectedHtml = extractHtmlFromContent(cleanContent);
