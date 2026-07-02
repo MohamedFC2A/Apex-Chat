@@ -451,14 +451,11 @@ export function PDFExportWidget({ jsonText, intentVerified }: { jsonText: string
 
   const [hasAutoDownloaded, setHasAutoDownloaded] = useState(false);
 
-  if (!intentVerified) {
-    console.warn("Security Safeguard: PDF block blocked from rendering without user confirmation.");
-    const fallbackText = parsed.document?.title || "PDF Document Content (Intent not verified)";
-    return <p className="text-sm text-neutral-400 font-arabic" dir="auto">{fallbackText}</p>;
-  }
-
   // Auto-download PDF once generated and ready
+  // IMPORTANT: This useEffect must be BEFORE any conditional return to obey React Rules of Hooks
   useEffect(() => {
+    // Guard: do not auto-download if intent not confirmed
+    if (!intentVerified) return;
     const doc = parsed.document;
     if (doc && !hasAutoDownloaded) {
       setHasAutoDownloaded(true);
@@ -570,7 +567,14 @@ export function PDFExportWidget({ jsonText, intentVerified }: { jsonText: string
 
       autoGenerate();
     }
-  }, [parsed.document, hasAutoDownloaded]);
+  }, [parsed.document, hasAutoDownloaded, intentVerified]);
+
+  // ── Early return guards (after ALL hooks are declared) ──
+  if (!intentVerified) {
+    console.warn("Security Safeguard: PDF block blocked from rendering without user confirmation.");
+    const fallbackText = parsed.document?.title || "PDF Document Content (Intent not verified)";
+    return <p className="text-sm text-neutral-400 font-arabic" dir="auto">{fallbackText}</p>;
+  }
 
   if (!documentState) {
     return (

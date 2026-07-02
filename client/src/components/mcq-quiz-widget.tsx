@@ -292,6 +292,7 @@ export function MCQQuizLoadingCard() {
 }
 
 export function MCQQuizWidget({ jsonText, intentVerified }: { jsonText: string; intentVerified?: boolean }) {
+  // ── All hooks must be called unconditionally before any early return ──
   const parsedRawJson = useMemo(() => {
     try {
       const cleaned = jsonText
@@ -304,39 +305,29 @@ export function MCQQuizWidget({ jsonText, intentVerified }: { jsonText: string; 
     }
   }, [jsonText]);
 
-  if (!intentVerified) {
-    console.warn("Security Safeguard: MCQ block blocked from rendering without user confirmation.");
-    const fallbackText = parsedRawJson?.explanation || parsedRawJson?.description || parsedRawJson?.title || "Quiz Content (Intent not verified)";
-    return <p className="text-sm text-neutral-400 font-arabic" dir="auto">{fallbackText}</p>;
-  }
-
   const parsed = useMemo(() => {
+    if (!intentVerified) return { quiz: null, error: null };
     try {
       return { quiz: normalizeQuiz(jsonText), error: null };
     } catch (error) {
       return { quiz: null, error: error instanceof Error ? error.message : "Invalid quiz payload" };
     }
-  }, [jsonText]);
-
-  if (!parsed.quiz) {
-    return (
-      <div className="my-4 rounded-xl border border-rose-400/20 bg-rose-400/10 p-4 text-right font-arabic" dir="rtl">
-        <p className="text-sm font-semibold text-rose-200">تعذر عرض الاختبار التفاعلي.</p>
-        <p className="mt-1 text-sm text-zinc-300">صيغة `mcq-quiz` غير صالحة أو غير مكتملة.</p>
-        {parsed.error && <pre className="mt-3 overflow-x-auto rounded-xl bg-black/20 p-3 text-left text-xs text-rose-100">{parsed.error}</pre>}
-      </div>
-    );
-  }
+  }, [jsonText, intentVerified]);
 
   const quiz = parsed.quiz;
-  const isRtl = containsArabic(`${quiz.title} ${quiz.description} ${quiz.questions.map((item) => item.question).join(" ")}`);
-  
+
+  const isRtl = useMemo(() => {
+    if (!quiz) return true;
+    return containsArabic(`${quiz.title} ${quiz.description} ${quiz.questions.map((item) => item.question).join(" ")}`);
+  }, [quiz]);
+
   // Adaptive test session setup
   const maxSessionQuestions = useMemo(() => {
-    return Math.min(5, quiz.questions.length);
-  }, [quiz.questions.length]);
+    return quiz ? Math.min(5, quiz.questions.length) : 0;
+  }, [quiz]);
 
   const [sessionQuestionIds, setSessionQuestionIds] = useState<string[]>(() => {
+    if (!quiz || quiz.questions.length === 0) return [];
     const startQuestion = quiz.questions.find((q) => q.difficulty === quiz.startingDifficulty);
     if (startQuestion) return [startQuestion.id];
     const mediumQuestion = quiz.questions.find((q) => q.difficulty === "medium");
@@ -345,6 +336,7 @@ export function MCQQuizWidget({ jsonText, intentVerified }: { jsonText: string; 
   });
 
   const [currentDifficulty, setCurrentDifficulty] = useState<"easy" | "medium" | "hard" | "impossible">(() => {
+    if (!quiz || quiz.questions.length === 0) return "medium";
     const startQuestion = quiz.questions.find((q) => q.difficulty === quiz.startingDifficulty);
     if (startQuestion) return quiz.startingDifficulty;
     const mediumQuestion = quiz.questions.find((q) => q.difficulty === "medium");
@@ -359,8 +351,41 @@ export function MCQQuizWidget({ jsonText, intentVerified }: { jsonText: string; 
   const [reviewMode, setReviewMode] = useState(false);
 
   const sessionQuestions = useMemo(() => {
+    if (!quiz) return [] as NormalizedQuestion[];
     return sessionQuestionIds.map(id => quiz.questions.find(q => q.id === id)).filter(Boolean) as NormalizedQuestion[];
-  }, [sessionQuestionIds, quiz.questions]);
+  }, [sessionQuestionIds, quiz]);
+
+  const setActiveQuizProgress = useChatStore((state) => state.setActiveQuizProgress);
+
+  useEffect(() => {
+    if (!quiz) return;
+    if (showResults) {
+      setActiveQuizProgress({ current: maxSessionQuestions, total: maxSessionQuestions });
+    } else {
+      const selectedAnswer = sessionQuestions[currentIndex] ? answers[sessionQuestions[currentIndex].id] : undefined;
+      setActiveQuizProgress({
+        current: currentIndex + (selectedAnswer ? 1 : 0),
+        total: maxSessionQuestions,
+      });
+    }
+  }, [currentIndex, answers, showResults, maxSessionQuestions, setActiveQuizProgress, quiz, sessionQuestions]);
+
+  // ── Early return guards (after ALL hooks are declared) ──
+  if (!intentVerified) {
+    console.warn("Security Safeguard: MCQ block blocked from rendering without user confirmation.");
+    const fallbackText = parsedRawJson?.explanation || parsedRawJson?.description || parsedRawJson?.title || "Quiz Content (Intent not verified)";
+    return <p className="text-sm text-neutral-400 font-arabic" dir="auto">{fallbackText}</p>;
+  }
+
+  if (!quiz) {
+    return (
+      <div className="my-4 rounded-xl border border-rose-400/20 bg-rose-400/10 p-4 text-right font-arabic" dir="rtl">
+        <p className="text-sm font-semibold text-rose-200">تعذر عرض الاختبار التفاعلي.</p>
+        <p className="mt-1 text-sm text-zinc-300">صيغة `mcq-quiz` غير صالحة أو غير مكتملة.</p>
+        {parsed.error && <pre className="mt-3 overflow-x-auto rounded-xl bg-black/20 p-3 text-left text-xs text-rose-100">{parsed.error}</pre>}
+      </div>
+    );
+  }
 
   const question = sessionQuestions[currentIndex] || quiz.questions[0];
   const selectedAnswer = answers[question.id];
@@ -369,19 +394,6 @@ export function MCQQuizWidget({ jsonText, intentVerified }: { jsonText: string; 
   const score = sessionQuestions.reduce((sum, item) => sum + (answers[item.id] === item.correctAnswer ? 1 : 0), 0);
   const percent = sessionQuestions.length ? (score / sessionQuestions.length) * 100 : 0;
   const progressValue = showResults ? 100 : ((currentIndex + (selectedAnswer ? 1 : 0)) / maxSessionQuestions) * 100;
-
-  const setActiveQuizProgress = useChatStore((state) => state.setActiveQuizProgress);
-
-  useEffect(() => {
-    if (showResults) {
-      setActiveQuizProgress({ current: maxSessionQuestions, total: maxSessionQuestions });
-    } else {
-      setActiveQuizProgress({
-        current: currentIndex + (selectedAnswer ? 1 : 0),
-        total: maxSessionQuestions,
-      });
-    }
-  }, [currentIndex, selectedAnswer, showResults, maxSessionQuestions, setActiveQuizProgress]);
 
   const results = sessionQuestions.map((item) => ({
     id: item.id,

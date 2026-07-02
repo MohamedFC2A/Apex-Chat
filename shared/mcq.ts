@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export type MCQQuizMode = "practice" | "exam";
-export type MCQQuizDifficulty = "easy" | "medium" | "hard";
+export type MCQQuizDifficulty = "easy" | "medium" | "hard" | "impossible";
 export type MCQQuizLanguage = "ar" | "en";
 
 export interface MCQOptionMap {
@@ -17,12 +17,14 @@ export interface MCQQuestion {
   options: MCQOptionMap;
   correctAnswer: keyof MCQOptionMap;
   explanation: string;
+  difficulty?: MCQQuizDifficulty;
 }
 
 export interface MCQQuiz {
   title: string;
   description: string;
   mode: MCQQuizMode;
+  startingDifficulty?: MCQQuizDifficulty;
   questions: MCQQuestion[];
   /** V2 Authorization Gate: true only when an explicit operational command triggered this quiz */
   isCommandAuthorized?: boolean;
@@ -44,6 +46,7 @@ const QUIZ_SCHEMA = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   mode: z.enum(["practice", "exam"]),
+  startingDifficulty: z.enum(["easy", "medium", "hard", "impossible"]).optional(),
   isCommandAuthorized: z.boolean().optional(),
   questions: z
     .array(
@@ -58,6 +61,7 @@ const QUIZ_SCHEMA = z.object({
         }),
         correctAnswer: z.enum(["a", "b", "c", "d"]),
         explanation: z.string().min(1),
+        difficulty: z.enum(["easy", "medium", "hard", "impossible"]).optional(),
       })
     )
     .min(1),
@@ -310,9 +314,9 @@ export function buildQuizGenerationInstructions(request: ParsedQuizRequest): str
     return `أنشئ الآن اختبار اختيار من متعدد بصيغة JSON فقط.
 
 الموضوع المطلوب: ${request.topic}
-عدد الأسئلة المطلوب: ${request.requestedQuestionCount}
+عدد الأسئلة المطلوب: ${request.requestedQuestionCount} على الأقل (يُفضل توليد من 6 إلى 8 أسئلة لتوزيع الصعوبة)
 الوضع المطلوب: ${request.mode}
-مستوى الصعوبة: ${getDifficultyLabel(request)}
+مستوى البداية: ${getDifficultyLabel(request)}
 
 قواعد إلزامية:
 1. أخرج كتلة واحدة فقط باسم \`\`\`mcq-quiz.
@@ -320,11 +324,13 @@ export function buildQuizGenerationInstructions(request: ParsedQuizRequest): str
 3. عنوان الاختبار ووصفه يجب أن يذكرا الموضوع حرفيًا: "${request.topic}".
 4. كل سؤال يجب أن يكون متعلقًا مباشرة بموضوع "${request.topic}" وليس معرفة عامة.
 5. استخدم 4 اختيارات فقط: a, b, c, d.
-6. استخدم هذا الشكل بدقة:
+6. وزّع مستويات الصعوبة: 1-2 "easy"، 2 "medium"، 2 "hard"، 1-2 "impossible".
+7. استخدم هذا الشكل بدقة:
 {
   "title": "عنوان الاختبار",
   "description": "وصف قصير",
   "mode": "${request.mode}",
+  "startingDifficulty": "${request.difficulty || 'medium'}",
   "questions": [
     {
       "id": "q1",
@@ -336,18 +342,20 @@ export function buildQuizGenerationInstructions(request: ParsedQuizRequest): str
         "d": "الخيار الرابع"
       },
       "correctAnswer": "a",
-      "explanation": "شرح واضح لسبب صحة الإجابة."
+      "explanation": "شرح واضح لسبب صحة الإجابة.",
+      "difficulty": "easy"
     }
   ]
-}`;
+}
+ملاحظة: قيم difficulty يجب أن تكون بالإنجليزية فقط: "easy" أو "medium" أو "hard" أو "impossible".`;
   }
 
   return `Generate a multiple-choice quiz as JSON only.
 
 Required topic: ${request.topic}
-Required question count: ${request.requestedQuestionCount}
+Required question count: at least ${request.requestedQuestionCount} (prefer 6-8 questions to spread difficulty levels)
 Required mode: ${request.mode}
-Difficulty: ${request.difficulty}
+Starting difficulty: ${request.difficulty || 'medium'}
 
 Hard rules:
 1. Output exactly one fenced block named \`\`\`mcq-quiz.
@@ -355,11 +363,13 @@ Hard rules:
 3. The title and description must explicitly include the exact topic phrase "${request.topic}".
 4. Every question must be directly about "${request.topic}", not general knowledge.
 5. Use exactly 4 options only: a, b, c, d.
-6. Use this exact shape:
+6. Distribute difficulty levels: 1-2 "easy", 2 "medium", 2 "hard", 1-2 "impossible".
+7. Use this exact shape:
 {
   "title": "Quiz title",
   "description": "Short description",
   "mode": "${request.mode}",
+  "startingDifficulty": "${request.difficulty || 'medium'}",
   "questions": [
     {
       "id": "q1",
@@ -371,7 +381,8 @@ Hard rules:
         "d": "Option D"
       },
       "correctAnswer": "a",
-      "explanation": "Clear explanation."
+      "explanation": "Clear explanation.",
+      "difficulty": "medium"
     }
   ]
 }`;
@@ -506,6 +517,13 @@ function normalizeQuizObject(raw: unknown, request: ParsedQuizRequest): MCQQuiz 
     const questionText = String(item.question ?? item.text ?? item.prompt ?? "").trim();
     const explanation = String(item.explanation ?? item.reason ?? item.rationale ?? "").trim();
 
+    // Parse difficulty from the question object (supports both English and Arabic values)
+    const rawDiff = String(item.difficulty || item.level || "medium").trim().toLowerCase();
+    let difficulty: MCQQuizDifficulty = "medium";
+    if (rawDiff === "easy" || rawDiff === "سهل") difficulty = "easy";
+    else if (rawDiff === "hard" || rawDiff === "صعب") difficulty = "hard";
+    else if (rawDiff === "impossible" || rawDiff === "مستحيل") difficulty = "impossible";
+
     if (!questionText || !correctAnswer) return null;
 
     questions.push({
@@ -513,6 +531,7 @@ function normalizeQuizObject(raw: unknown, request: ParsedQuizRequest): MCQQuiz 
       question: questionText,
       options,
       correctAnswer,
+      difficulty,
       explanation:
         explanation ||
         (request.language === "ar"
@@ -522,7 +541,8 @@ function normalizeQuizObject(raw: unknown, request: ParsedQuizRequest): MCQQuiz 
   }
 
   const trimmedQuestions = questions.slice(0, request.requestedQuestionCount);
-  if (trimmedQuestions.length < request.requestedQuestionCount) {
+  // Accept whatever questions were generated (don't fail if fewer than requested)
+  if (trimmedQuestions.length === 0) {
     return null;
   }
 
@@ -533,10 +553,18 @@ function normalizeQuizObject(raw: unknown, request: ParsedQuizRequest): MCQQuiz 
       ? `اختبار اختيار من متعدد عن ${request.topic}`
       : `A multiple-choice quiz about ${request.topic}`;
 
+  // Determine startingDifficulty from candidate JSON or default to medium
+  const rawStartDiff = String((candidate as any).startingDifficulty || "medium").toLowerCase();
+  let startingDifficulty: MCQQuizDifficulty = "medium";
+  if (rawStartDiff === "easy") startingDifficulty = "easy";
+  else if (rawStartDiff === "hard") startingDifficulty = "hard";
+  else if (rawStartDiff === "impossible") startingDifficulty = "impossible";
+
   const normalizedQuiz: MCQQuiz = {
     title: String(candidate.title ?? defaultTitle).trim() || defaultTitle,
     description: String(candidate.description ?? defaultDescription).trim() || defaultDescription,
     mode: candidate.mode === "exam" ? "exam" : request.mode,
+    startingDifficulty,
     questions: trimmedQuestions,
   };
 

@@ -754,6 +754,7 @@ Rules:
   "title": "Quiz title",
   "description": "Short description",
   "mode": "practice" or "exam",
+  "startingDifficulty": "easy" or "medium" or "hard" or "impossible",
   "questions": [
     {
       "id": "q1",
@@ -765,14 +766,22 @@ Rules:
         "d": "Option D"
       },
       "correctAnswer": "a",
-      "explanation": "A clear explanation of why the correct answer is correct."
+      "explanation": "A clear explanation of why the correct answer is correct.",
+      "difficulty": "easy" or "medium" or "hard" or "impossible"
     }
   ]
 }
-3. Each quiz must contain at least 3 questions unless the user requests a different number.
-4. Use exactly 4 options per question unless the user explicitly requests otherwise.
-5. Match the user's language exactly. If the user writes in Arabic, all quiz fields and explanations must be in Arabic.
-6. Default to "practice" mode unless the user explicitly asks for an exam/final-test style flow.`;
+3. IMPORTANT: Generate a diverse pool of at least 6 to 8 questions so the adaptive engine can select questions based on user performance.
+4. Distribute difficulty levels across the generated questions:
+   - At least 1-2 "easy" questions (basics, direct facts)
+   - At least 2 "medium" questions (application, normal understanding)
+   - At least 2 "hard" questions (complex scenarios, deep details)
+   - At least 1-2 "impossible" questions (extremely advanced edge cases, expert level)
+5. Set "startingDifficulty" to match what the user requested (if any), defaulting to "medium".
+6. Use exactly 4 options per question unless the user explicitly requests otherwise.
+7. Match the user's language exactly. If the user writes in Arabic, all quiz fields and explanations must be in Arabic, but keep difficulty values as English strings: "easy", "medium", "hard", "impossible".
+8. Default to "practice" mode unless the user explicitly asks for an exam/final-test style flow.`;
+
 
 const PDF_GENERATION_PROTOCOL = `\n\n## PDF DOCUMENT GENERATION PROTOCOL:
 When the user asks for a PDF, report, document, exported document, or professional file, you MUST output the result inside a single fenced code block labeled \`\`\`pdf-document.

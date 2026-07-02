@@ -161,8 +161,9 @@ Rules:
    - At least 1-2 "impossible" questions (extremely advanced edge cases, trick questions, expert level details)
 5. Detect the difficulty requested by the user in their prompt (e.g. if they say "سهل" or "easy" set "startingDifficulty" to "easy"; if they say "صعب" or "hard" set "startingDifficulty" to "hard"; if they say "مستحيل" or "impossible" set it to "impossible"). If they don't request a difficulty, default "startingDifficulty" to "medium".
 6. Use exactly 4 options per question.
-7. Match the user's language exactly. If the user writes in Arabic, all quiz fields, questions, options, difficulty values, and explanations must be in Arabic, but keep the difficulty JSON keys/values as "easy", "medium", "hard", "impossible" in English.
+7. Match the user's language exactly. If the user writes in Arabic, all quiz fields, questions, options, and explanations must be in Arabic, but keep the difficulty JSON keys/values as "easy", "medium", "hard", "impossible" in English.
 8. Default to "practice" mode.`;
+
 
 const PDF_GENERATION_PROTOCOL = `\n\n## PDF DOCUMENT GENERATION PROTOCOL:
 When the user asks for a PDF, report, document, or exported file, you MUST output the result inside a single fenced code block labeled \`\`\`pdf-document.
@@ -394,7 +395,7 @@ async function generateDedicatedPdfDirect(
           },
           { role: "user", content: userContent }
         ],
-        max_tokens: 4096,
+        max_tokens: 8192,
         stream: false,
         ...baseParams,
       })
