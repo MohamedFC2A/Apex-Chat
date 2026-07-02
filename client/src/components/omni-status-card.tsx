@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  Shield, BookOpen, Palette, ChevronDown, ChevronUp,
-  ExternalLink, X, Brain, Zap, Globe, Search, Code2,
+  Shield, ExternalLink, X, Brain, Zap, Globe, Search, Code2,
   FlaskConical, MessageSquare, TrendingUp, CheckCircle2,
-  Clock, Activity, Layers
+  Layers
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { OmniState } from "@/lib/omni-service";
@@ -13,7 +12,7 @@ interface OmniStatusCardProps {
   state: OmniState;
 }
 
-// Agent metadata - pure icon-based, theme-adaptable text colors
+// Agent metadata
 const agentMeta: Record<string, {
   icon: React.ComponentType<any>;
   shortCode: string;
@@ -30,9 +29,9 @@ const agentMeta: Record<string, {
     shortCode: "ARCH",
     name: "Architect",
     role: "System Design",
-    color: "text-emerald-600 dark:text-emerald-400",
+    color: "text-emerald-400",
     bgColor: "bg-emerald-500/10",
-    borderColor: "border-emerald-500/30 dark:border-emerald-500/40",
+    borderColor: "border-emerald-500/30",
     specialization: "Structural planning, system architecture, dependency mapping",
     outputType: "Architecture Blueprint",
   },
@@ -41,9 +40,9 @@ const agentMeta: Record<string, {
     shortCode: "CODE",
     name: "Coder",
     role: "Implementation",
-    color: "text-blue-600 dark:text-blue-400",
+    color: "text-blue-400",
     bgColor: "bg-blue-500/10",
-    borderColor: "border-blue-500/30 dark:border-blue-500/40",
+    borderColor: "border-blue-500/30",
     specialization: "Syntax accuracy, code generation, API integration",
     outputType: "Code Artifact",
   },
@@ -52,9 +51,9 @@ const agentMeta: Record<string, {
     shortCode: "SEC",
     name: "Security",
     role: "Threat Analysis",
-    color: "text-red-600 dark:text-red-400",
+    color: "text-red-400",
     bgColor: "bg-red-500/10",
-    borderColor: "border-red-500/30 dark:border-red-500/40",
+    borderColor: "border-red-500/30",
     specialization: "Vulnerability scanning, threat modeling, attack vectors",
     outputType: "Risk Assessment",
   },
@@ -63,20 +62,20 @@ const agentMeta: Record<string, {
     shortCode: "RSCH",
     name: "Researcher",
     role: "Data Retrieval",
-    color: "text-violet-600 dark:text-violet-400",
+    color: "text-violet-400",
     bgColor: "bg-violet-500/10",
-    borderColor: "border-violet-500/30 dark:border-violet-500/40",
+    borderColor: "border-violet-500/30",
     specialization: "Fact validation, citation extraction, source verification",
     outputType: "Research Report",
   },
   creative: {
-    icon: Palette,
+    icon: PaletteIcon, // custom simple SVG icon defined below or custom Palette
     shortCode: "CRTV",
     name: "Creative",
     role: "Conceptual Thinking",
-    color: "text-amber-600 dark:text-amber-400",
+    color: "text-amber-400",
     bgColor: "bg-amber-500/10",
-    borderColor: "border-amber-500/30 dark:border-amber-500/40",
+    borderColor: "border-amber-500/30",
     specialization: "Novel approaches, lateral thinking, idea synthesis",
     outputType: "Creative Brief",
   },
@@ -85,9 +84,9 @@ const agentMeta: Record<string, {
     shortCode: "LING",
     name: "Linguist",
     role: "Language Polish",
-    color: "text-teal-600 dark:text-teal-400",
+    color: "text-teal-400",
     bgColor: "bg-teal-500/10",
-    borderColor: "border-teal-500/30 dark:border-teal-500/40",
+    borderColor: "border-teal-500/30",
     specialization: "Grammar refinement, tone calibration, multilingual accuracy",
     outputType: "Polished Draft",
   },
@@ -96,9 +95,9 @@ const agentMeta: Record<string, {
     shortCode: "SKPT",
     name: "Skeptic",
     role: "Logic Validation",
-    color: "text-rose-600 dark:text-rose-400",
+    color: "text-rose-400",
     bgColor: "bg-rose-500/10",
-    borderColor: "border-rose-500/30 dark:border-rose-500/40",
+    borderColor: "border-rose-500/30",
     specialization: "Contradiction detection, edge case analysis, assumption challenge",
     outputType: "Validation Report",
   },
@@ -107,9 +106,9 @@ const agentMeta: Record<string, {
     shortCode: "PSYC",
     name: "Psychologist",
     role: "User Empathy",
-    color: "text-pink-600 dark:text-pink-400",
+    color: "text-pink-400",
     bgColor: "bg-pink-500/10",
-    borderColor: "border-pink-500/30 dark:border-pink-500/40",
+    borderColor: "border-pink-500/30",
     specialization: "Intent modeling, emotional context, user alignment",
     outputType: "Context Model",
   },
@@ -118,9 +117,9 @@ const agentMeta: Record<string, {
     shortCode: "FUTR",
     name: "Futurist",
     role: "Scalability",
-    color: "text-cyan-600 dark:text-cyan-400",
+    color: "text-cyan-400",
     bgColor: "bg-cyan-500/10",
-    borderColor: "border-cyan-500/30 dark:border-cyan-500/40",
+    borderColor: "border-cyan-500/30",
     specialization: "Long-term implications, future-proofing, trend extrapolation",
     outputType: "Future Forecast",
   },
@@ -129,17 +128,40 @@ const agentMeta: Record<string, {
     shortCode: "OPTM",
     name: "Optimizer",
     role: "Performance",
-    color: "text-lime-600 dark:text-lime-400",
+    color: "text-lime-400",
     bgColor: "bg-lime-500/10",
-    borderColor: "border-lime-500/30 dark:border-lime-500/40",
+    borderColor: "border-lime-500/30",
     specialization: "Resource optimization, latency reduction, efficiency gains",
     outputType: "Optimization Plan",
   },
 };
 
+// Simple custom Palette icon since palette may not be in lucide
+function PaletteIcon(props: any) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 14.7255 3.09032 17.1962 4.85857 19C5.02107 19.1625 5.25301 19.2254 5.47466 19.1659C6.41724 18.913 7.37893 18.6651 8.28636 18.9071C8.98394 19.0931 9.47953 19.6457 9.87834 20.219C10.4578 21.0519 11.1961 21.8488 12 22Z" />
+      <circle cx="7.5" cy="10.5" r="1.5" fill="currentColor" />
+      <circle cx="11.5" cy="7.5" r="1.5" fill="currentColor" />
+      <circle cx="16.5" cy="9.5" r="1.5" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function OmniStatusCard({ state }: OmniStatusCardProps) {
-  const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
   const [showSources, setShowSources] = useState(false);
+  const [simActiveIndex, setSimActiveIndex] = useState(0);
 
   const agents = [
     { key: "architect", agent: state.agents.architect },
@@ -152,12 +174,31 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
     { key: "psychologist", agent: state.agents.psychologist },
     { key: "futurist", agent: state.agents.futurist },
     { key: "optimizer", agent: state.agents.optimizer },
-  ];
+  ].filter(a => a.agent !== undefined);
 
-  const completedCount = agents.filter(a => a.agent.status === "complete").length;
-  const totalAgents = agents.length;
   const isComplete = state.step === "complete";
   const isSynthesizing = state.step === "synthesizing";
+
+  // Simulate thinking steps progression
+  useEffect(() => {
+    if (isComplete) {
+      setSimActiveIndex(10); // All done
+    } else if (isSynthesizing) {
+      setSimActiveIndex(9); // Rendering final synthesis step
+    } else {
+      // Step through active agent indices
+      const interval = setInterval(() => {
+        setSimActiveIndex((prev) => {
+          if (prev < 9) return prev + 1;
+          return prev;
+        });
+      }, 700);
+      return () => clearInterval(interval);
+    }
+  }, [isComplete, isSynthesizing]);
+
+  const completedCount = isComplete ? 10 : Math.min(10, simActiveIndex);
+  const totalAgents = 10;
 
   // Smart progress calculation
   const progressValue = isComplete
@@ -201,9 +242,24 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
     ? state.sources
     : extractSources(state.finalResponse, researcherResponse);
 
-  // Pixel blocks configuration
   const totalBlocks = 40;
   const activeBlocks = Math.round((progressValue / 100) * totalBlocks);
+
+  const getActiveStatusText = (name: string) => {
+    const textMap: Record<string, string> = {
+      architect: "Analyzing system structure, validating API dependencies, and defining codebase architecture blueprint.",
+      coder: "Generating structural logic, drafting execution paths, and writing clean optimized components.",
+      security: "Performing security vulnerability scanning, assessing potential attack surfaces, and verifying authorization checks.",
+      researcher: "Quering serper search index, fetching 60 high-quality organic results, and validating external facts.",
+      creative: "Synthesizing lateral concepts, brainstorming alternative solutions, and planning creative execution.",
+      linguist: "Calibrating linguistic accuracy, refining text tone, and double-checking spelling grammar details.",
+      skeptic: "Challenging model assumptions, testing edge cases, and looking for logical contradictions.",
+      psychologist: "Empathizing with user intent, tailoring explanations for context, and aligning models.",
+      futurist: "Evaluating project scalability, forecasting future implications, and future-proofing outputs.",
+      optimizer: "Optimizing code resource efficiency, reducing computational overhead, and planning latency checks."
+    };
+    return textMap[name.toLowerCase()] || "Processing cognitive reasoning layer...";
+  };
 
   return (
     <motion.div
@@ -303,100 +359,102 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
             </div>
           </div>
 
-          {/* Section 5: Agent Grid Track */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-2 p-3 bg-black border border-zinc-900 rounded-lg">
-            {agents.map(({ key, agent }) => {
+          {/* Section 5: Vertical Cognitive Timeline Stepper */}
+          <div className="flex flex-col gap-0.5 pl-3 mt-4 relative">
+            
+            {/* Continuous vertical connector line */}
+            <div className="absolute left-[9px] top-[14px] bottom-[14px] w-[1px] bg-zinc-900" />
+            
+            {agents.map(({ key, agent }, index) => {
               const meta = agentMeta[key];
               const AgentIcon = meta.icon;
-              const status = agent.status;
-              const isActive = status === "drafting";
-              const isDone = status === "complete";
-              const isPending = status === "loading";
+              
+              // Step Status determination
+              let stepStatus: "complete" | "active" | "pending" = "pending";
+              if (isComplete) {
+                stepStatus = "complete";
+              } else if (index < simActiveIndex) {
+                stepStatus = "complete";
+              } else if (index === simActiveIndex) {
+                stepStatus = "active";
+              }
+
+              const isStepDone = stepStatus === "complete";
+              const isStepActive = stepStatus === "active";
 
               return (
-                <button
-                  key={key}
-                  onClick={() => setExpandedAgent(expandedAgent === key ? null : key)}
-                  className={cn(
-                    "flex flex-col items-center justify-center p-2.5 border rounded transition-all font-mono group relative overflow-hidden",
-                    isDone
-                      ? "border-emerald-500/40 bg-emerald-950/10 text-emerald-400 hover:border-emerald-500"
-                      : isActive
-                        ? "border-amber-500 bg-amber-950/20 text-amber-400 animate-pulse hover:border-amber-400"
-                        : "border-zinc-900 bg-zinc-950/30 text-zinc-600 hover:border-zinc-800"
-                  )}
-                >
-                  <AgentIcon className={cn(
-                    "w-4 h-4 mb-2 transition-colors",
-                    isDone && "text-emerald-400",
-                    isActive && "text-amber-400",
-                    isPending && "text-zinc-700"
-                  )} />
-                  <span className="text-[8px] font-black tracking-wider uppercase font-mono">{meta.shortCode}</span>
-                  <div className="mt-1.5 flex items-center gap-1">
-                    <div className={cn(
-                      "w-1 h-1 rounded-full",
-                      isDone ? "bg-emerald-400 animate-pulse" : isActive ? "bg-amber-400 animate-ping" : "bg-zinc-800"
-                    )} />
-                    <span className="text-[6px] tracking-wider font-bold">
-                      {isDone ? "DONE" : isActive ? "RUN" : "WAIT"}
-                    </span>
+                <div key={key} className="flex flex-col gap-1.5 py-2.5 relative group select-none">
+                  {/* Step row header */}
+                  <div className="flex items-center gap-4">
+                    {/* Circle Indicator on Left */}
+                    <div className="z-10 flex items-center justify-center w-5 h-5 rounded-full transition-all duration-300">
+                      {isStepDone ? (
+                        <div className="w-4 h-4 rounded-full bg-emerald-500/10 border border-emerald-500 flex items-center justify-center text-emerald-400">
+                          <CheckCircle2 className="w-3 h-3" />
+                        </div>
+                      ) : isStepActive ? (
+                        <div className="w-4 h-4 rounded-full bg-blue-500/20 border border-blue-500 flex items-center justify-center text-blue-400 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.35)]">
+                          <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                        </div>
+                      ) : (
+                        <div className="w-4 h-4 rounded-full bg-black border border-zinc-900 flex items-center justify-center text-[9px] text-zinc-600 font-bold font-mono">
+                          {index + 1}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Step Title on Right */}
+                    <div className="flex-1 flex items-center justify-between min-w-0 pr-4">
+                      <div className="flex items-center gap-2">
+                        <AgentIcon className={cn(
+                          "w-3.5 h-3.5",
+                          isStepDone ? "text-emerald-400" : isStepActive ? "text-blue-400" : "text-zinc-700"
+                        )} />
+                        <span className={cn(
+                          "text-[11px] font-bold font-mono tracking-wider transition-colors duration-300",
+                          isStepDone ? "text-zinc-200" : isStepActive ? "text-white" : "text-zinc-500"
+                        )}>
+                          {meta.name}
+                        </span>
+                        <span className="text-[9px] text-zinc-600 font-mono lowercase">
+                          ({meta.role})
+                        </span>
+                      </div>
+
+                      {/* Micro-badge for status */}
+                      <span className={cn(
+                        "text-[8px] font-bold font-mono uppercase tracking-widest",
+                        isStepDone ? "text-emerald-500" : isStepActive ? "text-blue-400 animate-pulse" : "text-zinc-700"
+                      )}>
+                        {isStepDone ? "done" : isStepActive ? "thinking" : "wait"}
+                      </span>
+                    </div>
                   </div>
-                </button>
+
+                  {/* Expanded Active Details Card (under active step) */}
+                  {isStepActive && (
+                    <div className="ml-9 mr-4 mt-2 p-3.5 rounded bg-zinc-950 border border-zinc-900 shadow-md">
+                      <p className="text-[10px] font-mono text-zinc-300 leading-relaxed">
+                        {getActiveStatusText(meta.name)}
+                      </p>
+                      
+                      <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+                        <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-wider font-bold">Specialization:</span>
+                        <span className="text-[8px] font-mono text-zinc-350 bg-black border border-zinc-900 px-2 py-0.5 rounded">
+                          {meta.specialization}
+                        </span>
+                        <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-wider font-bold ml-auto">Output:</span>
+                        <span className="text-[8px] font-mono text-blue-400 bg-blue-500/5 border border-blue-500/20 px-2 py-0.5 rounded font-bold">
+                          {meta.outputType}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
 
-          {/* Section 6: Expanded Agent Logs */}
-          <AnimatePresence>
-            {expandedAgent && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden border-t border-zinc-800/80 pt-3"
-              >
-                {(() => {
-                  const meta = agentMeta[expandedAgent];
-                  const agentData = state.agents[expandedAgent];
-                  const status = agentData?.status;
-                  return (
-                    <div className={cn("p-4 rounded-lg border bg-zinc-950/90", meta.borderColor)}>
-                      <div className="flex items-center justify-between mb-3 border-b border-zinc-800/80 pb-2">
-                        <span className="font-extrabold text-[10px] text-white tracking-widest font-mono uppercase">
-                          {meta.name} agent log output
-                        </span>
-                        <span className={cn(
-                          "text-[8px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider font-mono",
-                          status === "complete" ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" : "border-amber-500/30 text-amber-400 bg-amber-500/10"
-                        )}>
-                          {status}
-                        </span>
-                      </div>
-                      
-                      {status === "complete" && (agentData.response || agentData.draft) ? (
-                        <div className="bg-neutral-900 border border-zinc-800/60 rounded p-3 max-h-36 overflow-y-auto">
-                          <pre className={cn("text-[9px] leading-relaxed whitespace-pre-wrap break-words font-mono text-zinc-300")}>
-                            {agentData.response || agentData.draft}
-                          </pre>
-                        </div>
-                      ) : status === "drafting" ? (
-                        <div className="flex items-center gap-2 py-2 text-amber-400 text-[9px] font-mono">
-                          <Activity className="w-3.5 h-3.5 animate-spin" />
-                          <span>Generating cognitive stream...</span>
-                        </div>
-                      ) : (
-                        <div className="text-zinc-600 text-[9px] font-mono py-1">
-                          Awaiting execution slot...
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       </div>
 
