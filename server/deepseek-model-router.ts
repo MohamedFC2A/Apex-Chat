@@ -4,7 +4,7 @@ const APEX_MODEL_ALIASES: Record<string, string> = {
   "apex-flash": "deepseek-chat",
   "apex-pro": "deepseek-reasoner",
   "apex-elite": "deepseek-reasoner",
-  "apex-omni": "deepseek-reasoner",
+  "apex-omni": "deepseek-v4-flash",
   "apex-unbound": "deepseek-reasoner",
 };
 

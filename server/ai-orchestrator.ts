@@ -1600,12 +1600,8 @@ export async function processMessage(
   // ── APEX OMNI: Route through full AI pipeline ──────────────────────────────
   if (model === "apex-omni") {
     const OpenAI = (await import("openai")).default;
-    let omniActualModel = process.env.APEX_OMNI_MODEL || "deepseek-reasoner";
-    if (omniActualModel.includes("rerank") || omniActualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free") {
-      console.warn(`[Orchestrator] APEX_OMNI_MODEL '${omniActualModel}' is a reranker. Falling back to deepseek-reasoner for completions.`);
-      omniActualModel = "deepseek-reasoner";
-    }
-    const isOpenRouter = omniActualModel.includes("/") || omniActualModel.includes("free");
+    let omniActualModel = "deepseek-v4-flash";
+    const isOpenRouter = false;
 
     let omniClient: any;
     if (isOpenRouter) {

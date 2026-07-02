@@ -179,23 +179,36 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
   const isComplete = state.step === "complete";
   const isSynthesizing = state.step === "synthesizing";
 
-  // Simulate thinking steps progression
+  const [activeProgress, setActiveProgress] = useState(0);
+
+  // Simulate thinking steps progression with smooth sub-progress
   useEffect(() => {
     if (isComplete) {
-      setSimActiveIndex(10); // All done
+      setSimActiveIndex(10);
+      setActiveProgress(100);
     } else if (isSynthesizing) {
-      setSimActiveIndex(9); // Rendering final synthesis step
+      setSimActiveIndex(9);
+      setActiveProgress(100);
     } else {
-      // Step through active agent indices
+      setActiveProgress(0);
+      const duration = 1200; // 1.2s per cognitive agent thinking phase
+      const startTime = Date.now();
       const interval = setInterval(() => {
-        setSimActiveIndex((prev) => {
-          if (prev < 9) return prev + 1;
-          return prev;
-        });
-      }, 700);
+        const elapsed = Date.now() - startTime;
+        const pct = Math.min(100, Math.round((elapsed / duration) * 100));
+        setActiveProgress(pct);
+
+        if (elapsed >= duration) {
+          clearInterval(interval);
+          setSimActiveIndex((prev) => {
+            if (prev < 9) return prev + 1;
+            return prev;
+          });
+        }
+      }, 30);
       return () => clearInterval(interval);
     }
-  }, [isComplete, isSynthesizing]);
+  }, [isComplete, isSynthesizing, simActiveIndex]);
 
   const completedCount = isComplete ? 10 : Math.min(10, simActiveIndex);
   const totalAgents = 10;
@@ -434,10 +447,22 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
                   {/* Expanded Active Details Card (under active step) */}
                   {isStepActive && (
                     <div className="ml-9 mr-4 mt-2 p-3.5 rounded bg-zinc-950 border border-zinc-900 shadow-md">
-                      <p className="text-[10px] font-mono text-zinc-300 leading-relaxed">
-                        {getActiveStatusText(meta.name)}
+                      <p className="text-[10px] font-mono text-zinc-350 leading-relaxed">
+                        {getActiveStatusText(meta.name)} <span className="animate-pulse">...</span>
                       </p>
                       
+                      {/* Animated sub-progress bar */}
+                      <div className="mt-3 flex items-center justify-between font-mono text-[8px] text-zinc-550 mb-1.5">
+                        <span>COGNITIVE PROCESSING</span>
+                        <span className="font-bold text-blue-400">{activeProgress}%</span>
+                      </div>
+                      <div className="h-1 bg-zinc-900 rounded-full overflow-hidden mb-3">
+                        <div 
+                          className="h-full bg-blue-500 rounded-full transition-all duration-75 shadow-[0_0_8px_rgba(59,130,246,0.5)]" 
+                          style={{ width: `${activeProgress}%` }} 
+                        />
+                      </div>
+
                       <div className="mt-2.5 flex items-center gap-2 flex-wrap">
                         <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-wider font-bold">Specialization:</span>
                         <span className="text-[8px] font-mono text-zinc-350 bg-black border border-zinc-900 px-2 py-0.5 rounded">
