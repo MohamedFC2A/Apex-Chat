@@ -164,8 +164,9 @@ Identify critical flaws, missing details, or errors. Be concise but rigorous. If
 
     let critique = "";
     try {
+      const isOpenRouter = actualModel.includes("/") || actualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
       const response = await client.chat.completions.create({
-        model: "deepseek-chat", // Fast critic
+        model: isOpenRouter ? actualModel : "deepseek-chat", // Fast critic unless OpenRouter
         messages: [
           { role: "system", content: "You are a strict, adversarial Critic sub-agent. Identify logical flaws, syntax errors, and edge cases. Output 'PASSED' only if there are absolutely no flaws." },
           { role: "user", content: criticPrompt }
@@ -236,6 +237,7 @@ Provide the complete refactored thought process addressing all the critic's poin
  */
 async function evaluateThought(
   client: OpenAI,
+  actualModel: string,
   query: string,
   node: ThoughtNode
 ): Promise<{ valueScore: number; valuation: ThoughtValuation }> {
@@ -258,8 +260,9 @@ Rate this thought. Output JSON with:
       maxTokens: 200,
     });
 
+    const isOpenRouter = actualModel.includes("/") || actualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
     const response = await client.chat.completions.create({
-      model: "deepseek-chat", // Use fast model for evaluation
+      model: isOpenRouter ? actualModel : "deepseek-chat", // Use fast model for evaluation unless OpenRouter
       messages: [
         { role: "system", content: "You are a strict thought evaluator. Output only valid JSON." },
         { role: "user", content: evalPrompt },
@@ -416,7 +419,7 @@ export async function runToTGoT(
 
   // ── Evaluate all level-0 nodes ──
   const evaluationResults = await Promise.all(
-    level0Nodes.map((node) => evaluateThought(client, query, node))
+    level0Nodes.map((node) => evaluateThought(client, actualModel, query, node))
   );
   level0Nodes.forEach((node, i) => {
     node.valueScore = evaluationResults[i].valueScore;
@@ -443,7 +446,7 @@ export async function runToTGoT(
       config,
       bestNode.content
     );
-    const expandedEval = await evaluateThought(client, query, expandedNode);
+    const expandedEval = await evaluateThought(client, actualModel, query, expandedNode);
     expandedNode.valueScore = expandedEval.valueScore;
     expandedNode.valuation = expandedEval.valuation;
     expandedNode.parentIds = [bestNode.id];

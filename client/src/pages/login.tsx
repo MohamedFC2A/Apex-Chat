@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword } = useAuth();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail, signInAnonymously, resetPassword } = useAuth();
   const { toast } = useToast();
 
   const [mode, setMode] = useState<"login" | "signup" | "reset">("login");
@@ -18,6 +18,26 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleGuestSignIn = async () => {
+    setIsLoading(true);
+    try {
+      await signInAnonymously();
+      toast({
+        title: "Welcome to APEX",
+        description: "Successfully signed in as Guest",
+      });
+      setLocation("/chat");
+    } catch (error: any) {
+      toast({
+        title: "Guest Sign-in failed",
+        description: error.message || "Could not sign in as Guest",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
@@ -116,14 +136,32 @@ export default function LoginPage() {
             whileHover={{ scale: 1.02, y: -1 }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="mb-3"
           >
             <Button
               onClick={handleGoogleSignIn}
               disabled={isLoading}
-              className="w-full bg-white hover:bg-zinc-100 text-zinc-900 font-medium h-12 gap-3 mb-6"
+              className="w-full bg-white hover:bg-zinc-100 text-zinc-900 font-medium h-12 gap-3"
             >
               <Chrome className="w-5 h-5" />
               Continue with Google
+            </Button>
+          </motion.div>
+
+          {/* Try as Guest */}
+          <motion.div
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          >
+            <Button
+              onClick={handleGuestSignIn}
+              disabled={isLoading}
+              variant="outline"
+              className="w-full border-white/10 hover:bg-zinc-800 text-white font-medium h-12 gap-3"
+            >
+              <User className="w-5 h-5 text-zinc-400" />
+              Try as Guest (Skip Registration)
             </Button>
           </motion.div>
 

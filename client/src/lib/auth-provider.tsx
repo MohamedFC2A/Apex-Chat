@@ -12,6 +12,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<void>;
+  signInAnonymously: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateUserProfile: (displayName?: string, photoURL?: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -227,6 +228,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const signInAnonymously = async () => {
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (error) throw error;
+    if (data.user) {
+      await syncUserData(data.user);
+    }
+  };
+
   const logout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
@@ -241,6 +250,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
+    signInAnonymously,
     resetPassword,
     updateUserProfile,
     logout,
