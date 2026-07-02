@@ -530,8 +530,8 @@ export async function runUnboundPipeline(
   const pipelineStart = Date.now();
 
   const isOfficial = isOfficialDeepSeekEndpoint(client.baseURL);
-  const architectModel = isOfficial ? "deepseek-reasoner" : "deepseek-v4-pro";
-  const specialistModel = isOfficial ? "deepseek-chat" : "deepseek-v4-flash";
+  const architectModel = isOfficial ? "deepseek-reasoner" : "deepseek-reasoner";
+  const specialistModel = isOfficial ? "deepseek-chat" : "deepseek-chat";
 
   const isResumed = !!request.spec;
   const isFollowUp = !!request.isFollowUp;

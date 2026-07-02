@@ -39,41 +39,21 @@ const MODEL_MAP: Record<string, string> = {
 type DeepSeekTask = "reasoning" | "generation";
 type LightweightMessage = Pick<Message, "role" | "content">;
 
-const OFFICIAL_DEEPSEEK_ALIASES: Record<string, Record<DeepSeekTask, string>> = {
-  "deepseek-chat": {
-    reasoning: "deepseek-v4-flash",
-    generation: "deepseek-v4-flash",
-  },
-  "deepseek-reasoner": {
-    reasoning: "deepseek-v4-pro",
-    generation: "deepseek-v4-pro",
-  },
-};
-
-function mapDeepSeekModelForClient(model: AIModel, task: DeepSeekTask): string {
-  return MODEL_MAP[model] || model;
+// DeepSeek Official API only supports two models:
+// - deepseek-chat    (fast, non-reasoning, gpt-4o equivalent)
+// - deepseek-reasoner (slow, CoT reasoning model)
+function mapDeepSeekModelForClient(model: AIModel, _task: DeepSeekTask): string {
+  return MODEL_MAP[model] || "deepseek-chat";
 }
 
 function getDeepSeekRequestParams(model: string): Record<string, any> {
+  // deepseek-reasoner does NOT accept temperature or top_p
   if (model === "deepseek-reasoner") {
     return {};
   }
-
-  if (model === "deepseek-v4-pro" || model === "deepseek-v4-flash" || model.includes("v4")) {
-    return {
-      reasoning_effort: "max",
-      extra_body: {
-        thinking: {
-          type: "enabled",
-        },
-      },
-    };
-  }
-
+  // deepseek-chat accepts temperature
   return {
     temperature: 0.7,
-    top_p: 0.9,
-    max_tokens: 4096,
   };
 }
 

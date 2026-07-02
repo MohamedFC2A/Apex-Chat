@@ -1,22 +1,14 @@
 export type DeepSeekTask = "reasoning" | "generation";
 
+// DeepSeek Official API supports only two model identifiers:
+// - deepseek-chat      (fast inference, V3 non-reasoning)
+// - deepseek-reasoner  (deep chain-of-thought reasoning, R1)
 const APEX_MODEL_ALIASES: Record<string, string> = {
   "apex-flash": "deepseek-chat",
   "apex-pro": "deepseek-reasoner",
   "apex-elite": "deepseek-reasoner",
-  "apex-omni": "deepseek-v4-flash",
+  "apex-omni": "deepseek-chat",
   "apex-unbound": "deepseek-reasoner",
-};
-
-const OFFICIAL_DEEPSEEK_ALIASES: Record<string, Record<DeepSeekTask, string>> = {
-  "deepseek-chat": {
-    reasoning: "deepseek-v4-flash",
-    generation: "deepseek-v4-flash",
-  },
-  "deepseek-reasoner": {
-    reasoning: "deepseek-v4-pro",
-    generation: "deepseek-v4-pro",
-  },
 };
 
 export function isOfficialDeepSeekEndpoint(baseURL?: string): boolean {
@@ -25,36 +17,19 @@ export function isOfficialDeepSeekEndpoint(baseURL?: string): boolean {
 
 export function mapDeepSeekModelForTask(
   requestedModel: string,
-  task: DeepSeekTask,
-  baseURL?: string
+  _task: DeepSeekTask,
+  _baseURL?: string
 ): string {
-  const model = APEX_MODEL_ALIASES[requestedModel] || requestedModel;
-  if (isOfficialDeepSeekEndpoint(baseURL)) {
-    if (model === "deepseek-v4-flash") {
-      return "deepseek-chat";
-    }
-    if (model === "deepseek-v4-pro") {
-      return "deepseek-reasoner";
-    }
-  }
-  return model;
+  // Always resolve to one of the two real DeepSeek API model IDs
+  return APEX_MODEL_ALIASES[requestedModel] || requestedModel;
 }
 
 export function getDeepSeekRequestParams(model: string, temperature = 0.7): Record<string, any> {
+  // deepseek-reasoner: does NOT support temperature or top_p
   if (model === "deepseek-reasoner") {
     return {};
   }
 
-  if (model === "deepseek-v4-pro" || model === "deepseek-v4-flash" || model.includes("v4")) {
-    return {
-      reasoning_effort: "max",
-      extra_body: {
-        thinking: {
-          type: "enabled",
-        },
-      },
-    };
-  }
-
+  // deepseek-chat: supports temperature
   return { temperature };
 }
