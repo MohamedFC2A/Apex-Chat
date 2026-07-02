@@ -368,7 +368,7 @@ export async function runApexSearch(message: string, options: ApexSearchOptions 
     // Vision-Language Reranking Step
     const imagePayloads = extractBase64Images(message);
     const candidateTextChunks = organic.map((o: ApexOrganicResult) => `${o.title}\n${o.snippet}`);
-    if (imagePayloads.length > 0 && candidateTextChunks.length > 0) {
+    if (candidateTextChunks.length > 0) {
       console.log(`[Apex Search] Intercepting ${candidateTextChunks.length} chunks for Vision Reranking...`);
       const rerankedTextChunks = await runVisionReranking(message, imagePayloads, candidateTextChunks);
       const rerankedOrganic: typeof organic = [];

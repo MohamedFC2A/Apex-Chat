@@ -1534,8 +1534,12 @@ export async function processMessage(
   // ── APEX OMNI: Route through full AI pipeline ──────────────────────────────
   if (model === "apex-omni") {
     const OpenAI = (await import("openai")).default;
-    const omniActualModel = process.env.APEX_OMNI_MODEL || "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
-    const isOpenRouter = omniActualModel.includes("/") || omniActualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
+    let omniActualModel = process.env.APEX_OMNI_MODEL || (process.env.OPENROUTER_API_KEY ? "google/gemini-2.5-flash:free" : "deepseek-chat");
+    if (omniActualModel.includes("rerank") || omniActualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free") {
+      console.warn(`[Orchestrator] APEX_OMNI_MODEL '${omniActualModel}' is a reranker. Falling back to google/gemini-2.5-flash:free for completions.`);
+      omniActualModel = "google/gemini-2.5-flash:free";
+    }
+    const isOpenRouter = omniActualModel.includes("/") || omniActualModel.includes("free") || omniActualModel === "google/gemini-2.5-flash:free";
 
     let omniClient: any;
     if (isOpenRouter) {

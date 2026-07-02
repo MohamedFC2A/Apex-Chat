@@ -268,6 +268,11 @@ export async function runApexOmniPipeline(
   onChunk?: (chunk: { content?: string; reasoningContent?: string }) => void
 ): Promise<ApexOmniResponse> {
   const isOpenRouterModel = actualModel.includes("/") || actualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
+  let completionsModel = actualModel;
+  if (completionsModel.includes("rerank") || completionsModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free") {
+    console.warn(`[Omni Pipeline] actualModel '${completionsModel}' is a reranker. Falling back to google/gemini-2.5-flash:free for completions.`);
+    completionsModel = "google/gemini-2.5-flash:free";
+  }
 
   // Pre-flight key validation contract
   if (isOpenRouterModel) {
@@ -336,7 +341,7 @@ export async function runApexOmniPipeline(
       (async () => {
         const mctsConfig = getAdaptiveMCTSConfig(queryConfig.complexity);
         try {
-          const res = await runMCTS(activeClient, actualModel, request.message, queryConfig.domain, mctsConfig);
+          const res = await runMCTS(activeClient, completionsModel, request.message, queryConfig.domain, mctsConfig);
           techniquesUsed.push(`MCTS (${mctsConfig.iterations} iterations)`);
           console.log(`      ✓ MCTS best plan found in ${res.totalNodes} nodes`);
           return res;
@@ -361,7 +366,7 @@ export async function runApexOmniPipeline(
       (async () => {
         const totConfig = getAdaptiveToTConfig(queryConfig.complexity);
         try {
-          const res = await runToTGoT(activeClient, actualModel, request.message, totConfig);
+          const res = await runToTGoT(activeClient, completionsModel, request.message, totConfig);
           const technique = totConfig.enableGoTMerging ? "ToT + GoT Merge" : "ToT";
           techniquesUsed.push(`${technique} (${totConfig.numBranches} branches)`);
           console.log(`      ✓ ToT/GoT synthesized ${res.allNodes.length} thought nodes`);
@@ -454,7 +459,7 @@ Generate a high-quality response following this plan and reasoning context.`;
       grpoResult = await runGRPO(
         activeClient,
         // GRPO uses fast model for parallel sampling
-        isOpenRouterModel ? actualModel : (actualModel === "deepseek-reasoner" ? "deepseek-chat" : actualModel),
+        isOpenRouterModel ? completionsModel : (completionsModel === "deepseek-reasoner" ? "deepseek-chat" : completionsModel),
         grpoMessages,
         request.message,
         queryConfig.domain,
@@ -520,7 +525,7 @@ Generate a high-quality response following this plan and reasoning context.`;
       console.log(`      GRPO reward (${grpoBestReward.toFixed(3)}) below threshold — generating fresh with full context`);
       const generated = await generateFinalResponse(
         activeClient,
-        actualModel,
+        completionsModel,
         request.message,
         request.systemPromptBase,
         queryConfig,
