@@ -1,0 +1,1 @@
+- [npm firewall blocks protobufjs entirely](npm-protobufjs-block.md) — any version of protobufjs is blocked by Replit's package firewall (Critical CVE); can't override with a pinned version, must remove the dependency chain instead.
