@@ -32,7 +32,7 @@ const MODEL_MAP: Record<string, string> = {
   "apex-flash": "deepseek-chat",
   "apex-pro": "deepseek-reasoner",
   "apex-elite": "deepseek-reasoner",
-  "apex-omni": "deepseek-reasoner",
+  "apex-omni": "deepseek-chat",
   "apex-unbound": "deepseek-reasoner",
 };
 
@@ -587,8 +587,9 @@ function clientCleanQueryFallback(message: string): { textQuery: string; imageQu
 }
 
 async function clientOptimizeSearchQueries(message: string, apiKey: string): Promise<{ textQuery: string; imageQuery: string }> {
+  const cleanMessage = message.split("[SYSTEM DIRECTIVE:")[0].trim();
   if (!apiKey) {
-    return clientCleanQueryFallback(message);
+    return clientCleanQueryFallback(cleanMessage);
   }
 
   try {
@@ -622,7 +623,7 @@ Output ONLY a raw JSON object in this format (no markdown, no backticks, no wrap
           },
           {
             role: "user",
-            content: message
+            content: cleanMessage
           }
         ],
         max_tokens: 150,

@@ -28,7 +28,16 @@ export function mapDeepSeekModelForTask(
   task: DeepSeekTask,
   baseURL?: string
 ): string {
-  return APEX_MODEL_ALIASES[requestedModel] || requestedModel;
+  const model = APEX_MODEL_ALIASES[requestedModel] || requestedModel;
+  if (isOfficialDeepSeekEndpoint(baseURL)) {
+    if (model === "deepseek-v4-flash") {
+      return "deepseek-chat";
+    }
+    if (model === "deepseek-v4-pro") {
+      return "deepseek-reasoner";
+    }
+  }
+  return model;
 }
 
 export function getDeepSeekRequestParams(model: string, temperature = 0.7): Record<string, any> {

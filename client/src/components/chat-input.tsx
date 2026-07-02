@@ -149,9 +149,9 @@ export function ChatInput({
 
     // Append Generator Directives if selected
     if (selectedGenType === "quiz") {
-      finalMessage += "\n\n[SYSTEM DIRECTIVE: You must output a structured MCQ/MSQ quiz block using the markdown code block format:\n```mcq-quiz\n{\n  \"quizTitle\": \"...\",\n  \"questions\": [\n    {\n      \"question\": \"...\",\n      \"options\": [\"...\", \"...\"],\n      \"correctAnswer\": \"...\",\n      \"explanation\": \"...\"\n    }\n  ]\n}\n```. Make sure the JSON is completely valid.]";
+      finalMessage += "\n\n[SYSTEM DIRECTIVE: You must output a structured MCQ/MSQ quiz block using the markdown code block format:\n```mcq-quiz\n{\n  \"title\": \"Quiz Title\",\n  \"description\": \"Description of the quiz...\",\n  \"mode\": \"practice\",\n  \"questions\": [\n    {\n      \"id\": \"q1\",\n      \"question\": \"Question text?\",\n      \"options\": {\n        \"a\": \"Option A\",\n        \"b\": \"Option B\",\n        \"c\": \"Option C\",\n        \"d\": \"Option D\"\n      },\n      \"correctAnswer\": \"a\",\n      \"explanation\": \"Detailed explanation of why A is correct.\"\n    }\n  ]\n}\n```. Make sure the JSON is completely valid and uses the exact keys defined here.]";
     } else if (selectedGenType === "pdf") {
-      finalMessage += "\n\n[SYSTEM DIRECTIVE: You must output a structured PDF document block using the markdown code block format:\n```pdf-document\n# Document Title\n\n## Section 1\n...\n```. Make sure the content is highly detailed and professional.]";
+      finalMessage += "\n\n[SYSTEM DIRECTIVE: You must output a structured PDF document block using the markdown code block format:\n```pdf-document\n{\n  \"title\": \"Document Title\",\n  \"subtitle\": \"Detailed subtitle...\",\n  \"language\": \"ar\",\n  \"theme\": \"dark\",\n  \"pageSize\": \"a4\",\n  \"coverPage\": true,\n  \"tableOfContents\": true,\n  \"sections\": [\n    {\n      \"id\": \"sec-1\",\n      \"type\": \"heading\",\n      \"content\": \"Introduction\",\n      \"level\": 1\n    },\n    {\n      \"id\": \"sec-2\",\n      \"type\": \"paragraph\",\n      \"content\": \"Paragraph text...\"\n    }\n  ]\n}\n```. Make sure the JSON is completely valid and uses the exact keys defined here. Content must be highly detailed and professional.]";
     }
 
     // Append file attachments to context content
