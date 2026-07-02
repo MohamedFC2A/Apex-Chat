@@ -485,7 +485,7 @@ function scoreSerperImage(img: any, query: string): number {
 }
 
 async function performSerperImageSearch(query: string): Promise<SerperImageResult | undefined> {
-  const apiKey = process.env.SERPER_API_KEY || "0adc781c41f363a53ce1f72f199f494b9436bafd";
+  const apiKey = process.env.SERPER_API_KEY;
   try {
     console.log(`[Serper API] Performing image search for query: "${query}"...`);
     const res = await fetch("https://google.serper.dev/images", {
