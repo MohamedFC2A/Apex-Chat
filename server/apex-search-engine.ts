@@ -295,7 +295,7 @@ async function serperPost(path: "search" | "images", body: Record<string, any>, 
 }
 
 export async function runApexSearch(message: string, options: ApexSearchOptions = {}): Promise<ApexSearchResponse> {
-  const apiKey = process.env.SERPER_API_KEY || "0adc781c41f363a53ce1f72f199f494b9436bafd";
+  const apiKey = process.env.SERPER_API_KEY;
   const searchPlan = buildSearchPlan(message, options.intent || "website");
   const fallback: ApexSearchResponse = { organic: [], images: [], imageAssets: [], searchPlan };
 
