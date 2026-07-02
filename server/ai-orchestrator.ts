@@ -1690,7 +1690,7 @@ export async function processMessage(
     const omniSystemBase = buildCerebrasSystemPrompt(model, mode, features, request.clientLocalTime);
 
     try {
-      console.log("[Orchestrator] Routing apex-omni → Apex Omni Pipeline (MCTS + ToT/GoT + GRPO + Constraints)");
+      console.log("[Orchestrator] Routing apex-omni → Apex Omni Restructured Pipeline (Adaptive Dual-Pass / Native CoT)");
       const omniResult = await runApexOmniPipeline(
         omniClient,
         omniActualModel,
@@ -1710,7 +1710,7 @@ export async function processMessage(
         reasoningContent: omniResult.reasoningContent,
       };
     } catch (pipelineError: any) {
-      console.error("[Orchestrator] Apex Omni Pipeline failed, falling back to standard DeepSeek:", pipelineError.message);
+      console.error("[Orchestrator] Apex Omni Restructured Pipeline failed, falling back to standard DeepSeek:", pipelineError.message);
     }
   }
 
