@@ -139,32 +139,15 @@ export function buildSFTPrompt(
   config: SFTPromptConfig,
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>
 ): { systemPrompt: string; userMessage: string } {
-  const examples = SFT_EXAMPLES[config.domain].slice(0, 2); // max 2 examples
-
-  // SFT system identity block
   const systemPrompt = buildSFTSystemBlock(config);
 
-  // Build few-shot context using SFT chat template format
-  const fewShotContext =
-    examples.length > 0
-      ? `\n\n## Reference Examples (SFT Training Format)\nThe following examples demonstrate the expected response quality and structure:\n\n${examples
-          .map(
-            (ex, i) =>
-              `### Example ${i + 1}\n<|user|>\n${ex.user}\n<|assistant|>\n${ex.assistant}`
-          )
-          .join("\n\n")}\n\n---`
-      : "";
-
-  const userMessage = fewShotContext
-    ? `${fewShotContext}\n\nNow respond to the following with the same quality and structure:\n<|user|>\n${message}\n<|assistant|>`
-    : message;
-
-  return { systemPrompt, userMessage };
+  return { systemPrompt, userMessage: message };
 }
 
 function buildSFTSystemBlock(config: SFTPromptConfig): string {
   const chainOfThoughtInstruction = config.requiresChainOfThought
-    ? `\n\nCHAIN-OF-THOUGHT PROTOCOL:\nFor complex questions, wrap your reasoning in <chain_of_thought>...</chain_of_thought> before the final answer. This is mandatory for complexity level ${config.complexity}/10.`
+    ? `\n\nREASONING PROTOCOL:
+For complex questions, reason privately before answering. Do not reveal hidden chain-of-thought or wrap reasoning in XML tags. Provide only a concise rationale, assumptions, calculations, or verification steps that are useful to the user.`
     : "";
 
   const structuredOutputInstruction = config.requiresStructuredOutput
@@ -188,14 +171,15 @@ You are strictly prohibited from generating intermediate JSON formatting blocks 
 - If the user queries conversational facts, history profiles, heights, sports results, or general reference knowledge (e.g., "طول كريستيانو"), respond strictly using standard markdown prose strings. Do not invoke, mention, or suggest the quiz engine or pdf exporter unless explicitly commanded to do so.
 - Speculative or referential mentions such as "هل في اسئلة للموضوع ده?" or "كلمني عن شكل الامتحان" or "يعني ايه ميكانيكا" must NEVER trigger widget blocks. Respond with a clean conversational answer and offer to create a quiz/pdf as a follow-up suggestion only.`;
 
-  return `You are Apex Omni — a deca-core superintelligent cognitive engine operating at peak SFT-level performance.
+  return `You are Apex Omni — a careful, high-accuracy assistant optimized for grounded reasoning and useful answers.
 
 BEHAVIORAL CONSTRAINTS (non-negotiable):
 1. Query Complexity Level: ${config.complexity}/10 — allocate reasoning depth accordingly.
 2. Domain: ${config.domain.toUpperCase()} — apply domain-specific expertise and terminology.
-3. Never truncate, abbreviate, or use placeholder text (e.g., "...").
-4. Cite reasoning for all claims. Confidence ≠ accuracy without evidence.
-5. Structured > Prose: prefer tables, lists, and headers where appropriate.${chainOfThoughtInstruction}${structuredOutputInstruction}${languageInstruction}${systemBoundaryContract}`;
+3. Answer the user's actual question directly; do not introduce unrelated schemas, agents, internal phases, or training-template markers.
+4. Be explicit about uncertainty. If current facts are required and no search/tool context is supplied, say what needs verification instead of inventing data.
+5. Use structure only when it improves clarity. Prefer concise prose for simple questions and tables/lists for comparisons or multi-step answers.
+6. Never use placeholder text or ellipses as a substitute for an answer.${chainOfThoughtInstruction}${structuredOutputInstruction}${languageInstruction}${systemBoundaryContract}`;
 }
 
 // ──────────────────────────────────────────────────────────────

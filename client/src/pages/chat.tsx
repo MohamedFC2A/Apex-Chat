@@ -21,7 +21,7 @@ import {
 import { extractSourcesAndClean } from "@/lib/sources-helper";
 import { motion, AnimatePresence } from "framer-motion";
 import { sendAIMessage, getAIClientStatus } from "@/lib/ai-client";
-import { processOmniRequest, type OmniState } from "@/lib/omni-service";
+import type { OmniState } from "@/lib/omni-service";
 import { runUnboundService, type UnboundState } from "@/lib/unbound-service";
 import { buildCompactConversationHistory, buildRelevantMemoryContext } from "@/lib/context-engine";
 import type { Message, ChatResponse, AIModel } from "@shared/schema";
@@ -284,20 +284,72 @@ export default function ChatPage() {
             },
           });
 
-          response = await processOmniRequest(
-            content,
-            (state) => {
-              setOmniStateForConv(thisConvId, state);
-              if (state.step === "synthesizing" && state.finalResponse) {
-                setStreamingContentForConv(thisConvId, state.finalResponse);
-              }
+          setOmniStateForConv(thisConvId, {
+            step: "synthesizing",
+            agents: {
+              architect:    { model: "architect",    status: "complete", draft: "Server reasoning pipeline" },
+              coder:        { model: "coder",         status: "complete", draft: "Server reasoning pipeline" },
+              security:     { model: "security",      status: "complete", draft: "Server reasoning pipeline" },
+              researcher:   { model: "researcher",    status: "complete", draft: "Server reasoning pipeline" },
+              creative:     { model: "creative",      status: "complete", draft: "Server reasoning pipeline" },
+              linguist:     { model: "linguist",      status: "complete", draft: "Server reasoning pipeline" },
+              skeptic:      { model: "skeptic",       status: "complete", draft: "Server reasoning pipeline" },
+              psychologist: { model: "psychologist",  status: "complete", draft: "Server reasoning pipeline" },
+              futurist:     { model: "futurist",      status: "complete", draft: "Server reasoning pipeline" },
+              optimizer:    { model: "optimizer",     status: "complete", draft: "Server reasoning pipeline" },
             },
-            compactHistory
+          });
+
+          response = await sendAIMessage(
+            content,
+            selectedModel,
+            compactHistory,
+            serviceMode,
+            false,
+            { ...features, deepResearch: false, godMode: false },
+            reasoningLevel,
+            (chunkText, chunkReasoning) => {
+              setStreamingContentForConv(thisConvId, chunkText);
+              setStreamingReasoningForConv(thisConvId, chunkReasoning);
+              setOmniStateForConv(thisConvId, {
+                step: "synthesizing",
+                agents: {
+                  architect:    { model: "architect",    status: "complete", draft: "Server reasoning pipeline" },
+                  coder:        { model: "coder",         status: "complete", draft: "Server reasoning pipeline" },
+                  security:     { model: "security",      status: "complete", draft: "Server reasoning pipeline" },
+                  researcher:   { model: "researcher",    status: "complete", draft: "Server reasoning pipeline" },
+                  creative:     { model: "creative",      status: "complete", draft: "Server reasoning pipeline" },
+                  linguist:     { model: "linguist",      status: "complete", draft: "Server reasoning pipeline" },
+                  skeptic:      { model: "skeptic",       status: "complete", draft: "Server reasoning pipeline" },
+                  psychologist: { model: "psychologist",  status: "complete", draft: "Server reasoning pipeline" },
+                  futurist:     { model: "futurist",      status: "complete", draft: "Server reasoning pipeline" },
+                  optimizer:    { model: "optimizer",     status: "complete", draft: "Server reasoning pipeline" },
+                },
+                finalResponse: chunkText,
+              });
+            },
+            userMemoryContext
           );
 
           if ((response as any).error) {
             throw new Error((response as any).message || (response as any).error);
           }
+          setOmniStateForConv(thisConvId, {
+            step: "complete",
+            agents: {
+              architect:    { model: "architect",    status: "complete", draft: "Server reasoning pipeline" },
+              coder:        { model: "coder",         status: "complete", draft: "Server reasoning pipeline" },
+              security:     { model: "security",      status: "complete", draft: "Server reasoning pipeline" },
+              researcher:   { model: "researcher",    status: "complete", draft: "Server reasoning pipeline" },
+              creative:     { model: "creative",      status: "complete", draft: "Server reasoning pipeline" },
+              linguist:     { model: "linguist",      status: "complete", draft: "Server reasoning pipeline" },
+              skeptic:      { model: "skeptic",       status: "complete", draft: "Server reasoning pipeline" },
+              psychologist: { model: "psychologist",  status: "complete", draft: "Server reasoning pipeline" },
+              futurist:     { model: "futurist",      status: "complete", draft: "Server reasoning pipeline" },
+              optimizer:    { model: "optimizer",     status: "complete", draft: "Server reasoning pipeline" },
+            },
+            finalResponse: response.content,
+          });
         } else if (selectedModel === "apex-unbound") {
           // ── APEX Unbound: route through the new multi-agent pipeline ──
           const currentUnboundState = unboundStateMap[thisConvId];

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -58,16 +58,16 @@ function AgentMaskBadge({
       initial={{ opacity: 0, x: -6 }}
       animate={{ opacity: 1, x: 0 }}
       className={cn(
-        "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-300",
+        "flex items-center gap-2 px-3 py-1.5 rounded border transition-all duration-300 font-mono text-[10px]",
         active
-          ? "bg-white/5 border-white/10 text-zinc-200"
-          : "bg-black/20 border-white/5 text-zinc-600 opacity-50"
+          ? "bg-zinc-900/50 border-zinc-800 text-zinc-200"
+          : "bg-black/40 border-zinc-900 text-zinc-600 opacity-50"
       )}
     >
       <Icon className="w-3 h-3 shrink-0" style={{ color: active ? color : "#52525b" }} />
-      <span className="truncate flex-1">{label}</span>
+      <span className="truncate flex-1 font-bold uppercase tracking-wider">{label}</span>
       {active ? (
-        <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+        <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
       ) : (
         <XCircle className="w-3 h-3 text-zinc-700 shrink-0" />
       )}
@@ -76,26 +76,35 @@ function AgentMaskBadge({
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Complexity Bar
+// Complexity Bar (Retro Pixel Progress Bar)
 // ──────────────────────────────────────────────────────────────────────────────
 
 function ComplexityBar({ score }: { score: number }) {
-  const pct = Math.min(100, (score / 10) * 100);
-  const color = score <= 3 ? "#34d399" : score <= 6 ? "#fbbf24" : "#f87171";
+  const colorClass = score <= 3 ? "bg-emerald-500" : score <= 6 ? "bg-amber-500" : "bg-red-500";
+  const textColorClass = score <= 3 ? "text-emerald-400" : score <= 6 ? "text-amber-400" : "text-red-400";
+  
+  const totalBlocks = 10;
+  const activeBlocks = Math.round((score / 10) * totalBlocks);
+
   return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between text-[10px] text-zinc-400">
+    <div className="space-y-1.5 font-mono select-none">
+      <div className="flex items-center justify-between text-[9px] text-zinc-500 font-bold uppercase tracking-wider">
         <span>Complexity Score</span>
-        <span style={{ color }} className="font-mono font-bold">{score.toFixed(1)}/10</span>
+        <span className={cn("font-bold", textColorClass)}>{score.toFixed(1)}/10</span>
       </div>
-      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="h-full rounded-full"
-          style={{ backgroundColor: color }}
-        />
+      <div className="flex gap-[2px] w-full">
+        {Array.from({ length: totalBlocks }).map((_, i) => {
+          const isActive = i < activeBlocks;
+          return (
+            <div
+              key={i}
+              className={cn(
+                "flex-1 h-3 transition-all duration-300",
+                isActive ? colorClass : "bg-zinc-900"
+              )}
+            />
+          );
+        })}
       </div>
     </div>
   );
@@ -108,17 +117,17 @@ function ComplexityBar({ score }: { score: number }) {
 function PipelineLogStream({ logs }: { logs: string[] }) {
   if (logs.length === 0) return null;
   return (
-    <div className="space-y-1">
-      <p className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider">Pipeline Trace</p>
-      <div className="bg-black/30 rounded-lg border border-white/5 p-2 space-y-0.5 max-h-32 overflow-y-auto font-mono">
+    <div className="space-y-1.5">
+      <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Pipeline Trace</p>
+      <div className="bg-black/60 rounded border border-zinc-800/80 p-3 space-y-1 max-h-32 overflow-y-auto font-mono scrollbar-none">
         {logs.slice(-20).map((log, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-[10px] text-zinc-400 leading-relaxed"
+            className="text-[9px] text-zinc-400 leading-relaxed font-mono"
           >
-            <span className="text-violet-400/60 mr-1">›</span>
+            <span className="text-zinc-600 mr-1.5">›</span>
             {log.replace(/^\*\*|\*\*$/g, "").replace(/^>\s*/, "").trim()}
           </motion.div>
         ))}
@@ -128,7 +137,7 @@ function PipelineLogStream({ logs }: { logs: string[] }) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Panel Inner Content (shared between desktop + mobile)
+// Panel Inner Content
 // ──────────────────────────────────────────────────────────────────────────────
 
 function MonitorContent({
@@ -155,11 +164,11 @@ function MonitorContent({
     <div className={cn("space-y-4", compact && "space-y-3")}>
       {/* Agent Mask Summary */}
       {maskConfig && (
-        <div className="flex items-center justify-between text-[10px]">
+        <div className="flex items-center justify-between text-[9px] font-mono font-bold uppercase tracking-wider">
           <span className="text-zinc-500 flex items-center gap-1">
             <Zap className="w-3 h-3" /> Agent Mask
           </span>
-          <span className="text-amber-400 font-mono font-semibold">
+          <span className="text-amber-400 font-mono">
             {maskedCount}/{totalAgents} masked
           </span>
         </div>
@@ -180,7 +189,7 @@ function MonitorContent({
       {/* OmniState Agent Cards */}
       {omniState && !compact && (
         <div>
-          <p className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider mb-2">Agent Grid</p>
+          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-2">Agent Grid</p>
           <OmniProcessView state={omniState} isInMonitor />
         </div>
       )}
@@ -193,7 +202,7 @@ function MonitorContent({
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-[10px] text-zinc-600 text-center py-1"
+          className="text-[9px] font-mono text-zinc-600 text-center py-1 uppercase tracking-widest font-bold"
         >
           Auto-closing in 5s...
         </motion.p>
@@ -253,21 +262,14 @@ export function CognitiveMonitorPanel({
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.8, x: 20 }}
             onClick={onToggle}
-            className="fixed right-4 top-1/2 -translate-y-1/2 z-50 md:flex hidden flex-col items-center gap-1.5 px-2.5 py-3 rounded-xl bg-neutral-950/80 backdrop-blur-md border border-white/10 shadow-lg shadow-black/40 hover:bg-neutral-900/80 hover:border-white/20 transition-all duration-200"
+            className="fixed right-4 top-1/2 -translate-y-1/2 z-50 md:flex hidden flex-col items-center gap-2 px-2.5 py-3 rounded border border-zinc-800 bg-neutral-950 shadow-2xl hover:bg-zinc-900 transition-all duration-200"
             aria-label="Toggle Cognitive Monitor"
           >
-            {isProcessing && (
-              <motion.div
-                className="absolute inset-0 rounded-xl border border-violet-500/40 pointer-events-none"
-                animate={{ opacity: [0.4, 1, 0.4] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
-            )}
-            <Brain className={cn("w-4 h-4", isProcessing ? "text-violet-400 animate-pulse" : "text-zinc-400")} />
-            <span className="text-[9px] font-medium text-zinc-400 tracking-wider uppercase [writing-mode:vertical-rl] rotate-180">
+            <Brain className={cn("w-4 h-4", isProcessing ? "text-violet-400 animate-pulse" : "text-zinc-500")} />
+            <span className="text-[9px] font-bold text-zinc-500 tracking-[0.1em] uppercase [writing-mode:vertical-rl] rotate-180 font-mono">
               Monitor
             </span>
-            <Activity className={cn("w-3 h-3", isProcessing ? "text-emerald-400" : "text-zinc-600")} />
+            <Activity className={cn("w-3 h-3", isProcessing ? "text-emerald-400" : "text-zinc-700")} />
           </motion.button>
         )}
       </AnimatePresence>
@@ -280,10 +282,10 @@ export function CognitiveMonitorPanel({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             onClick={onToggle}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 md:hidden flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-950/90 backdrop-blur-md border border-white/10 shadow-lg shadow-black/40"
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 md:hidden flex items-center gap-2 px-4 py-2 rounded border border-zinc-800 bg-neutral-950 shadow-2xl"
           >
-            <Brain className={cn("w-3.5 h-3.5", isProcessing ? "text-violet-400 animate-pulse" : "text-zinc-400")} />
-            <span className="text-xs font-medium text-zinc-300">Cognitive Monitor</span>
+            <Brain className={cn("w-3.5 h-3.5", isProcessing ? "text-violet-400 animate-pulse" : "text-zinc-500")} />
+            <span className="text-xs font-bold font-mono text-zinc-300 uppercase tracking-wider">Cognitive Monitor</span>
             {isOpen ? <ChevronDown className="w-3 h-3 text-zinc-500" /> : <ChevronUp className="w-3 h-3 text-zinc-500" />}
           </motion.button>
         )}
@@ -296,40 +298,31 @@ export function CognitiveMonitorPanel({
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={onToggle}
-              className="fixed inset-0 z-40 bg-black/10 md:block hidden"
+              className="fixed inset-0 z-40 bg-black/30 md:block hidden"
             />
             <motion.div
               initial={{ x: "100%", opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "100%", opacity: 0 }}
               transition={{ type: "spring", damping: 28, stiffness: 260 }}
-              className="fixed right-0 top-0 bottom-0 z-50 w-80 bg-neutral-950/60 backdrop-blur-md border-l border-white/5 shadow-2xl shadow-black/60 md:flex hidden flex-col overflow-hidden"
+              className="fixed right-0 top-0 bottom-0 z-50 w-80 bg-neutral-950 border-l border-zinc-900 shadow-2xl md:flex hidden flex-col overflow-hidden"
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 shrink-0">
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Brain className="w-4 h-4 text-violet-400" />
-                    {isProcessing && (
-                      <motion.div
-                        className="absolute -inset-1 rounded-full border border-violet-500/40 pointer-events-none"
-                        animate={{ scale: [1, 1.5, 1], opacity: [0.6, 0, 0.6] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      />
-                    )}
-                  </div>
+              <div className="flex items-center justify-between px-4 py-3.5 border-b border-zinc-900 shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <Brain className="w-4 h-4 text-violet-400 shrink-0" />
                   <div>
-                    <p className="text-xs font-semibold text-zinc-100">Apex Cognitive Monitor</p>
-                    <p className="text-[10px] text-zinc-500">{phaseLabel}</p>
+                    <p className="text-xs font-black text-white uppercase tracking-widest font-mono">Cognitive Monitor</p>
+                    <p className="text-[9px] text-zinc-500 uppercase tracking-wider font-mono font-bold">{phaseLabel}</p>
                   </div>
                 </div>
-                <button onClick={onToggle} className="p-1.5 rounded-lg hover:bg-white/5 text-zinc-500 hover:text-zinc-300 transition-colors">
+                <button onClick={onToggle} className="p-1.5 rounded hover:bg-zinc-900 text-zinc-500 hover:text-white transition-colors">
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
 
               {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto p-4 scrollbar-none">
                 <MonitorContent
                   maskConfig={maskConfig}
                   complexityScore={complexityScore}
@@ -341,12 +334,12 @@ export function CognitiveMonitorPanel({
               </div>
 
               {/* Footer */}
-              <div className="px-4 py-3 border-t border-white/5 shrink-0 flex items-center gap-2 text-[10px] text-zinc-600">
-                <Terminal className="w-3 h-3" />
-                <span>V2 Cognitive Monitor · Apex Omni</span>
+              <div className="px-4 py-3.5 border-t border-zinc-900 shrink-0 flex items-center gap-2 text-[9px] text-zinc-500 font-mono font-bold uppercase tracking-wider">
+                <Terminal className="w-3.5 h-3.5" />
+                <span>V2 MONITOR · APEX OMNI</span>
                 {isProcessing && (
                   <motion.div
-                    className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400"
+                    className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-500"
                     animate={{ opacity: [1, 0.3, 1] }}
                     transition={{ duration: 1.2, repeat: Infinity }}
                   />
@@ -360,22 +353,22 @@ export function CognitiveMonitorPanel({
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: "100%", opacity: 0 }}
               transition={{ type: "spring", damping: 28, stiffness: 260 }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-neutral-950/90 backdrop-blur-md border-t border-white/5 shadow-2xl rounded-t-2xl md:hidden flex flex-col max-h-[60vh] overflow-hidden"
+              className="fixed bottom-0 left-0 right-0 z-50 bg-neutral-950 border-t border-zinc-900 shadow-2xl rounded-t-xl md:hidden flex flex-col max-h-[60vh] overflow-hidden"
             >
               <div className="flex justify-center pt-3 pb-1 shrink-0">
-                <div className="w-10 h-1 bg-white/10 rounded-full" />
+                <div className="w-10 h-1 bg-zinc-800 rounded-full" />
               </div>
-              <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 shrink-0">
+              <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-900 shrink-0">
                 <div className="flex items-center gap-2">
                   <Brain className="w-4 h-4 text-violet-400" />
-                  <p className="text-xs font-semibold text-zinc-100">Cognitive Monitor</p>
-                  <span className="text-[10px] text-zinc-500">· {phaseLabel}</span>
+                  <p className="text-xs font-black text-white font-mono uppercase tracking-wider">Cognitive Monitor</p>
+                  <span className="text-[9px] text-zinc-500 font-mono uppercase tracking-widest font-bold">· {phaseLabel}</span>
                 </div>
-                <button onClick={onToggle} className="p-1.5 rounded-lg hover:bg-white/5 text-zinc-500">
+                <button onClick={onToggle} className="p-1.5 rounded hover:bg-zinc-900 text-zinc-500">
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto p-4 scrollbar-none">
                 <MonitorContent
                   maskConfig={maskConfig}
                   complexityScore={complexityScore}

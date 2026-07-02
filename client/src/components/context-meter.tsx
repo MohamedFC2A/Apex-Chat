@@ -1,8 +1,8 @@
 import { useChatStore } from "@/lib/store";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Brain } from "lucide-react";
 import React from "react";
+import { cn } from "@/lib/utils";
 
 // Smart automatic token estimator
 export function estimateTokens(text: string): number {
@@ -33,6 +33,10 @@ export function ContextMeter() {
   const percentage = (usedTokens / totalLimit) * 100;
   const formattedPercent = percentage < 0.01 ? percentage.toFixed(3) : percentage.toFixed(2);
 
+  // Pixel blocks configuration
+  const totalBlocks = 20;
+  const activeBlocks = Math.round((percentage / 100) * totalBlocks);
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -56,47 +60,55 @@ export function ContextMeter() {
                 cx="18"
                 cy="18"
                 r="16"
-                className="stroke-violet-400 transition-all duration-500"
+                className="stroke-zinc-400 transition-all duration-500"
                 strokeWidth="4"
                 fill="transparent"
                 strokeDasharray="100"
                 strokeDashoffset={100 - Math.max(0.1, Math.min(100, percentage))}
               />
             </svg>
-            <span className="text-[9px] font-mono font-bold text-violet-300 absolute leading-none">
+            <span className="text-[9px] font-mono font-bold text-zinc-300 absolute leading-none">
               {percentage < 1 ? percentage.toFixed(1) : Math.round(percentage)}%
             </span>
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 bg-zinc-950/90 backdrop-blur-xl border border-zinc-800/80 rounded-xl p-4 shadow-xl z-[100]" align="end">
-        <div className="space-y-3 font-arabic text-right" dir="rtl">
-          <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
-            <span className="text-xs font-semibold text-zinc-400">نافذة السياق الذكية</span>
-            <span className="text-[10px] font-bold bg-violet-950/60 text-violet-400 border border-violet-900/50 px-1.5 py-0.5 rounded">Auto (تلقائي)</span>
+      <PopoverContent className="w-72 bg-neutral-950 border border-zinc-800 rounded-lg p-4 shadow-2xl z-[100] font-mono" align="end">
+        <div className="space-y-3 font-mono text-right" dir="rtl">
+          <div className="flex items-center justify-between border-b border-zinc-900 pb-2">
+            <span className="text-[10px] font-black text-white uppercase tracking-widest">نافذة السياق الذكية</span>
+            <span className="text-[8px] font-bold border border-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">AUTO</span>
           </div>
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-xs">
-              <span className="text-zinc-500">حجم الاستهلاك:</span>
-              <span className="text-zinc-300 font-mono font-medium">{formattedPercent}%</span>
+          <div className="space-y-1.5 font-mono text-[10px]">
+            <div className="flex justify-between">
+              <span className="text-zinc-500 font-bold uppercase tracking-wider">حجم الاستهلاك:</span>
+              <span className="text-zinc-300 font-bold">{formattedPercent}%</span>
             </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-zinc-500">الرموز المستخدمة (Tokens):</span>
-              <span className="text-zinc-300 font-mono font-medium">
+            <div className="flex justify-between">
+              <span className="text-zinc-500 font-bold uppercase tracking-wider">الرموز المستخدمة (Tokens):</span>
+              <span className="text-zinc-300 font-bold">
                 {usedTokens.toLocaleString()} / 1,000,000
               </span>
             </div>
           </div>
           
-          {/* Mini progress bar */}
-          <div className="w-full h-1.5 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800/50">
-            <div 
-              className="h-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-blue-500 rounded-full transition-all duration-500"
-              style={{ width: `${Math.min(100, Math.max(1, percentage))}%` }}
-            />
+          {/* Unifed Retro Pixel Grid Progress Bar */}
+          <div className="flex gap-[1.5px] w-full py-1">
+            {Array.from({ length: totalBlocks }).map((_, i) => {
+              const isActive = i < activeBlocks;
+              return (
+                <div
+                  key={i}
+                  className={cn(
+                    "flex-1 h-3 transition-all duration-300",
+                    isActive ? "bg-white" : "bg-zinc-900"
+                  )}
+                />
+              );
+            })}
           </div>
           
-          <p className="text-[10px] text-zinc-500 leading-normal">
+          <p className="text-[9px] text-zinc-500 leading-normal font-bold uppercase tracking-wider">
             يتم حساب استهلاك الرموز (Tokens) تلقائياً لتوفير أفضل دقة وسرعة استجابة مع الحفاظ على ترابط المحادثة بالكامل.
           </p>
         </div>

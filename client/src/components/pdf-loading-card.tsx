@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, Sparkles } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { FileText } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const factsArabic = [
   "ملفات PDF المولدة هنا تبقى نصية وقابلة للبحث والنسخ.",
@@ -65,54 +65,75 @@ export function PDFLoadingCard({ language = "ar" }: PDFLoadingCardProps) {
 
   const isRtl = language !== "en";
 
+  // Pixel blocks configuration
+  const totalBlocks = 40;
+  const activeBlocks = Math.round((progress / 100) * totalBlocks);
+
   return (
     <div
-      className="my-4 overflow-hidden rounded-3xl border border-zinc-800/80 dark:border-zinc-900/80 bg-gradient-to-br from-zinc-950/90 via-zinc-950/95 to-violet-950/10 p-6 shadow-lg backdrop-blur-xl"
+      className="my-4 overflow-hidden rounded-xl border border-zinc-800 bg-neutral-950 p-6 shadow-2xl relative bg-[radial-gradient(#e5e7eb03_1px,transparent_1px)] [background-size:16px_16px] font-mono"
       dir={isRtl ? "rtl" : "ltr"}
     >
       <div className="flex flex-col items-center gap-5 text-center">
-        <div className="relative flex h-24 w-24 items-center justify-center">
+        
+        {/* Simplified Flat Monospace Spinner Box */}
+        <div className="relative flex h-20 w-20 items-center justify-center rounded border border-zinc-800 bg-black">
+          <FileText className="h-6 w-6 text-zinc-400" />
           <motion.div
-            className="absolute inset-0 rounded-[28px] border border-violet-500/20"
+            className="absolute -inset-0.5 rounded border border-dashed border-zinc-700/60 pointer-events-none"
             animate={{ rotate: 360 }}
-            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-          />
-          <motion.div
-            className="absolute inset-3 rounded-[22px] border border-dashed border-violet-400/30"
-            animate={{ rotate: -360 }}
             transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
           />
-          <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-zinc-800/80 bg-white/[0.02]">
-            <FileText className="h-7 w-7 text-violet-400" />
-            <Sparkles className="absolute -right-1 -top-1 h-4 w-4 text-violet-300" />
-          </div>
         </div>
 
-        <div className="space-y-1">
-          <h4 className="text-sm font-bold text-zinc-100 font-arabic">
+        <div className="space-y-1.5 font-mono select-none">
+          <h4 className="text-xs font-black text-white uppercase tracking-widest">
             {isRtl ? "جاري تجهيز مستند PDF احترافي" : "Preparing a professional PDF document"}
           </h4>
-          <p className="text-xs text-zinc-400">{steps[stepIndex]}</p>
+          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{steps[stepIndex]}</p>
         </div>
 
-        <div className="w-full max-w-md space-y-2">
-          <Progress value={progress} className="h-2 bg-white/5" />
-          <div className="flex items-center justify-between text-[11px] text-zinc-500">
+        {/* Double-Row Pixel Grid Progress Bar */}
+        <div className="w-full max-w-md space-y-3 font-mono select-none">
+          <div className="flex gap-[2px] w-full py-1">
+            {Array.from({ length: totalBlocks }).map((_, i) => {
+              const isActive = i < activeBlocks;
+              return (
+                <div key={i} className="flex-1 flex flex-col gap-[2px]">
+                  <div
+                    className={cn(
+                      "h-2 transition-all duration-300",
+                      isActive ? "bg-white" : "bg-zinc-900"
+                    )}
+                  />
+                  <div
+                    className={cn(
+                      "h-2 transition-all duration-300",
+                      isActive ? "bg-white" : "bg-zinc-900"
+                    )}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center justify-between text-[9px] text-zinc-500 font-bold uppercase tracking-wider">
             <span>{isRtl ? "المعالجة" : "Processing"}</span>
             <span>{progress}%</span>
           </div>
         </div>
 
-        <div className="min-h-10 max-w-lg border-t border-white/5 pt-4 text-[11.5px] leading-relaxed text-zinc-400">
+        {/* Footer info/fact blocks */}
+        <div className="w-full min-h-10 max-w-lg border-t border-zinc-900 pt-4 text-[10px] leading-relaxed text-zinc-400 font-mono">
           <AnimatePresence mode="wait">
             <motion.p
               key={factIndex}
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2 }}
             >
-              <span className="text-violet-400 font-semibold">PDF</span> {facts[factIndex]}
+              <span className="text-white font-bold">[PDF INFO]</span> {facts[factIndex]}
             </motion.p>
           </AnimatePresence>
         </div>
@@ -120,4 +141,3 @@ export function PDFLoadingCard({ language = "ar" }: PDFLoadingCardProps) {
     </div>
   );
 }
-

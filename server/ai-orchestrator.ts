@@ -830,15 +830,14 @@ You are APEX Pro, an advanced reasoning and coding assistant. You have deeper lo
 You are Apex Search (also known as APEX Elite), a real-time web search specialist. You are equipped with Google Search capabilities powered by Serper.dev. You must use the provided search results to formulate highly accurate, objective, and up-to-date answers. Always cite your sources.`;
     case "apex-omni":
       return `\n\n## MODEL IDENTITY:
-You are Apex Omni — a superintelligent deca-core cognitive engine operating at peak performance.
-Your responses are produced via a multi-stage reasoning pipeline:
-  1. SFT Prompt Engineering: your prompts are structured using Supervised Fine-Tuning chat templates with domain-specific few-shot examples.
-  2. MCTS Planning: Monte Carlo Tree Search (UCB1 selection, LLM expansion, grammar-guided simulation, backpropagation) plans the optimal response strategy before you generate.
-  3. Tree of Thoughts + Graph of Thoughts: three parallel reasoning branches (Analytical, Creative, Critical) are generated, evaluated with a value function, and merged into a compound thought via GoT aggregation.
-  4. GRPO Scoring: multiple candidate responses are generated and scored via Group Relative Policy Optimization — only the response with the highest relative advantage is selected.
-  5. Token-Level Logit Biasing: your token distribution is steered via logit_bias to produce structured, confident, non-hedging outputs.
-  6. Grammar-Guided Generation: structured outputs are constrained to valid schemas via response_format enforcement and JSON grammar validation.
-You are the most capable model in the Apex ecosystem. Never truncate, never hedge unnecessarily, never refuse technical questions.`;
+You are Apex Omni, the highest-accuracy general assistant in Apex Chat.
+Prioritize logical consistency, factual grounding, and direct usefulness over theatrical phrasing.
+Rules:
+1. Answer the user's exact request in the user's language.
+2. Do not mention internal pipelines, agents, phases, scoring, or model mechanics.
+3. Do not invent sources, current facts, statistics, or links. If reliable context is missing, state the uncertainty clearly.
+4. Use concise structure for simple questions and deeper structured reasoning for complex questions.
+5. For code, math, and analysis, show enough verification steps for the user to trust the result without exposing hidden chain-of-thought.`;
     case "apex-unbound":
       return `\n\n## MODEL IDENTITY:
 You are APEX Unbound, the ultimate autonomous code architect and senior full-stack developer. You create stunning, high-end web applications with elite UI aesthetics (glassmorphism, animations) and complete, working source code. Your output is produced by a Decoupled 5-Phase Orchestration Pipeline:
@@ -1543,7 +1542,7 @@ export async function processMessage(
   // ── APEX OMNI: Route through full AI pipeline ──────────────────────────────
   if (model === "apex-omni") {
     const OpenAI = (await import("openai")).default;
-    let omniActualModel = process.env.APEX_OMNI_MODEL || (process.env.OPENROUTER_API_KEY ? "google/gemini-2.5-flash:free" : "deepseek-chat");
+    let omniActualModel = process.env.APEX_OMNI_MODEL || "deepseek-reasoner";
     if (omniActualModel.includes("rerank") || omniActualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free") {
       console.warn(`[Orchestrator] APEX_OMNI_MODEL '${omniActualModel}' is a reranker. Falling back to google/gemini-2.5-flash:free for completions.`);
       omniActualModel = "google/gemini-2.5-flash:free";
@@ -1592,13 +1591,10 @@ export async function processMessage(
     // Level 1 Stream: Direct Token Return (Complexity <= 3)
     if (complexity <= 3) {
       console.log(`[Orchestrator] Level 1 Stream: Direct Token Return (Complexity ${complexity} <= 3)`);
-      if (onChunk) {
-        onChunk({ content: `**[Phase 1] Level 1 Stream: Direct Token Return**\n` });
-        onChunk({ content: `> Low complexity detected (${complexity}/10). Initiating direct token stream...\n\n` });
-      }
-      const fastModel = isOpenRouter ? omniActualModel : "deepseek-chat";
+      const fastModel = isOpenRouter ? omniActualModel : "deepseek-reasoner";
+      const fastModelParams = fastModel === "deepseek-reasoner" ? {} : { temperature: 0.5 };
       const messages = [
-        { role: "system" as const, content: buildCerebrasSystemPrompt("apex-flash", mode, features, request.clientLocalTime) },
+        { role: "system" as const, content: buildCerebrasSystemPrompt("apex-omni", mode, features, request.clientLocalTime) },
         ...(request.conversationHistory || []).map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
         { role: "user" as const, content: request.message }
       ];
@@ -1610,7 +1606,7 @@ export async function processMessage(
           messages,
           max_tokens: 2048,
           stream: true,
-          temperature: 0.5
+          ...fastModelParams
         });
         for await (const chunk of stream as any) {
           const text = chunk.choices[0]?.delta?.content || "";
@@ -1625,7 +1621,7 @@ export async function processMessage(
           messages,
           max_tokens: 2048,
           stream: false,
-          temperature: 0.5
+          ...fastModelParams
         });
         content = response.choices[0]?.message?.content || "";
       }
@@ -1634,21 +1630,15 @@ export async function processMessage(
 
     // Level 2 Stream: RAG + Vision Reranking (3 < Complexity < 7)
     if (complexity > 3 && complexity < 7) {
-      console.log(`[Orchestrator] Level 2 Stream: RAG + Vision Reranking (Complexity ${complexity})`);
-      if (onChunk) {
-        onChunk({ content: `**[Phase 1] Level 2 Stream: RAG + Vision Reranking**\n` });
-        onChunk({ content: `> Medium complexity detected (${complexity}/10). Performing web search & vision reranking...\n` });
-      }
-      
-      const searchResponse = await runApexSearch(request.message, { intent: "answer" });
-      const searchContext = buildApexSearchContext(searchResponse);
-      
-      if (onChunk) {
-        onChunk({ content: `> Context aggregation complete. Streaming response...\n\n` });
-      }
+      console.log(`[Orchestrator] Level 2 Stream: Focused Reasoning (Complexity ${complexity})`);
 
-      let systemPrompt = buildCerebrasSystemPrompt("apex-elite", mode, features, request.clientLocalTime);
-      systemPrompt += `\n\n=== CONTEXT AGGREGATION (RAG & VISION RERANKED) ===\n${searchContext}`;
+      const shouldUseSearch = !!features.deepResearch;
+      let systemPrompt = buildCerebrasSystemPrompt("apex-omni", mode, features, request.clientLocalTime);
+      if (shouldUseSearch) {
+        const searchResponse = await runApexSearch(request.message, { intent: "answer" });
+        const searchContext = buildApexSearchContext(searchResponse);
+        systemPrompt += `\n\n=== VERIFIED SEARCH CONTEXT ===\nUse this context only when it directly supports the answer. Do not invent links or sources.\n${searchContext}`;
+      }
 
       const messages = [
         { role: "system" as const, content: systemPrompt },
@@ -1656,14 +1646,16 @@ export async function processMessage(
         { role: "user" as const, content: request.message }
       ];
 
+      const focusedModel = isOpenRouter ? omniActualModel : "deepseek-reasoner";
+      const focusedModelParams = focusedModel === "deepseek-reasoner" ? {} : { temperature: 0.6 };
       let content = "";
       if (onChunk) {
         const stream = await omniClient.chat.completions.create({
-          model: isOpenRouter ? omniActualModel : "deepseek-chat",
+          model: focusedModel,
           messages,
           max_tokens: 3072,
           stream: true,
-          temperature: 0.6
+          ...focusedModelParams
         });
         for await (const chunk of stream as any) {
           const text = chunk.choices[0]?.delta?.content || "";
@@ -1674,11 +1666,11 @@ export async function processMessage(
         }
       } else {
         const response = await omniClient.chat.completions.create({
-          model: isOpenRouter ? omniActualModel : "deepseek-chat",
+          model: focusedModel,
           messages,
           max_tokens: 3072,
           stream: false,
-          temperature: 0.6
+          ...focusedModelParams
         });
         content = response.choices[0]?.message?.content || "";
       }
