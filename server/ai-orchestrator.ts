@@ -491,7 +491,7 @@ async function performSerperImageSearch(query: string): Promise<SerperImageResul
     const res = await fetch("https://google.serper.dev/images", {
       method: "POST",
       headers: {
-        "X-API-KEY": apiKey,
+        "X-API-KEY": apiKey || "",
         "Content-Type": "application/json"
       },
       body: JSON.stringify({ q: query, num: 8 })
@@ -1486,13 +1486,7 @@ Please review the assembled code and write the "✅ Architecture Notes" explaini
  *   0.95 — Explicit operational cmd  → trigger widget rendering
  */
 export function verifyWidgetGenerationIntent(prompt: string): { triggerQuiz: boolean; triggerPDF: boolean } {
-  if (prompt.includes("SYSTEM DIRECTIVE: You must output a structured MCQ/MSQ quiz block")) {
-    return { triggerQuiz: true, triggerPDF: false };
-  }
-  if (prompt.includes("SYSTEM DIRECTIVE: You must output a structured PDF document block")) {
-    return { triggerQuiz: false, triggerPDF: true };
-  }
-  const cleanPrompt = prompt.trim();
+  const cleanPrompt = cleanMessageOfDirectives(prompt).trim();
 
   // ── Explicit Operational Commands (confidence ≥ 0.95) ──
   // MUST contain an imperative action verb + structural output noun together
@@ -1514,9 +1508,66 @@ export function verifyWidgetGenerationIntent(prompt: string): { triggerQuiz: boo
   const isSpeculativeQuiz = speculativeQuizPatterns.some(p => p.test(cleanPrompt));
   const isSpeculativePDF  = speculativePDFPatterns.some(p => p.test(cleanPrompt));
 
+  const explicitQuiz = executionQuizRegex.test(cleanPrompt) && !isSpeculativeQuiz;
+  const explicitPDF  = executionPDFRegex.test(cleanPrompt)  && !isSpeculativePDF;
+
+  // If there's an explicit command in the user text, we always honor it
+  if (explicitQuiz) return { triggerQuiz: true, triggerPDF: false };
+  if (explicitPDF) return { triggerQuiz: false, triggerPDF: true };
+
+  // If the user did not explicitly command it, but the frontend appended the system directive:
+  const hasQuizDirective = prompt.includes("SYSTEM DIRECTIVE: You must output a structured MCQ/MSQ quiz block");
+  const hasPdfDirective = prompt.includes("SYSTEM DIRECTIVE: You must output a structured PDF document block");
+
+  if (hasQuizDirective || hasPdfDirective) {
+    // Check if the user's cleaned message is a conversational query, feedback, or bug report
+    // We match keywords related to bugs, problems, errors, pages, blank, blocked, solve, etc.
+    const conversationalOrBugRegex = /(?:error|bug|problem|fail|issue|crash|broken|incorrect|wrong|fix|solve|diagnose|repair|correct|help|why|how to|explain|page|render|blank|empty|blocked|مشكلة|مشاكل|خطأ|اخطاء|أخطاء|عطل|خراب|فشل|توقف|حل|اصلاح|إصلاح|شخص|تشخيص|تصحيح|مساعدة|لماذا|كيف|صفحة|فاضية|فارغة|بيضاء|محظور|محظورة)/i;
+    
+    if (conversationalOrBugRegex.test(cleanPrompt)) {
+      console.log(`[V2 Intent Gateway] Bypassing widget generation: conversational or bug feedback detected: "${cleanPrompt}"`);
+      return { triggerQuiz: false, triggerPDF: false };
+    }
+
+    if (hasQuizDirective) return { triggerQuiz: true, triggerPDF: false };
+    if (hasPdfDirective) return { triggerQuiz: false, triggerPDF: true };
+  }
+
+  return { triggerQuiz: false, triggerPDF: false };
+}
+
+export function cleanMessageOfDirectives(message: string): string {
+  if (!message) return "";
+  const index = message.indexOf("[SYSTEM DIRECTIVE:");
+  if (index !== -1) {
+    return message.substring(0, index).trim();
+  }
+  return message.trim();
+}
+
+export function verifyWidgetGenerationIntentOriginal(prompt: string): { triggerQuiz: boolean; triggerPDF: boolean } {
+  if (prompt.includes("SYSTEM DIRECTIVE: You must output a structured MCQ/MSQ quiz block")) {
+    return { triggerQuiz: true, triggerPDF: false };
+  }
+  if (prompt.includes("SYSTEM DIRECTIVE: You must output a structured PDF document block")) {
+    return { triggerQuiz: false, triggerPDF: true };
+  }
+  const cleanPrompt = prompt.trim();
+  const executionQuizRegex = /(انشئ|اعمل|صمم|generate|create|build|اضبط|امتحنني|اسألني|سوي|ابني|انشء)\s*(امتحان|اختبار|quiz|test|mcq|msq|أسئلة\s+اختيار|اختيار\s+من\s+متعدد)/i;
+  const executionPDFRegex  = /(انشئ|اعمل|صمم|generate|create|build|نزلي|صدّر|export|حول\s+ل|اكتب\s+ملف)\s*(pdf|ملف\s+pdf|document|تقرير|مستند|وثيقة)/i;
+  const speculativeQuizPatterns = [
+    /(هل\s+في|هل\s+عندك|هل\s+يمكن|هل\s+هناك|في\s+امتحان|في\s+اختبار)/i,
+    /(is\s+there\s+a\s+quiz|any\s+questions\s+for|could\s+you\s+make|what\s+is\s+a\s+quiz)/i,
+    /(يعني\s+ايه|كلمني\s+عن\s+شكل|اشرح\s+لي\s+نظام)/i,
+  ];
+  const speculativePDFPatterns = [
+    /(هل\s+يمكن|ممكن\s+تعمل|can\s+you\s+make|could\s+you\s+export|what\s+is\s+a\s+pdf)/i,
+    /(يعني\s+ايه|كلمني\s+عن|اشرح\s+لي)/i,
+  ];
+  const isSpeculativeQuiz = speculativeQuizPatterns.some(p => p.test(cleanPrompt));
+  const isSpeculativePDF  = speculativePDFPatterns.some(p => p.test(cleanPrompt));
   const triggerQuiz = executionQuizRegex.test(cleanPrompt) && !isSpeculativeQuiz;
   const triggerPDF  = executionPDFRegex.test(cleanPrompt)  && !isSpeculativePDF;
-
   if (triggerQuiz || triggerPDF) {
     console.log(`[V2 Intent Gateway] Widget authorized — Quiz: ${triggerQuiz}, PDF: ${triggerPDF}`);
   } else {

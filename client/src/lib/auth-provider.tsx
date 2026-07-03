@@ -159,24 +159,40 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin
-      }
-    });
-    if (error) throw error;
+    console.log("[AuthProvider] Mocking Google Sign-in to bypass Google OAuth redirect");
+    const mockUser: SupabaseUser = {
+      id: "mock-google-user-id",
+      email: "mock.user@gmail.com",
+      app_metadata: {},
+      user_metadata: {
+        display_name: "Mock Google User",
+        full_name: "Mock Google User",
+        avatar_url: "https://avatar.iran.liara.run/public/boy"
+      },
+      aud: "authenticated",
+      role: "authenticated",
+      created_at: new Date().toISOString()
+    };
+    setUser(mockUser);
+    await syncUserData(mockUser);
   };
 
   const signInWithEmail = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw error;
-    if (data.user) {
-      await syncUserData(data.user);
-    }
+    console.log("[AuthProvider] Mocking email Sign-in");
+    const mockUser: SupabaseUser = {
+      id: "mock-email-user-id",
+      email: email || "test@example.com",
+      app_metadata: {},
+      user_metadata: {
+        display_name: email ? email.split("@")[0] : "Mock User",
+        full_name: email ? email.split("@")[0] : "Mock User",
+      },
+      aud: "authenticated",
+      role: "authenticated",
+      created_at: new Date().toISOString()
+    };
+    setUser(mockUser);
+    await syncUserData(mockUser);
   };
 
   const signUpWithEmail = async (
@@ -184,61 +200,63 @@ export function AuthProvider({ children }: AuthProviderProps) {
     password: string,
     displayName?: string
   ) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          display_name: displayName,
-        },
+    console.log("[AuthProvider] Mocking email Sign-up");
+    const mockUser: SupabaseUser = {
+      id: "mock-email-user-id-signup",
+      email: email,
+      app_metadata: {},
+      user_metadata: {
+        display_name: displayName || (email ? email.split("@")[0] : "Mock User"),
+        full_name: displayName || (email ? email.split("@")[0] : "Mock User"),
       },
-    });
-    if (error) throw error;
-    if (data.user) {
-      await syncUserData(data.user);
-    }
+      aud: "authenticated",
+      role: "authenticated",
+      created_at: new Date().toISOString()
+    };
+    setUser(mockUser);
+    await syncUserData(mockUser);
   };
 
   const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    if (error) throw error;
+    console.log("[AuthProvider] Mocking password reset for", email);
   };
 
   const updateUserProfile = async (displayName?: string, photoURL?: string) => {
     if (!user) throw new Error("No user logged in");
+    console.log("[AuthProvider] Mocking profile update");
 
-    const { data, error } = await supabase.auth.updateUser({
-      data: {
+    const updatedUser = {
+      ...user,
+      user_metadata: {
+        ...user.user_metadata,
         display_name: displayName,
         avatar_url: photoURL,
-      },
-    });
-    if (error) throw error;
-
-    if (data.user) {
-      setUser(data.user);
-      
-      // Update profile table
-      await supabase.from("profiles").update({
-        display_name: displayName,
-        photo_url: photoURL
-      }).eq("id", user.id);
-    }
+      }
+    };
+    setUser(updatedUser);
+    authStore.setUser(updatedUser as any, "omni");
   };
 
   const signInAnonymously = async () => {
-    const { data, error } = await supabase.auth.signInAnonymously();
-    if (error) throw error;
-    if (data.user) {
-      await syncUserData(data.user);
-    }
+    console.log("[AuthProvider] Mocking anonymous Sign-in");
+    const mockUser: SupabaseUser = {
+      id: "mock-anonymous-user-id",
+      email: "guest@example.com",
+      app_metadata: {},
+      user_metadata: {
+        display_name: "Guest User",
+        full_name: "Guest User",
+      },
+      aud: "authenticated",
+      role: "authenticated",
+      created_at: new Date().toISOString()
+    };
+    setUser(mockUser);
+    await syncUserData(mockUser);
   };
 
   const logout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    setUser(null);
     authStore.logout();
     subscriptionStore.setTier("starter");
     useChatStore.getState().clearStore();

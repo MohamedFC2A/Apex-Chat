@@ -1743,7 +1743,8 @@ function CodeBlockWrapper({ language, code, parentContent }: { language: string;
     const activeId = state.activeConversationId;
     const conv = state.conversations.find((c) => c.id === activeId);
     const userMsgs = conv?.messages.filter((m) => m.role === "user") ?? [];
-    return userMsgs[userMsgs.length - 1]?.content ?? "";
+    const lastMsg = userMsgs[userMsgs.length - 1];
+    return lastMsg?.contextContent ?? lastMsg?.content ?? "";
   });
 
   const intentVerified = useMemo(() => {
