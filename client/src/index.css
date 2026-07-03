@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&family=JetBrains+Mono:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -59,6 +59,7 @@
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-display: 'Space Mono', 'JetBrains Mono', monospace;
   --font-arabic: 'Cairo', 'Inter', sans-serif;
 
   --opaque-button-border-intensity: -8;
@@ -68,55 +69,54 @@
   --app-viewport-height: 100dvh;
 }
 
-/* ─── DARK MODE — Deep Space Palette ─── */
+/* ─── DARK MODE — Pure Black / White Terminal ─── */
 .dark {
   --opaque-button-border-intensity: 9;
-  --elevate-1: rgba(255, 255, 255, .03);
-  --elevate-2: rgba(255, 255, 255, .07);
-  --button-outline: rgba(255, 255, 255, .08);
+  --elevate-1: rgba(255, 255, 255, .02);
+  --elevate-2: rgba(255, 255, 255, .05);
+  --button-outline: rgba(255, 255, 255, .07);
 
-  /* Deep space backgrounds */
-  --background: 240 10% 2%;          /* #050506 — premium obsidian black */
-  --foreground: 210 20% 94%;
+  /* ████ TRUE BLACK — like the reference card ████ */
+  --background: 0 0% 2%;             /* #050505 — void black */
+  --foreground: 0 0% 92%;            /* #ebebeb — clean white */
 
-  --card: 240 10% 4%;               /* #0a0a0c — sleek black card surface */
-  --card-foreground: 210 20% 94%;
+  --card: 0 0% 5%;                   /* #0d0d0d — card black */
+  --card-foreground: 0 0% 90%;
 
-  --border: 240 6% 10%;             /* clean titanium-dark border */
-  --input: 240 6% 12%;
+  --border: 0 0% 9%;                 /* #171717 — subtle border */
+  --input: 0 0% 8%;
 
-  /* Glassmorphism surfaces */
-  --popover: 240 10% 3%;
-  --popover-foreground: 210 20% 94%;
+  --popover: 0 0% 4%;                /* #0a0a0a — dropdown black */
+  --popover-foreground: 0 0% 90%;
 
-  /* Sidebar — slightly lighter than bg */
-  --sidebar: 240 10% 3%;
-  --sidebar-foreground: 210 20% 94%;
-  --sidebar-border: 240 6% 8%;
-  --sidebar-accent: 240 6% 8%;
-  --sidebar-accent-foreground: 210 20% 94%;
+  /* Sidebar */
+  --sidebar: 0 0% 3%;
+  --sidebar-foreground: 0 0% 88%;
+  --sidebar-border: 0 0% 8%;
+  --sidebar-accent: 0 0% 7%;
+  --sidebar-accent-foreground: 0 0% 90%;
   --sidebar-primary: 0 0% 98%;
   --sidebar-primary-foreground: 0 0% 0%;
   --sidebar-ring: 0 0% 98%;
 
-  /* Brand accents */
-  --primary: 0 0% 98%;               /* sleek premium white */
+  /* Minimal accents — white only */
+  --primary: 0 0% 98%;
   --primary-foreground: 0 0% 0%;
-  --secondary: 240 6% 8%;
-  --secondary-foreground: 210 20% 90%;
-  --muted: 240 6% 8%;
-  --muted-foreground: 217 8% 55%;
-  --accent: 240 6% 8%;
-  --accent-foreground: 210 20% 94%;
-  --destructive: 0 80% 50%;
+  --secondary: 0 0% 7%;
+  --secondary-foreground: 0 0% 88%;
+  --muted: 0 0% 7%;
+  --muted-foreground: 0 0% 42%;      /* #6b6b6b — muted gray */
+  --accent: 0 0% 8%;
+  --accent-foreground: 0 0% 92%;
+  --destructive: 0 72% 45%;
   --destructive-foreground: 0 0% 100%;
-  --ring: 0 0% 98%;
+  --ring: 0 0% 50%;
 
-  /* Apex glow tokens */
-  --apex-glow-primary: 0 0 4px hsl(0 0% 98% / 0.05);
-  --apex-glow-cyan: 0 0 4px hsl(190 90% 55% / 0.05);
-  --apex-glow-emerald: 0 0 4px hsl(160 80% 45% / 0.05);
-  --apex-glow-rose: 0 0 4px hsl(345 85% 60% / 0.05);
+  /* Apex glow tokens — minimal */
+  --apex-glow-primary: none;
+  --apex-glow-cyan: none;
+  --apex-glow-emerald: none;
+  --apex-glow-rose: none;
 }
 
 .app-viewport {
@@ -423,8 +423,7 @@
   content: "▋";
   display: inline-block;
   margin-inline-start: 4px;
-  color: #a78bfa; /* Premium Violet */
-  text-shadow: 0 0 8px rgba(167, 139, 250, 0.8);
+  color: rgba(255, 255, 255, 0.6);
   animation: blink-caret 0.8s step-end infinite;
   vertical-align: middle;
   font-size: 0.9em;
@@ -818,4 +817,70 @@ body.god-mode .border {
 
 .animate-spotlight-auto {
   animation: spotlight-auto 20s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TERMINAL / PIXEL AESTHETIC — Model Selector & UI
+════════════════════════════════════════════════════════════════════ */
+
+/* Space Mono display font utility */
+.font-display {
+  font-family: 'Space Mono', 'JetBrains Mono', monospace;
+}
+
+/* Pixel block progress bar (like the image) */
+.pixel-bar {
+  display: flex;
+  gap: 2px;
+}
+.pixel-bar-block {
+  display: inline-block;
+  width: 6px;
+  height: 10px;
+  background: currentColor;
+}
+.pixel-bar-block.empty {
+  opacity: 0.12;
+}
+
+/* Model selector trigger — terminal style */
+.model-selector-btn {
+  font-family: 'Space Mono', 'JetBrains Mono', monospace !important;
+  letter-spacing: 0.06em;
+  border-radius: 2px !important;
+}
+
+/* Dropdown — pure black terminal card */
+[data-radix-popper-content-wrapper] [role="menu"],
+[data-radix-popper-content-wrapper] [role="listbox"] {
+  border-radius: 3px !important;
+}
+
+/* Uppercase tracking for labels */
+.label-mono {
+  font-family: 'Space Mono', 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.2);
+}
+
+/* Invert hover: white bg + black text */
+.hover-invert {
+  transition: background 0.1s, color 0.1s;
+}
+.hover-invert:hover {
+  background: white;
+  color: black;
+}
+
+/* Pixel / scanline background texture for cards */
+.scanline-bg {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255,255,255,0.012) 2px,
+    rgba(255,255,255,0.012) 4px
+  );
 }

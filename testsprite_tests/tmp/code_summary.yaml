@@ -1,0 +1,94 @@
+version: "2"
+type: frontend
+tech_stack:
+  - TypeScript
+  - React
+  - Tailwind CSS
+  - Shadcn UI
+  - Wouter
+  - Firebase (Auth, Firestore)
+routes:
+  - path: /login
+    file: client/src/pages/login.tsx
+    auth_required: false
+    description: User login page with Google OAuth or Email/Password credentials.
+  - path: /chat
+    file: client/src/pages/chat.tsx
+    auth_required: true
+    description: AI chat page with model selection, reasoning toggle, and specific chat modes.
+  - path: /settings
+    file: client/src/pages/settings.tsx
+    auth_required: true
+    description: Settings page to manage profile details (Avatar, Display name).
+  - path: /pricing
+    file: client/src/pages/pricing-page.tsx
+    auth_required: true
+    description: Subscription pricing options tier-based pricing (Starter, Pro, Apex Elite) with voucher inputs.
+  - path: /billing
+    file: client/src/pages/billing.tsx
+    auth_required: true
+    description: Billing history page displaying transaction details, vouchers used, and subscription level.
+features:
+  - name: User Login & Register
+    description: Authenticate user with Email and Password or via Google OAuth.
+    files:
+      - client/src/pages/login.tsx
+      - client/src/lib/auth-provider.tsx
+    entry_route: /login
+    user_interactions:
+      - Fill email input field
+      - Fill password input field
+      - Click Sign In / Register buttons
+      - Click Google OAuth sign-in button
+    api_calls: []
+    auth_required: false
+  - name: Chat Interface
+    description: Fast inference chat, custom models selection, Deep Research and God Mode toggles.
+    files:
+      - client/src/pages/chat.tsx
+    entry_route: /chat
+    user_interactions:
+      - Select AI Model from selector dropdown
+      - Toggle Thinking / Reasoning mode
+      - Toggle Deep Research mode
+      - Send a chat message
+      - View message stream
+    api_calls:
+      - method: POST
+        endpoint: /api/chat
+    auth_required: true
+  - name: Subscription Pricing
+    description: Choose premium subscription tiers (Starter, Pro, Apex Elite) and redeem vouchers.
+    files:
+      - client/src/pages/pricing-page.tsx
+    entry_route: /pricing
+    user_interactions:
+      - View subscription cards
+      - Enter promo/voucher code
+      - Click Redeem Voucher button
+    api_calls:
+      - method: POST
+        endpoint: /api/subscription/validate
+    auth_required: true
+  - name: Profile Settings
+    description: Manage user profile information such as Display Name and Avatar URL.
+    files:
+      - client/src/pages/settings.tsx
+    entry_route: /settings
+    user_interactions:
+      - Edit display name field
+      - Edit avatar URL field
+      - Click Save settings button
+    api_calls: []
+    auth_required: true
+  - name: Billing Dashboard
+    description: View current balance, active subscription tier and billing history.
+    files:
+      - client/src/pages/billing.tsx
+    entry_route: /billing
+    user_interactions:
+      - View wallet details
+      - View transaction history log
+    api_calls: []
+    auth_required: true
+known_limitations: []

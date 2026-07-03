@@ -208,7 +208,7 @@ export function ChatInput({
         className="relative flex flex-col gap-2.5 p-3.5 rounded-xl bg-neutral-950 border border-zinc-900 focus-within:border-zinc-800 transition-all duration-200"
       >
         {/* Progress Bar during PDF/Quiz generation */}
-        {(activeQuizProgress || activePdfProgress) && (
+        {isGenerating && (activeQuizProgress || activePdfProgress) && (
           <div className="w-full flex flex-col gap-1.5 px-1 py-1.5 border-b border-zinc-900 mb-2">
             <div className="flex justify-between items-center text-xs">
               <span className="text-zinc-400 font-arabic flex items-center gap-1.5">

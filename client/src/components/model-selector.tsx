@@ -5,14 +5,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Lock, Zap, Infinity as InfinityIcon } from "lucide-react";
+import { ChevronDown, Lock } from "lucide-react";
 import type { AIModel } from "@shared/schema";
 import { MODELS, MODEL_INFO, MODEL_TIER_MAP } from "@/lib/constants";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ModelSelectorProps {
   selectedModel: AIModel;
@@ -20,235 +19,164 @@ interface ModelSelectorProps {
   disabled?: boolean;
 }
 
+const TIER_LABELS: Record<string, string> = {
+  omni:    "TIER·4 // OMNI",
+  elite:   "TIER·3 // ELITE",
+  pro:     "TIER·2 // PRO",
+  starter: "TIER·1 // STARTER",
+};
+
+const TIER_ORDER = ["omni", "elite", "pro", "starter"];
+
 export function ModelSelector({ selectedModel, onSelectModel, disabled }: ModelSelectorProps) {
   const { canAccessModel, tier } = useSubscriptionStore();
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
-  
+
   const currentModelInfo = MODEL_INFO[selectedModel];
-  const Icon = selectedModel === "apex-omni" ? InfinityIcon : (currentModelInfo?.icon || Zap);
-  const isGodModeModel = selectedModel === "apex-unbound";
-  const isFreeTier = tier === "starter";
-
-  const omniModel: AIModel[] = MODELS.filter((m) => MODEL_TIER_MAP[m] === "omni");
-  const eliteModels: AIModel[] = MODELS.filter((m) => MODEL_TIER_MAP[m] === "elite");
-  const proModels: AIModel[] = MODELS.filter((m) => MODEL_TIER_MAP[m] === "pro");
-  const starterModels: AIModel[] = MODELS.filter((m) => MODEL_TIER_MAP[m] === "starter");
-
-  const getButtonStyles = () => {
-    if (selectedModel === "apex-unbound") {
-      return {
-        button: "bg-gradient-to-r from-violet-950/40 via-purple-950/50 to-violet-950/40 border border-violet-500/40 text-violet-400 hover:bg-violet-950/50 hover:border-violet-500/60 shadow-[0_0_12px_rgba(139,92,246,0.12)] rounded-lg",
-        text: "bg-gradient-to-r from-violet-300 via-fuchsia-400 to-violet-200 bg-clip-text text-transparent font-bold tracking-wider",
-        iconColor: "text-violet-400"
-      };
-    }
-    const modelTier = MODEL_TIER_MAP[selectedModel];
-    switch (modelTier) {
-      case "omni":
-        return {
-          button: "bg-gradient-to-r from-amber-950/40 via-yellow-950/50 to-amber-950/40 border border-yellow-500/40 text-yellow-400 hover:bg-yellow-950/50 hover:border-yellow-500/60 shadow-[0_0_12px_rgba(234,179,8,0.12)] rounded-lg",
-          text: "bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-200 bg-clip-text text-transparent font-bold tracking-wider",
-          iconColor: "text-yellow-400"
-        };
-      case "elite":
-        return {
-          button: "bg-gradient-to-r from-emerald-950/30 via-teal-950/40 to-emerald-950/30 border border-emerald-500/45 text-emerald-400 hover:bg-emerald-950/50 hover:border-emerald-500/60 shadow-[0_0_12px_rgba(16,185,129,0.12)] rounded-lg",
-          text: "bg-gradient-to-r from-emerald-300 via-teal-400 to-emerald-200 bg-clip-text text-transparent font-bold tracking-wider",
-          iconColor: "text-emerald-400"
-        };
-      case "pro":
-        return {
-          button: "bg-gradient-to-r from-purple-950/20 via-indigo-950/30 to-purple-950/20 border border-purple-500/30 text-purple-400 hover:bg-purple-950/45 hover:border-purple-500/50 shadow-[0_0_12px_rgba(168,85,247,0.08)] rounded-lg",
-          text: "text-purple-300 font-semibold tracking-wide",
-          iconColor: "text-purple-400"
-        };
-      case "starter":
-      default:
-        return {
-          button: "bg-card hover:bg-muted border border-border text-foreground rounded-lg",
-          text: "text-foreground font-medium",
-          iconColor: "text-muted-foreground"
-        };
-    }
-  };
-
-  const currentStyles = getButtonStyles();
+  const modelsByTier = TIER_ORDER.map((t) => ({
+    tier: t,
+    models: MODELS.filter((m) => MODEL_TIER_MAP[m] === t),
+  }));
 
   return (
     <DropdownMenu open={isOpen && !disabled} onOpenChange={(open) => !disabled && setIsOpen(open)}>
       <DropdownMenuTrigger asChild disabled={disabled}>
         <motion.div
-          whileHover={disabled ? {} : { scale: 1.02, y: -1 }}
-          whileTap={disabled ? {} : { scale: 0.98 }}
-          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          whileHover={disabled ? {} : { scale: 1.01 }}
+          whileTap={disabled ? {} : { scale: 0.99 }}
+          transition={{ type: "spring", stiffness: 500, damping: 30 }}
         >
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             disabled={disabled}
-            className={`model-selector-btn w-full justify-start gap-1.5 sm:gap-2 min-w-[160px] sm:min-w-[200px] relative overflow-hidden whitespace-nowrap transition-all duration-300 ${currentStyles.button} ${
-              isFreeTier && selectedModel === "apex-flash" ? "shimmer-button" : ""
-            } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`
+              model-selector-btn h-9 px-3 gap-2
+              min-w-[160px] sm:min-w-[210px]
+              justify-start
+              bg-black border border-white/10
+              text-white font-mono text-xs tracking-widest uppercase
+              hover:bg-white/5 hover:border-white/20
+              transition-all duration-150
+              rounded-sm
+              ${disabled ? "opacity-40 cursor-not-allowed" : ""}
+            `}
           >
-            {isFreeTier && selectedModel === "apex-flash" && (
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-foreground/5 to-transparent"
-                animate={{
-                  x: ["-100%", "200%"],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatDelay: 3,
-                }}
-              />
-            )}
-            <Icon className={`w-4 h-4 shrink-0 z-10 ${currentStyles.iconColor || "text-foreground"}`} />
-            <span className={`flex-1 min-w-0 text-left truncate z-10 ${currentStyles.text}`}>
-              {selectedModel === "apex-omni" ? "APEX OMNI" : (currentModelInfo?.name || "Select Model")}
+            <span className="text-white/30 text-[10px]">▶</span>
+            <span className="flex-1 text-left truncate">
+              {currentModelInfo?.name?.toUpperCase() ?? "SELECT MODEL"}
             </span>
-            {isGodModeModel && (
-              <motion.span
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="hidden sm:inline-flex text-[9px] font-semibold tracking-wider bg-violet-950/50 text-violet-400 border border-violet-900/50 px-1.5 py-0.5 rounded z-10"
-              >
-                CODE·AI
-              </motion.span>
-            )}
-            <ChevronDown className={`w-4 h-4 shrink-0 z-10 ${currentStyles.iconColor || "text-foreground"}`} />
+            <ChevronDown className={`w-3 h-3 text-white/40 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
           </Button>
         </motion.div>
       </DropdownMenuTrigger>
+
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -10 }}
-            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.12 }}
           >
             <DropdownMenuContent
               forceMount
               align="start"
-              sideOffset={8}
-              className="w-[min(24rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] max-h-[min(75vh,32rem)] overscroll-contain bg-popover border border-border rounded-xl shadow-xl p-1.5"
+              sideOffset={6}
+              className="
+                w-[min(22rem,calc(100vw-1rem))]
+                max-h-[min(80vh,34rem)]
+                overflow-y-auto overscroll-contain
+                bg-[#0a0a0a] border border-white/10
+                rounded-sm shadow-2xl shadow-black/80
+                p-0
+              "
             >
-          {/* Apex Omni - Ultimate Tier */}
-          <DropdownMenuLabel className="text-yellow-600 dark:text-yellow-500 text-xs tracking-wide bg-gradient-to-r from-amber-500/10 to-transparent px-3 py-2">
-            Apex Omni (Tier 4)
-          </DropdownMenuLabel>
-          {omniModel.map((model) => {
-            const info = MODEL_INFO[model];
-            const ModelIcon = info.icon;
-            const canAccess = canAccessModel(model);
-            const isSelected = model === selectedModel;
+              {/* Header */}
+              <div className="px-4 pt-3 pb-2 border-b border-white/5">
+                <p className="font-mono text-[10px] tracking-[0.2em] text-white/25 uppercase">
+                  SELECT·MODEL // upgrade اشتراك ترقية
+                </p>
+              </div>
 
-            return (
-              <DropdownMenuItem
-                key={model}
-                disabled={!canAccess}
-                onClick={() => canAccess && onSelectModel(model)}
-                className={`cursor-pointer hover:bg-accent transition-colors px-3 py-2.5 ${
-                  isSelected ? "bg-accent" : ""
-                } ${!canAccess ? "opacity-50" : ""}`}
-              >
-                <div className="flex items-start gap-2 w-full">
-                  <ModelIcon className={`w-4 h-4 shrink-0 ${canAccess ? "text-amber-500 dark:text-amber-400" : "text-muted-foreground"}`} />
-                  <div className="flex-1 min-w-0">
-                    <div className={`text-sm font-medium leading-5 break-words whitespace-normal ${canAccess ? "text-amber-600 dark:text-amber-300" : "text-foreground"}`}>{info.name}</div>
-                    <div className="text-xs text-muted-foreground leading-4 break-words whitespace-normal">{info.subtitle}</div>
+              {/* Model groups */}
+              {modelsByTier.map(({ tier: t, models }) => {
+                if (models.length === 0) return null;
+                return (
+                  <div key={t} className="py-1">
+                    {/* Tier label */}
+                    <div className="px-4 py-1.5 flex items-center gap-2">
+                      <span className="font-mono text-[9px] tracking-[0.25em] text-white/20 uppercase">
+                        {TIER_LABELS[t]}
+                      </span>
+                      <div className="flex-1 h-px bg-white/5" />
+                    </div>
+
+                    {/* Models in this tier */}
+                    {models.map((model) => {
+                      const info = MODEL_INFO[model];
+                      const canAccess = canAccessModel(model);
+                      const isSelected = model === selectedModel;
+
+                      return (
+                        <DropdownMenuItem
+                          key={model}
+                          onClick={() => {
+                            if (canAccess) {
+                              onSelectModel(model);
+                            } else {
+                              toast({
+                                title: "LOCKED",
+                                description: `Upgrade your subscription to access ${info.name}.`,
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                          className={`
+                            relative mx-1 px-3 py-2.5 rounded-sm
+                            cursor-pointer transition-all duration-100
+                            focus:outline-none
+                            ${isSelected
+                              ? "bg-white text-black"
+                              : "text-white/70 hover:bg-white/5 hover:text-white"
+                            }
+                            ${!canAccess ? "opacity-40" : ""}
+                          `}
+                        >
+                          <div className="flex items-center gap-3 w-full">
+                            {/* Active indicator */}
+                            <span className={`text-[9px] font-mono shrink-0 w-3 ${isSelected ? "text-black" : "text-white/15"}`}>
+                              {isSelected ? "▶" : "·"}
+                            </span>
+
+                            {/* Model info */}
+                            <div className="flex-1 min-w-0">
+                              <p className={`font-mono text-xs tracking-wider uppercase leading-none mb-0.5 ${isSelected ? "text-black" : "text-white/90"}`}>
+                                {info.name}
+                              </p>
+                              <p className={`font-mono text-[10px] tracking-wide leading-tight truncate ${isSelected ? "text-black/60" : "text-white/30"}`}>
+                                {info.subtitle}
+                              </p>
+                            </div>
+
+                            {/* Lock icon */}
+                            {!canAccess && (
+                              <Lock className="w-3 h-3 shrink-0 text-white/20" />
+                            )}
+                          </div>
+                        </DropdownMenuItem>
+                      );
+                    })}
                   </div>
-                  {!canAccess && <Lock className="w-3 h-3 shrink-0 text-muted-foreground" />}
-                </div>
-              </DropdownMenuItem>
-            );
-          })}
+                );
+              })}
 
-          <DropdownMenuSeparator className="bg-border" />
-
-          {/* Elite Tier */}
-          <DropdownMenuLabel className="text-xs tracking-wide text-muted-foreground px-3 py-2">Elite Tier</DropdownMenuLabel>
-          {eliteModels.map((model) => {
-            const info = MODEL_INFO[model];
-            const ModelIcon = info.icon;
-            const canAccess = canAccessModel(model);
-            const isSelected = model === selectedModel;
-
-            return (
-              <DropdownMenuItem
-                key={model}
-                disabled={!canAccess}
-                onClick={() => canAccess && onSelectModel(model)}
-                className={`cursor-pointer hover:bg-accent transition-colors px-3 py-2.5 ${
-                  isSelected ? "bg-accent" : ""
-                }`}
-              >
-                <div className="flex items-start gap-2 w-full">
-                  <ModelIcon className="w-4 h-4 shrink-0 text-foreground" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium leading-5 break-words whitespace-normal text-foreground">{info.name}</div>
-                    <div className="text-xs text-muted-foreground leading-4 break-words whitespace-normal">{info.subtitle}</div>
-                  </div>
-                  {!canAccess && <Lock className="w-3 h-3 shrink-0 text-muted-foreground" />}
-                </div>
-              </DropdownMenuItem>
-            );
-          })}
-
-          <DropdownMenuSeparator className="bg-border" />
-          <DropdownMenuLabel className="text-xs tracking-wide text-muted-foreground px-3 py-2">Pro Tier</DropdownMenuLabel>
-          {proModels.map((model) => {
-            const info = MODEL_INFO[model];
-            const ModelIcon = info.icon;
-            const canAccess = canAccessModel(model);
-            const isSelected = model === selectedModel;
-
-            return (
-              <DropdownMenuItem
-                key={model}
-                disabled={!canAccess}
-                onClick={() => canAccess && onSelectModel(model)}
-                className={`cursor-pointer hover:bg-accent transition-colors px-3 py-2.5 ${
-                  isSelected ? "bg-accent" : ""
-                }`}
-              >
-                <div className="flex items-start gap-2 w-full">
-                  <ModelIcon className="w-4 h-4 shrink-0 text-foreground" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium leading-5 break-words whitespace-normal text-foreground">{info.name}</div>
-                    <div className="text-xs text-muted-foreground leading-4 break-words whitespace-normal">{info.subtitle}</div>
-                  </div>
-                  {!canAccess && <Lock className="w-3 h-3 shrink-0 text-muted-foreground" />}
-                </div>
-              </DropdownMenuItem>
-            );
-          })}
-
-          <DropdownMenuSeparator className="bg-border" />
-          <DropdownMenuLabel className="text-xs tracking-wide text-muted-foreground px-3 py-2">Starter Tier</DropdownMenuLabel>
-          {starterModels.map((model) => {
-            const info = MODEL_INFO[model];
-            const ModelIcon = info.icon;
-            const isSelected = model === selectedModel;
-
-            return (
-              <DropdownMenuItem
-                key={model}
-                onClick={() => onSelectModel(model)}
-                className={`cursor-pointer hover:bg-accent transition-colors px-3 py-2.5 ${
-                  isSelected ? "bg-accent" : ""
-                }`}
-              >
-                <div className="flex items-start gap-2 w-full">
-                  <ModelIcon className="w-4 h-4 shrink-0 text-foreground" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium leading-5 break-words whitespace-normal text-foreground">{info.name}</div>
-                    <div className="text-xs text-muted-foreground leading-4 break-words whitespace-normal">{info.subtitle}</div>
-                  </div>
-                </div>
-              </DropdownMenuItem>
-            );
-          })}
+              {/* Footer */}
+              <div className="px-4 py-2 border-t border-white/5 mt-1">
+                <p className="font-mono text-[9px] tracking-[0.15em] text-white/15 uppercase">
+                  APEX·CHAT // AI·STUDIO
+                </p>
+              </div>
             </DropdownMenuContent>
           </motion.div>
         )}

@@ -1,0 +1,17 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:5000",
+  "executionArgs": {
+    "projectName": "Apex-Chat",
+    "projectPath": "c:\\Users\\Mo_Matany\\Downloads\\Apex-Chat\\Apex-Chat",
+    "testIds": [],
+    "additionalInstruction": "",
+    "serverMode": "production",
+    "envs": {
+      "API_KEY": "sk-user-PKA8QPJ045cWKLB2iWyZPeZ0V249vsHI-MJWg-PvAFVedAj7Y5J_MWUwU6bPKtox3BljBRUq2smd_2lTVD1HmuPCz_XjRpJTLFS8UN9TJjAJ6WX0oiJtiS2ugSsvDW8xl6A"
+    }
+  },
+  "serverPort": 54395
+}

@@ -1,0 +1,964 @@
+[
+  {
+    "id": "TC001",
+    "title": "Send a chat message with a selected model",
+    "description": "A signed-in user can choose a model, send a prompt, and receive a streamed reply in chat.",
+    "category": "Chat Interface",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open chat"
+      },
+      {
+        "type": "action",
+        "description": "Select an available AI model"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the message field with a chat prompt"
+      },
+      {
+        "type": "action",
+        "description": "Send the message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the sent message appears in the conversation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a streamed AI reply is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Login with email and password",
+    "description": "An authenticated member can sign in with email and password and reach the protected app.",
+    "category": "User Login & Register",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the authenticated experience is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access to the protected app is granted"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Send a prompt and receive a streamed reply",
+    "description": "Verifies that a signed-in user can select a model, send a chat prompt, and see a streamed assistant response in the conversation.",
+    "category": "Chat",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /chat"
+      },
+      {
+        "type": "action",
+        "description": "Select an available model"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the chat prompt field with Hello, summarize the app"
+      },
+      {
+        "type": "action",
+        "description": "Send the chat message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user message appears in the conversation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a streamed assistant response is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Login with Google account",
+    "description": "An authenticated member can complete Google sign-in and reach the protected app.",
+    "category": "User Login & Register",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Choose Google sign-in"
+      },
+      {
+        "type": "action",
+        "description": "Complete the authentication flow"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the authenticated experience is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access to the protected app is granted"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Open chat after signing in",
+    "description": "A signed-in user can open the chat experience from the protected app and see the message composer.",
+    "category": "Chat Interface",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open chat"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the chat interface is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the message composer is available"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Respect model and mode entitlements in chat",
+    "description": "Verifies that a subscriber can use entitled reasoning or deep research modes while locked options remain unavailable in chat.",
+    "category": "Chat",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /chat"
+      },
+      {
+        "type": "action",
+        "description": "Select a higher-tier available model"
+      },
+      {
+        "type": "action",
+        "description": "Enable the reasoning mode"
+      },
+      {
+        "type": "action",
+        "description": "Enable the deep research mode"
+      },
+      {
+        "type": "action",
+        "description": "Verify locked models or modes are not available for selection"
+      },
+      {
+        "type": "action",
+        "description": "Send the chat message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the enabled advanced modes are reflected in the conversation state"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the assistant reply is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "View subscription tiers and redeem a voucher",
+    "description": "A user can review pricing options, redeem a valid voucher, and see upgraded access reflected in the app.",
+    "category": "Subscription Pricing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open pricing"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid voucher code"
+      },
+      {
+        "type": "action",
+        "description": "Redeem the voucher"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the subscription access is updated"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an updated billing entry is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Use reasoning mode in chat",
+    "description": "A subscriber can enable reasoning mode for a supported model and get a response in the chat thread.",
+    "category": "Chat Interface",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open chat"
+      },
+      {
+        "type": "action",
+        "description": "Select an available AI model"
+      },
+      {
+        "type": "action",
+        "description": "Enable reasoning mode"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the message field with a reasoning prompt"
+      },
+      {
+        "type": "action",
+        "description": "Send the message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the reasoning-enabled conversation is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a response is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "View pricing tiers and redeem a voucher",
+    "description": "Verifies that a signed-in user can open pricing, review subscription tiers, and redeem a valid voucher to see the account upgrade reflected.",
+    "category": "Pricing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /pricing"
+      },
+      {
+        "type": "action",
+        "description": "Review the available subscription tiers"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a valid voucher code into the voucher field"
+      },
+      {
+        "type": "action",
+        "description": "Redeem the voucher"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the subscription upgrade is reflected on the page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify voucher redemption activity is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "Use deep research mode in chat",
+    "description": "A subscriber can enable deep research for a supported model and receive a detailed reply.",
+    "category": "Chat Interface",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open chat"
+      },
+      {
+        "type": "action",
+        "description": "Select an available AI model"
+      },
+      {
+        "type": "action",
+        "description": "Enable deep research mode"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the message field with a research question"
+      },
+      {
+        "type": "action",
+        "description": "Send the message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the deep research conversation is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a detailed response is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC011",
+    "title": "See locked model gating in chat",
+    "description": "A free-tier user can identify that a locked model requires a higher subscription tier and return to choosing another model.",
+    "category": "Chat Interface",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open chat"
+      },
+      {
+        "type": "action",
+        "description": "Select a locked AI model"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a higher-tier access message is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify model selection remains available"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC012",
+    "title": "Review billing balance, tier, and history",
+    "description": "An authenticated admin or support viewer can open billing and review the wallet balance, active tier, and transaction history.",
+    "category": "Billing Dashboard",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open billing"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the wallet balance is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the active subscription tier and transaction history are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC013",
+    "title": "Review wallet balance and active tier",
+    "description": "Verifies that a signed-in user can open billing and view the wallet balance, active subscription tier, and transaction history.",
+    "category": "Billing Dashboard",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /billing"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the wallet balance is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the active subscription tier is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the transaction history log is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC014",
+    "title": "Edit display name and avatar URL in settings",
+    "description": "An authenticated user can update profile details in settings and see the saved profile reflected in the app.",
+    "category": "User Profile Settings",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open settings"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the display name field with a new profile name"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the avatar URL field with a valid image URL"
+      },
+      {
+        "type": "action",
+        "description": "Save the profile changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated profile is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the saved profile changes are reflected in the app"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC015",
+    "title": "Update profile details successfully",
+    "description": "Verifies that a signed-in user can change their display name and avatar URL and see the updated profile reflected in settings.",
+    "category": "Profile Settings",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /settings"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the display name field with Apex Member"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the avatar URL field with a valid URL"
+      },
+      {
+        "type": "action",
+        "description": "Save the profile changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated profile details are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC016",
+    "title": "Review redeemed vouchers and tier changes",
+    "description": "Verifies that billing history shows previously redeemed vouchers along with credited amounts and subscription tier changes.",
+    "category": "Billing Dashboard",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /billing"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify redeemed voucher activity is displayed in the billing history"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify credited amounts or tier change details are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC017",
+    "title": "Show empty chat state before a conversation starts",
+    "description": "Verifies that a signed-in user sees the empty chat state before sending any messages and can begin a conversation from it.",
+    "category": "Chat",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /chat"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an empty chat state is displayed"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the chat prompt field with Start a new conversation"
+      },
+      {
+        "type": "action",
+        "description": "Send the chat message"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the conversation begins with the new message"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC018",
+    "title": "Show validation for missing login credentials",
+    "description": "A guest sees validation feedback when trying to sign in without providing the required credentials.",
+    "category": "User Login & Register",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form without entering credentials"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify validation feedback is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the authenticated experience is not displayed"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC019",
+    "title": "Show validation for an invalid voucher code",
+    "description": "A user sees voucher validation feedback when redeeming an invalid code on the pricing page.",
+    "category": "Subscription Pricing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open pricing"
+      },
+      {
+        "type": "action",
+        "description": "Enter an invalid voucher code"
+      },
+      {
+        "type": "action",
+        "description": "Redeem the voucher"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify voucher validation feedback is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify subscription access is not updated"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC020",
+    "title": "Show validation for empty profile fields",
+    "description": "An authenticated user sees validation feedback when trying to save invalid empty profile values in settings.",
+    "category": "User Profile Settings",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-in form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open settings"
+      },
+      {
+        "type": "action",
+        "description": "Clear the display name field"
+      },
+      {
+        "type": "action",
+        "description": "Clear the avatar URL field"
+      },
+      {
+        "type": "action",
+        "description": "Save the profile changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify validation feedback is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the profile is not updated"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC021",
+    "title": "Reject empty profile values",
+    "description": "Verifies that saving invalid or empty profile values shows validation feedback and does not apply the changes.",
+    "category": "Profile Settings",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /settings"
+      },
+      {
+        "type": "action",
+        "description": "Clear the display name field"
+      },
+      {
+        "type": "action",
+        "description": "Clear the avatar URL field"
+      },
+      {
+        "type": "action",
+        "description": "Save the profile changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify profile validation feedback is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the profile changes are not applied"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC022",
+    "title": "Reject an invalid voucher code",
+    "description": "Verifies that entering an invalid voucher code on pricing shows validation feedback and does not apply a subscription change.",
+    "category": "Pricing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /pricing"
+      },
+      {
+        "type": "action",
+        "description": "Fill in an invalid voucher code into the voucher field"
+      },
+      {
+        "type": "action",
+        "description": "Redeem the voucher"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify voucher validation feedback is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the subscription remains unchanged"
+      }
+    ],
+    "priority": "Low"
+  }
+]
