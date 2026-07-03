@@ -1995,6 +1995,7 @@ export function ChatMessages({
   onSelectUnboundChoice,
 }: ChatMessagesProps) {
   const selectedModel = useChatStore((state) => state.selectedModel);
+  const reasoningLevel = useChatStore((state) => state.reasoningLevel);
   const isDeepResearch = useFeatureToggleStore((state) => state.deepResearch);
   const conversations = useChatStore((state) => state.conversations);
   const activeConversationId = useChatStore((state) => state.activeConversationId);
@@ -2199,6 +2200,7 @@ export function ChatMessages({
               isSearch={selectedModel === "apex-elite" || isDeepResearch} 
               isQuiz={isQuizRequest}
               isPdf={isPdfRequest}
+              isThink={reasoningLevel === "thinking" || reasoningLevel === "overthinking"}
             />
           </motion.div>
         )}

@@ -21,7 +21,7 @@ import {
 import { extractSourcesAndClean } from "@/lib/sources-helper";
 import { motion, AnimatePresence } from "framer-motion";
 import { sendAIMessage, getAIClientStatus, clientPerformSerperSearch } from "@/lib/ai-client";
-import type { OmniState } from "@/lib/omni-service";
+import { processOmniRequest, type OmniState } from "@/lib/omni-service";
 import { runUnboundService, type UnboundState } from "@/lib/unbound-service";
 import { buildCompactConversationHistory, buildRelevantMemoryContext } from "@/lib/context-engine";
 import type { Message, ChatResponse, AIModel } from "@shared/schema";
@@ -290,116 +290,32 @@ export default function ChatPage() {
         const isGodModeModel = selectedModel === "apex-unbound";
 
         if (selectedModel === "apex-omni") {
-          // Perform client-side serper search first for Apex Omni Deep Research
-          let searchData: any = { organic: [] };
-          try {
-            const deepseekKey = import.meta.env.VITE_DEEPSEEK_API_KEY || "";
-            searchData = await clientPerformSerperSearch(content, deepseekKey);
-          } catch (err) {
-            console.error("Client search failed:", err);
-          }
-
-          const parsedSources = (searchData.organic || []).map((item: any) => {
-            let domain = "";
-            try {
-              domain = new URL(item.link).hostname.replace("www.", "");
-            } catch {
-              domain = item.link;
-            }
-            return {
-              title: item.title || domain,
-              url: item.link,
-              domain
-            };
-          });
-
-          setOmniStateForConv(thisConvId, {
-            step: "dispatch",
-            agents: {
-              architect:    { model: "architect",    status: "loading", draft: "" },
-              coder:        { model: "coder",         status: "loading", draft: "" },
-              security:     { model: "security",      status: "loading", draft: "" },
-              researcher:   { model: "researcher",    status: "loading", draft: "" },
-              creative:     { model: "creative",      status: "loading", draft: "" },
-              linguist:     { model: "linguist",      status: "loading", draft: "" },
-              skeptic:      { model: "skeptic",       status: "loading", draft: "" },
-              psychologist: { model: "psychologist",  status: "loading", draft: "" },
-              futurist:     { model: "futurist",      status: "loading", draft: "" },
-              optimizer:    { model: "optimizer",     status: "loading", draft: "" },
-            },
-            sources: parsedSources,
-          });
-
-          setOmniStateForConv(thisConvId, {
-            step: "synthesizing",
-            agents: {
-              architect:    { model: "architect",    status: "complete", draft: "Server reasoning pipeline" },
-              coder:        { model: "coder",         status: "complete", draft: "Server reasoning pipeline" },
-              security:     { model: "security",      status: "complete", draft: "Server reasoning pipeline" },
-              researcher:   { model: "researcher",    status: "complete", draft: "Server reasoning pipeline" },
-              creative:     { model: "creative",      status: "complete", draft: "Server reasoning pipeline" },
-              linguist:     { model: "linguist",      status: "complete", draft: "Server reasoning pipeline" },
-              skeptic:      { model: "skeptic",       status: "complete", draft: "Server reasoning pipeline" },
-              psychologist: { model: "psychologist",  status: "complete", draft: "Server reasoning pipeline" },
-              futurist:     { model: "futurist",      status: "complete", draft: "Server reasoning pipeline" },
-              optimizer:    { model: "optimizer",     status: "complete", draft: "Server reasoning pipeline" },
-            },
-            sources: parsedSources,
-          });
-
-          response = await sendAIMessage(
+          let lastReportedState: OmniState | null = null;
+          response = await processOmniRequest(
             content,
-            selectedModel,
-            compactHistory,
-            serviceMode,
-            false,
-            { ...features, deepResearch: false, godMode: false },
-            reasoningLevel,
-            (chunkText, chunkReasoning) => {
-              setStreamingContentForConv(thisConvId, chunkText);
-              setStreamingReasoningForConv(thisConvId, chunkReasoning);
-              setOmniStateForConv(thisConvId, {
-                step: "synthesizing",
-                agents: {
-                  architect:    { model: "architect",    status: "complete", draft: "Server reasoning pipeline" },
-                  coder:        { model: "coder",         status: "complete", draft: "Server reasoning pipeline" },
-                  security:     { model: "security",      status: "complete", draft: "Server reasoning pipeline" },
-                  researcher:   { model: "researcher",    status: "complete", draft: "Server reasoning pipeline" },
-                  creative:     { model: "creative",      status: "complete", draft: "Server reasoning pipeline" },
-                  linguist:     { model: "linguist",      status: "complete", draft: "Server reasoning pipeline" },
-                  skeptic:      { model: "skeptic",       status: "complete", draft: "Server reasoning pipeline" },
-                  psychologist: { model: "psychologist",  status: "complete", draft: "Server reasoning pipeline" },
-                  futurist:     { model: "futurist",      status: "complete", draft: "Server reasoning pipeline" },
-                  optimizer:    { model: "optimizer",     status: "complete", draft: "Server reasoning pipeline" },
-                },
-                finalResponse: chunkText,
-                sources: parsedSources,
-              });
+            (state) => {
+              lastReportedState = state;
+              setOmniStateForConv(thisConvId, state);
+              if (state.finalResponse) {
+                setStreamingContentForConv(thisConvId, state.finalResponse);
+              }
             },
-            userMemoryContext
+            compactHistory
           );
 
           if ((response as any).error) {
             throw new Error((response as any).message || (response as any).error);
           }
-          setOmniStateForConv(thisConvId, {
-            step: "complete",
-            agents: {
-              architect:    { model: "architect",    status: "complete", draft: "Server reasoning pipeline" },
-              coder:        { model: "coder",         status: "complete", draft: "Server reasoning pipeline" },
-              security:     { model: "security",      status: "complete", draft: "Server reasoning pipeline" },
-              researcher:   { model: "researcher",    status: "complete", draft: "Server reasoning pipeline" },
-              creative:     { model: "creative",      status: "complete", draft: "Server reasoning pipeline" },
-              linguist:     { model: "linguist",      status: "complete", draft: "Server reasoning pipeline" },
-              skeptic:      { model: "skeptic",       status: "complete", draft: "Server reasoning pipeline" },
-              psychologist: { model: "psychologist",  status: "complete", draft: "Server reasoning pipeline" },
-              futurist:     { model: "futurist",      status: "complete", draft: "Server reasoning pipeline" },
-              optimizer:    { model: "optimizer",     status: "complete", draft: "Server reasoning pipeline" },
-            },
-            finalResponse: response.content,
-            totalDuration: (response as any).totalDuration || undefined,
-            sources: parsedSources,
-          });
+
+          // Force full-state complete update inside DB and store
+          if (lastReportedState) {
+            setOmniStateForConv(thisConvId, {
+              ...lastReportedState,
+              step: "complete",
+              finalResponse: response.content,
+              totalDuration: (response as any).totalDuration || undefined,
+            });
+          }
         } else if (selectedModel === "apex-unbound") {
           // ── APEX Unbound: route through the new multi-agent pipeline ──
           const currentUnboundState = unboundStateMap[thisConvId];

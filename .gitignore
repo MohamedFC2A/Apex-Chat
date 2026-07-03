@@ -12,3 +12,5 @@ vite.config.ts.*
 output/*.pdf
 deploy.log
 .vercel
+
+testsprite_tests\tmp\config.json

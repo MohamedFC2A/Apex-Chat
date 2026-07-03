@@ -10,8 +10,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
-  ArrowUp, Square, Brain, Search, Code2, Lock, Mic, Globe, X, FileText, FileDown, BookOpen
+  ArrowUp, Square, Brain, Search, Code2, Lock, Mic, Globe, X, FileText, FileDown, BookOpen, Crown
 } from "lucide-react";
 import { motion } from "framer-motion";
 import type { UnboundState } from "@/lib/unbound-service";
@@ -437,83 +443,112 @@ export function ChatInput({
                 </TooltipContent>
               </Tooltip>
 
-              {/* Capsule: Quiz */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+              {/* Combined Capsule: More (...) with Dropdown for Unbound, Quiz, and PDF */}
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                          "w-8 h-8 rounded-full border text-xs font-bold transition-all duration-200 flex items-center justify-center font-mono",
+                          (selectedModel === "apex-unbound" || selectedGenType === "quiz" || selectedGenType === "pdf")
+                            ? "border-white bg-white/10 text-white"
+                            : "border-zinc-900 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 hover:border-zinc-800"
+                        )}
+                      >
+                        <span className="text-xs leading-none">...</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>More Options (Unbound, Quiz, PDF)</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <DropdownMenuContent
+                  align="start"
+                  sideOffset={6}
+                  className="w-56 bg-[#080808] border border-white/12 p-1 rounded-sm shadow-xl font-mono text-[11px] uppercase tracking-wider text-white"
+                >
+                  {/* Option 1: APEX Unbound */}
+                  <DropdownMenuItem
+                    disabled={!canUseGodMode()}
                     onClick={() => {
-                      setSelectedGenType((prev) => (prev === "quiz" ? null : "quiz"));
+                      const isCurrentlyActive = selectedModel === "apex-unbound";
+                      setSelectedModel(isCurrentlyActive ? "apex-flash" : "apex-unbound");
+                      // Turn off other generators when turning on unbound
+                      setSelectedGenType(null);
                     }}
                     className={cn(
-                      "h-8 px-3.5 rounded-full border text-[11px] font-bold transition-all duration-200 flex items-center gap-1.5 font-mono uppercase tracking-wider",
+                      "flex items-center gap-2.5 px-3 py-2 rounded-sm cursor-pointer transition-colors duration-100",
+                      selectedModel === "apex-unbound"
+                        ? "bg-white text-black hover:bg-white hover:text-black"
+                        : "hover:bg-white/6 hover:text-white"
+                    )}
+                  >
+                    <Code2 className="w-3.5 h-3.5" />
+                    <div className="flex-1">
+                      <p className="font-bold leading-none">APEX UNBOUND</p>
+                      <p className={`text-[8px] tracking-normal mt-0.5 normal-case ${selectedModel === "apex-unbound" ? "text-black/60" : "text-white/40"}`}>
+                        Multi-agent interface builder
+                      </p>
+                    </div>
+                    {!canUseGodMode() && <Lock className="w-3 h-3 text-white/20" />}
+                  </DropdownMenuItem>
+
+                  {/* Option 2: Quiz Mode */}
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setSelectedGenType((prev) => (prev === "quiz" ? null : "quiz"));
+                      // Turn off unbound when selecting quiz
+                      if (selectedModel === "apex-unbound") {
+                        setSelectedModel("apex-flash");
+                      }
+                    }}
+                    className={cn(
+                      "flex items-center gap-2.5 px-3 py-2 rounded-sm cursor-pointer transition-colors duration-100",
                       selectedGenType === "quiz"
-                        ? "border-amber-500 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-                        : "border-zinc-900 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 hover:border-zinc-800"
+                        ? "bg-white text-black hover:bg-white hover:text-black"
+                        : "hover:bg-white/6 hover:text-white"
                     )}
                   >
                     <BookOpen className="w-3.5 h-3.5" />
-                    <span>Quiz</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Generate Interactive MCQ/MSQ Quiz</p>
-                </TooltipContent>
-              </Tooltip>
+                    <div className="flex-1">
+                      <p className="font-bold leading-none">Quiz Mode</p>
+                      <p className={`text-[8px] tracking-normal mt-0.5 normal-case ${selectedGenType === "quiz" ? "text-black/60" : "text-white/40"}`}>
+                        Interactive MCQ/MSQ generator
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
 
-              {/* Capsule: PDF */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  {/* Option 3: PDF Mode */}
+                  <DropdownMenuItem
                     onClick={() => {
                       setSelectedGenType((prev) => (prev === "pdf" ? null : "pdf"));
+                      // Turn off unbound when selecting pdf
+                      if (selectedModel === "apex-unbound") {
+                        setSelectedModel("apex-flash");
+                      }
                     }}
                     className={cn(
-                      "h-8 px-3.5 rounded-full border text-[11px] font-bold transition-all duration-200 flex items-center gap-1.5 font-mono uppercase tracking-wider",
+                      "flex items-center gap-2.5 px-3 py-2 rounded-sm cursor-pointer transition-colors duration-100",
                       selectedGenType === "pdf"
-                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
-                        : "border-zinc-900 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 hover:border-zinc-800"
+                        ? "bg-white text-black hover:bg-white hover:text-black"
+                        : "hover:bg-white/6 hover:text-white"
                     )}
                   >
                     <FileDown className="w-3.5 h-3.5" />
-                    <span>PDF</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Generate Styled PDF Document</p>
-                </TooltipContent>
-              </Tooltip>
-
-              {/* Capsule: More (...) */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      if (canUseGodMode()) {
-                        const isCurrentlyActive = selectedModel === "apex-unbound";
-                        setSelectedModel(isCurrentlyActive ? "apex-flash" : "apex-unbound");
-                      }
-                    }}
-                    disabled={!canUseGodMode()}
-                    className={cn(
-                      "w-8 h-8 rounded-full border text-xs font-bold transition-all duration-200 flex items-center justify-center font-mono",
-                      selectedModel === "apex-unbound"
-                        ? "border-violet-500 bg-violet-500/10 text-violet-400 hover:bg-violet-500/20"
-                        : "border-zinc-900 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 hover:border-zinc-800"
-                    )}
-                  >
-                    <span className="text-xs leading-none">...</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>APEX UNBOUND Mode</p>
-                </TooltipContent>
-              </Tooltip>
+                    <div className="flex-1">
+                      <p className="font-bold leading-none">PDF Mode</p>
+                      <p className={`text-[8px] tracking-normal mt-0.5 normal-case ${selectedGenType === "pdf" ? "text-black/60" : "text-white/40"}`}>
+                        Styled document compilation
+                      </p>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Omni-Status Card Sources button helper inside input row if needed */}
