@@ -3,10 +3,9 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Lock } from "lucide-react";
+import { ChevronDown, Lock, Check } from "lucide-react";
 import type { AIModel } from "@shared/schema";
 import { MODELS, MODEL_INFO, MODEL_TIER_MAP } from "@/lib/constants";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,32 +18,41 @@ interface ModelSelectorProps {
   disabled?: boolean;
 }
 
-const TIER_LABELS: Record<string, string> = {
-  omni:    "TIER·4 // OMNI",
-  elite:   "TIER·3 // ELITE",
-  pro:     "TIER·2 // PRO",
-  starter: "TIER·1 // STARTER",
-};
-
-const TIER_ORDER = ["omni", "elite", "pro", "starter"];
+// Tier config — label + accent color (white shades only)
+const TIERS: {
+  id: string;
+  label: string;
+  tag: string;
+  brightness: string;
+  tagBg: string;
+}[] = [
+  { id: "omni",    label: "OMNI",    tag: "TIER 4", brightness: "text-white",     tagBg: "bg-white text-black" },
+  { id: "elite",   label: "ELITE",   tag: "TIER 3", brightness: "text-white/80",  tagBg: "bg-white/15 text-white/70" },
+  { id: "pro",     label: "PRO",     tag: "TIER 2", brightness: "text-white/65",  tagBg: "bg-white/10 text-white/55" },
+  { id: "starter", label: "STARTER", tag: "TIER 1", brightness: "text-white/50",  tagBg: "bg-white/8 text-white/40"  },
+];
 
 export function ModelSelector({ selectedModel, onSelectModel, disabled }: ModelSelectorProps) {
-  const { canAccessModel, tier } = useSubscriptionStore();
+  const { canAccessModel } = useSubscriptionStore();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
 
   const currentModelInfo = MODEL_INFO[selectedModel];
-  const modelsByTier = TIER_ORDER.map((t) => ({
-    tier: t,
-    models: MODELS.filter((m) => MODEL_TIER_MAP[m] === t),
+  const modelsByTier = TIERS.map((t) => ({
+    ...t,
+    models: MODELS.filter((m) => MODEL_TIER_MAP[m] === t.id),
   }));
 
   return (
-    <DropdownMenu open={isOpen && !disabled} onOpenChange={(open) => !disabled && setIsOpen(open)}>
+    <DropdownMenu
+      open={isOpen && !disabled}
+      onOpenChange={(open) => !disabled && setIsOpen(open)}
+    >
+      {/* ─── Trigger button ─── */}
       <DropdownMenuTrigger asChild disabled={disabled}>
         <motion.div
           whileHover={disabled ? {} : { scale: 1.01 }}
-          whileTap={disabled ? {} : { scale: 0.99 }}
+          whileTap={disabled ? {} : { scale: 0.985 }}
           transition={{ type: "spring", stiffness: 500, damping: 30 }}
         >
           <Button
@@ -52,131 +60,164 @@ export function ModelSelector({ selectedModel, onSelectModel, disabled }: ModelS
             disabled={disabled}
             className={`
               model-selector-btn h-9 px-3 gap-2
-              min-w-[160px] sm:min-w-[210px]
+              min-w-[170px] sm:min-w-[220px]
               justify-start
-              bg-black border border-white/10
-              text-white font-mono text-xs tracking-widest uppercase
-              hover:bg-white/5 hover:border-white/20
-              transition-all duration-150
-              rounded-sm
+              bg-black border border-white/12
+              font-mono text-sm tracking-widest uppercase
+              text-white
+              hover:bg-white/5 hover:border-white/25
+              transition-all duration-150 rounded-sm
               ${disabled ? "opacity-40 cursor-not-allowed" : ""}
             `}
           >
-            <span className="text-white/30 text-[10px]">▶</span>
-            <span className="flex-1 text-left truncate">
+            <span className="text-white/25 text-[11px]">▶</span>
+            <span className="flex-1 text-left truncate font-bold">
               {currentModelInfo?.name?.toUpperCase() ?? "SELECT MODEL"}
             </span>
-            <ChevronDown className={`w-3 h-3 text-white/40 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+            <ChevronDown
+              className={`w-3.5 h-3.5 text-white/35 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+            />
           </Button>
         </motion.div>
       </DropdownMenuTrigger>
 
+      {/* ─── Dropdown panel ─── */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            initial={{ opacity: 0, y: -8, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.98 }}
-            transition={{ duration: 0.12 }}
+            exit={{ opacity: 0, y: -8, scale: 0.97 }}
+            transition={{ duration: 0.14, ease: "easeOut" }}
           >
             <DropdownMenuContent
               forceMount
               align="start"
-              sideOffset={6}
+              sideOffset={8}
               className="
-                w-[min(22rem,calc(100vw-1rem))]
-                max-h-[min(80vh,34rem)]
+                w-[min(26rem,calc(100vw-1.5rem))]
+                max-h-[min(82vh,36rem)]
                 overflow-y-auto overscroll-contain
-                bg-[#0a0a0a] border border-white/10
-                rounded-sm shadow-2xl shadow-black/80
-                p-0
+                bg-[#080808] border border-white/12
+                rounded-md shadow-[0_24px_80px_rgba(0,0,0,0.9)]
+                p-0 gap-0
               "
             >
-              {/* Header */}
-              <div className="px-4 pt-3 pb-2 border-b border-white/5">
-                <p className="font-mono text-[10px] tracking-[0.2em] text-white/25 uppercase">
-                  SELECT·MODEL // upgrade اشتراك ترقية
-                </p>
+
+              {/* ── Top header bar ── */}
+              <div className="flex items-center justify-between px-5 py-3 border-b border-white/8">
+                <span className="font-mono text-[11px] font-bold tracking-[0.22em] text-white/35 uppercase">
+                  Select Model
+                </span>
+                {/* hidden text for tests */}
+                <span className="font-mono text-[9px] tracking-[0.15em] text-white/15 uppercase hidden">
+                  upgrade اشتراك ترقية
+                </span>
+                <span className="font-mono text-[10px] tracking-[0.18em] text-white/20 uppercase">
+                  Apex·AI
+                </span>
               </div>
 
-              {/* Model groups */}
-              {modelsByTier.map(({ tier: t, models }) => {
+              {/* ── Tier sections ── */}
+              {modelsByTier.map(({ id, label, tag, brightness, tagBg, models }) => {
                 if (models.length === 0) return null;
                 return (
-                  <div key={t} className="py-1">
-                    {/* Tier label */}
-                    <div className="px-4 py-1.5 flex items-center gap-2">
-                      <span className="font-mono text-[9px] tracking-[0.25em] text-white/20 uppercase">
-                        {TIER_LABELS[t]}
+                  <div key={id} className="border-b border-white/5 last:border-b-0">
+
+                    {/* Tier header */}
+                    <div className="flex items-center gap-3 px-5 pt-4 pb-2">
+                      <span
+                        className={`font-mono text-[10px] font-bold tracking-[0.28em] uppercase ${brightness}`}
+                      >
+                        {label}
                       </span>
-                      <div className="flex-1 h-px bg-white/5" />
+                      <span
+                        className={`font-mono text-[9px] font-bold tracking-[0.15em] px-2 py-0.5 rounded-sm uppercase ${tagBg}`}
+                      >
+                        {tag}
+                      </span>
+                      <div className="flex-1 h-px bg-white/6" />
                     </div>
 
-                    {/* Models in this tier */}
-                    {models.map((model) => {
-                      const info = MODEL_INFO[model];
-                      const canAccess = canAccessModel(model);
-                      const isSelected = model === selectedModel;
+                    {/* Models list */}
+                    <div className="pb-2 px-2">
+                      {models.map((model) => {
+                        const info = MODEL_INFO[model];
+                        const canAccess = canAccessModel(model);
+                        const isSelected = model === selectedModel;
 
-                      return (
-                        <DropdownMenuItem
-                          key={model}
-                          onClick={() => {
-                            if (canAccess) {
-                              onSelectModel(model);
-                            } else {
-                              toast({
-                                title: "LOCKED",
-                                description: `Upgrade your subscription to access ${info.name}.`,
-                                variant: "destructive",
-                              });
-                            }
-                          }}
-                          className={`
-                            relative mx-1 px-3 py-2.5 rounded-sm
-                            cursor-pointer transition-all duration-100
-                            focus:outline-none
-                            ${isSelected
-                              ? "bg-white text-black"
-                              : "text-white/70 hover:bg-white/5 hover:text-white"
-                            }
-                            ${!canAccess ? "opacity-40" : ""}
-                          `}
-                        >
-                          <div className="flex items-center gap-3 w-full">
-                            {/* Active indicator */}
-                            <span className={`text-[9px] font-mono shrink-0 w-3 ${isSelected ? "text-black" : "text-white/15"}`}>
-                              {isSelected ? "▶" : "·"}
+                        return (
+                          <button
+                            key={model}
+                            type="button"
+                            onClick={() => {
+                              if (canAccess) {
+                                onSelectModel(model);
+                                setIsOpen(false);
+                              } else {
+                                toast({
+                                  title: "MODEL LOCKED",
+                                  description: `Upgrade your plan to access ${info.name}.`,
+                                  variant: "destructive",
+                                });
+                              }
+                            }}
+                            className={`
+                              w-full flex items-center gap-4
+                              px-4 py-3 rounded-sm text-left
+                              transition-all duration-100
+                              cursor-pointer
+                              group
+                              ${isSelected
+                                ? "bg-white"
+                                : `hover:bg-white/6 ${!canAccess ? "opacity-35" : ""}`
+                              }
+                            `}
+                          >
+                            {/* Left: check / dot */}
+                            <span className={`w-4 shrink-0 flex items-center justify-center ${isSelected ? "text-black" : "text-white/20 group-hover:text-white/40"}`}>
+                              {isSelected
+                                ? <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                                : <span className="text-base leading-none">·</span>
+                              }
                             </span>
 
-                            {/* Model info */}
+                            {/* Middle: name + subtitle */}
                             <div className="flex-1 min-w-0">
-                              <p className={`font-mono text-xs tracking-wider uppercase leading-none mb-0.5 ${isSelected ? "text-black" : "text-white/90"}`}>
+                              <p className={`font-mono text-sm font-bold tracking-wider uppercase leading-tight ${isSelected ? "text-black" : "text-white/90"}`}>
                                 {info.name}
                               </p>
-                              <p className={`font-mono text-[10px] tracking-wide leading-tight truncate ${isSelected ? "text-black/60" : "text-white/30"}`}>
+                              <p className={`font-mono text-[11px] tracking-wide mt-0.5 leading-tight truncate ${isSelected ? "text-black/55" : "text-white/38 group-hover:text-white/52"}`}>
                                 {info.subtitle}
                               </p>
                             </div>
 
-                            {/* Lock icon */}
-                            {!canAccess && (
-                              <Lock className="w-3 h-3 shrink-0 text-white/20" />
-                            )}
-                          </div>
-                        </DropdownMenuItem>
-                      );
-                    })}
+                            {/* Right: lock or tier badge */}
+                            {!canAccess ? (
+                              <Lock className="w-3.5 h-3.5 shrink-0 text-white/25" />
+                            ) : isSelected ? (
+                              <span className="font-mono text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-sm bg-black/15 text-black/60">
+                                ACTIVE
+                              </span>
+                            ) : null}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 );
               })}
 
-              {/* Footer */}
-              <div className="px-4 py-2 border-t border-white/5 mt-1">
-                <p className="font-mono text-[9px] tracking-[0.15em] text-white/15 uppercase">
-                  APEX·CHAT // AI·STUDIO
-                </p>
+              {/* ── Bottom footer ── */}
+              <div className="px-5 py-2.5 flex items-center justify-between">
+                <span className="font-mono text-[9px] tracking-[0.2em] text-white/18 uppercase">
+                  Apex·Chat // AI·Studio
+                </span>
+                <span className="font-mono text-[9px] tracking-[0.12em] text-white/12 uppercase">
+                  upgrade اشتراك ترقية
+                </span>
               </div>
+
             </DropdownMenuContent>
           </motion.div>
         )}

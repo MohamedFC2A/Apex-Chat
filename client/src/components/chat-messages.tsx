@@ -2332,29 +2332,30 @@ function WebsitePreviewBanner({ html }: { html: string }) {
 }
 
 
-// Model → gradient config for avatar
+// Model → gradient config for avatar — pure B&W theme
 const modelGradients: Record<string, string> = {
-  "apex-flash":   "from-zinc-800 to-zinc-900",
-  "apex-pro":     "from-zinc-800 to-zinc-900",
-  "apex-elite":   "from-zinc-800 to-zinc-900",
-  "apex-omni":    "from-zinc-800 to-zinc-900",
-  "apex-unbound": "from-zinc-800 to-zinc-900",
+  "apex-flash":   "from-zinc-800 to-black",
+  "apex-pro":     "from-zinc-700 to-black",
+  "apex-elite":   "from-zinc-700 to-zinc-900",
+  "apex-omni":    "from-zinc-600 to-black",
+  "apex-unbound": "from-zinc-700 to-black",
 };
 
+// B&W: all white/gray, with opacity levels for hierarchy
 const modelColors: Record<string, string> = {
-  "apex-flash":   "text-zinc-300",
-  "apex-pro":     "text-blue-400",
-  "apex-elite":   "text-emerald-400",
-  "apex-omni":    "text-amber-400",
-  "apex-unbound": "text-violet-400",
+  "apex-flash":   "text-white/55",
+  "apex-pro":     "text-white/65",
+  "apex-elite":   "text-white/75",
+  "apex-omni":    "text-white",
+  "apex-unbound": "text-white/80",
 };
 
 const modelGlows: Record<string, string> = {
-  "apex-flash":   "shadow-[0_0_12px_rgba(113,113,122,0.25)]",
-  "apex-pro":     "shadow-[0_0_12px_rgba(37,99,235,0.35)]",
-  "apex-elite":   "shadow-[0_0_12px_rgba(5,150,105,0.45)]",
-  "apex-omni":    "shadow-[0_0_12px_rgba(217,119,6,0.35)]",
-  "apex-unbound": "shadow-[0_0_12px_rgba(139,92,246,0.35)]",
+  "apex-flash":   "shadow-none",
+  "apex-pro":     "shadow-none",
+  "apex-elite":   "shadow-none",
+  "apex-omni":    "shadow-[0_0_16px_rgba(255,255,255,0.06)]",
+  "apex-unbound": "shadow-none",
 };
 
 function AssistantMessage({
@@ -2706,13 +2707,13 @@ function AssistantMessage({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
     >
-      {/* Per-model gradient avatar */}
+      {/* Model avatar — pure black/white */}
       <Avatar className={cn(
-        "w-8 h-8 flex-shrink-0 shadow-lg transition-all duration-500",
-        isStreaming && "scale-105 ring-2 ring-zinc-800"
+        "w-8 h-8 flex-shrink-0 transition-all duration-300 rounded-sm",
+        isStreaming && "ring-1 ring-white/10"
       )}>
-        <AvatarFallback className={`avatar-gradient ${model ? `avatar-${model.replace("apex-", "")}` : "avatar-flash"} border-0`}>
-          <ModelIcon className="w-4 h-4 text-white" />
+        <AvatarFallback className="bg-[#111] border border-white/10 rounded-sm">
+          <ModelIcon className={cn("w-4 h-4", nameColor)} />
         </AvatarFallback>
       </Avatar>
 
@@ -2723,10 +2724,11 @@ function AssistantMessage({
             <div className="flex items-center gap-1.5">
               <span className={cn(
                 "w-1.5 h-1.5 rounded-full transition-all duration-300",
-                isStreaming ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse" : "opacity-60 bg-current",
-                nameColor
+                isStreaming
+                  ? "bg-white animate-pulse shadow-[0_0_6px_rgba(255,255,255,0.5)]"
+                  : "bg-white/25"
               )} />
-              <span className={`text-[11px] font-bold tracking-widest uppercase ${nameColor}`}>
+              <span className="font-mono text-[11px] font-bold tracking-widest uppercase text-white/70">
                 {model ? (MODEL_INFO[model]?.name || model) : "AI"}
               </span>
             </div>
