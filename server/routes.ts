@@ -8,9 +8,9 @@ import { runUnboundPipeline } from "./apex-unbound/pipeline.js";
 import OpenAI from "openai";
 import DOMPurify from "isomorphic-dompurify";
 import { cleanJsonString } from "./apex-unbound/architect-agent.js";
-import { generatePdf, buildPdfHtml } from "./pdf-engine.js";
-import { conversationToPdfDocument, markdownToPdfDocument } from "./markdown-to-pdf.js";
-import { generateOptimizedPdf, generateQualityReport, optimizePdfDocument } from "./pdf-optimizer.js";
+// PDF modules are loaded lazily (dynamic import) to avoid Vercel
+// bundle-size / initialization crashes from puppeteer + katex + prismjs.
+// Each route handler imports what it needs at call time.
 
 const previewStore = new Map<string, { html: string; createdAt: number }>();
 
@@ -317,6 +317,11 @@ export async function registerRoutes(
     try {
       const { document, content, messages, exportType, options } = req.body || {};
 
+      // Dynamic imports — keeps Puppeteer/KaTeX/Prism out of the initial bundle
+      const { conversationToPdfDocument, markdownToPdfDocument } = await import("./markdown-to-pdf.js");
+      const { buildPdfHtml } = await import("./pdf-engine.js");
+      const { optimizePdfDocument, generateOptimizedPdf } = await import("./pdf-optimizer.js");
+
       let pdfDocument: PDFDocument;
 
       if (exportType === "structured" && document) {
@@ -358,8 +363,12 @@ export async function registerRoutes(
       res.send(pdfBuffer);
     } catch (error) {
       console.error("PDF generation failed, falling back to styled HTML:", error);
-      
+
       try {
+        const { conversationToPdfDocument, markdownToPdfDocument } = await import("./markdown-to-pdf.js");
+        const { buildPdfHtml } = await import("./pdf-engine.js");
+        const { optimizePdfDocument } = await import("./pdf-optimizer.js");
+
         const { document, content, messages, exportType } = req.body || {};
         let pdfDocument: PDFDocument;
 
@@ -420,6 +429,7 @@ export async function registerRoutes(
       if (!document) {
         return res.status(400).json({ error: "Document is required" });
       }
+      const { generateQualityReport } = await import("./pdf-optimizer.js");
       const normalized = normalizeStructuredPdfDocument(document);
       const report = generateQualityReport(normalized);
       return res.json(report);
@@ -439,6 +449,8 @@ export async function registerRoutes(
       if (!document) {
         return res.status(400).json({ error: "Document is required" });
       }
+      const { buildPdfHtml } = await import("./pdf-engine.js");
+      const { optimizePdfDocument } = await import("./pdf-optimizer.js");
       const normalized = normalizeStructuredPdfDocument(document);
       const optimized = optimizePdfDocument(normalized, { deduplication: true, mergeShortParagraphs: true });
       const html = buildPdfHtml(optimized);
