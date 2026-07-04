@@ -38,7 +38,7 @@ import type {
   ChartDataPoint,
   TimelineEvent,
   StatCardData,
-} from "../shared/pdf";
+} from "../shared/pdf.js";
 
 // ─── Browser Pool ─────────────────────────────────────────────────────────────
 let browserPromise: Promise<Browser> | null = null;
