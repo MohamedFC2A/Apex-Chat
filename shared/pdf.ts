@@ -738,35 +738,19 @@ export function buildPdfGenerationInstructions(request: ParsedPdfRequest): strin
 ثيم المستند: ${request.theme || "dark"}
 حجم الصفحة: ${request.pageSize || "a4"}
 
-قواعد إلزامية للإبداع، التخطيط المسبق، وتكثيف المحتوى ليصبح احترافيًا وخارقًا (يجب أن يكون المستند شاملاً وتفصيليًا بشكل هائل ويصل إلى 25-35 صفحة عند الطباعة):
-1. **أولاً وقبل أي شيء**، يجب أن تفكر وتخطط وتخرج أفكارك داخل كتلة \`<pdf-plan>...</pdf-plan>\`. في هذه الخطة، ابتكر أفكاراً إبداعية غير متكررة، حدد ألواناً احترافية ومختلفة تماماً عن المرات السابقة (تجنب الألوان الأساسية المملة، استخدم لوحات ألوان علمية/هندسية فريدة)، وحدد أنواع الرسوم البيانية التي تخدم البيانات بذكاء. يجب ألا تكون ردودك قالبية أو موحدة. كن حراً، جريئاً، ومبدعاً في التخطيط!
-2. **ثانياً**، بعد إغلاق كتلة التخطيط \`</pdf-plan>\`، أخرج كتلة واحدة فقط باسم \`\`\`pdf-document.
-3. داخل كتلة \`\`\`pdf-document أخرج JSON صالح فقط بدون أي شرح خارجي.
-4. خطط هيكل المستند ليكتب بأعلى قدرة استيعابية وتفاصيل فائقة. قم بإنشاء أقسام فرعية متعددة (H1, H2, H3, H4) متبوعة بشروحات وافية وتفصيلية لكل عنصر. يجب ألا تقل الفقرة الواحدة عن 200-300 كلمة.
-4. وزع المحتوى على 35 إلى 55 قسمًا (section) منظمًا منطقيًا يغطي كافة الجوانب:
-   - صفحة الغلاف والتمهيد والمقدمة الشاملة.
-   - **بطاقات إحصاء** (type: "stat-card") بـ 4 بطاقات على الأقل تُظهر أرقامًا مبتكرة مع مؤشرات نمو واقعية ومتنوعة (trend: "up"/"down"/"flat"). استخدم ألوانًا إبداعية لكل بطاقة!
-   - **خط زمني** (type: "timeline") بـ 6 أحداث على الأقل لعرض التطور.
-   - **رسوم بيانية SVG** (type: "chart-svg") بنوعين مختلفين على الأقل (اختر الأنسب للبيانات، مثل line للنمو الزمني، donut للنسب، إلخ). ابدع في اختيار ألوان كل ChartDataPoint لتكوين لوحة ألوان مبهرة ومتناغمة (Harmony). لا تستخدم نفس الألوان المكررة!
-   - **تخطيط عمودين** (type: "two-column") لعرض المقارنات المزدوجة بذكاء.
-   - **قوائم مرقمة** (type: "numbered-list") مع وصف تفصيلي.
-   - **صناديق تمييز** (type: "highlight-box") بألوان متناغمة مع التصميم العام لإبراز النقاط الحاسمة.
-   - **شارات** (type: "badge") لتصنيف المعلومات بألوان مدروسة.
-   - الخلفية التاريخية أو السياق النظري للموضوع.
-   - التحليل المتعمق والتفاصيل التقنية (باستخدام القوائم المنظمة والجداول المقارنة المفصلة).
-   - الأكواد البرمجية الكاملة (مع التعليقات والشروحات) والمعادلات الرياضية بصيغة LaTeX المفصلة إن أمكن.
-   - قسم خاص بالأسئلة الشائعة والأجوبة (type: "qa") بطريقة تفاعلية ومنظمة (بإضافة 5 أسئلة على الأقل).
-   - الملاحظات الهامة والتحذيرات باستخدام كتل التنبيه (type: "callout") المتنوعة (info, warning, success, error).
-   - استشهادات واقتباسات ملهمة (type: "quote") وفواصل جمالية (type: "divider").
-   - الخاتمة والتوصيات العملية والمراجع أو الملحق.
-5. تأكد من أن كل جدول يحتوي على عدد كبير من الصفوف والأعمدة ليعكس دراسة حقيقية وتفصيلية، واملأ الخلايا ببيانات حقيقية وكاملة دون أي اختزال. لجداول الإجمالي أضف "totalRow": true لآخر صف.
-6. استخدم direction = "rtl" للمحتوى العربي و "ltr" للإنجليزي.
-7. يجب أن يحتوي كائن الـ JSON على حقل theme بقيمة "${request.theme || "dark"}" وحقل pageSize بقيمة "${request.pageSize || "a4"}".
-8. تمييز وتظليل الكلمات والمصطلحات الهامة في أي نص باستخدام تنسيق الماركر: ==نص مهم==.
-9. إدراج معادلات رياضية مضمنة داخل الفقرات أو عناصر القوائم أو الجداول باستخدام التنسيق \\( ... \\) أو $...$.
-10. لا تضف أي نص قبل أو بعد كتلة \`\`\`pdf-document.
-11. استخدم بنية PDFDocument بدقة.
-12. كل section يجب أن تحتوي id و type و content (باستثناء qa التي تستخدم question و answer، وstat-card التي تستخدم cards، وtimeline التي تستخدم events).
+قواعد إلزامية لإنتاج مستند احترافي يناسب حد الـ tokens المتاح:
+1. أخرج كتلة واحدة فقط باسم \`\`\`pdf-document وبداخلها JSON صالح فقط بدون أي نص خارجي.
+2. نظّم المستند في **12 إلى 18 قسمًا** منطقيًا مرتبًا يغطي جوهر الموضوع:
+   - مقدمة شاملة (heading + paragraph). - **بطاقات إحصاء** (stat-card) بـ 4 بطاقات بألوان مبدعة.
+   - **خط زمني** (timeline) بـ 4-5 أحداث. - **رسم بياني SVG** (chart-svg) واحد أو اثنان.
+   - **تخطيط عمودين** (two-column) لمقارنة رئيسية. - **جدول** (table) تفصيلي.
+   - **قوائم مرقمة** (numbered-list) للخطوات. - **صندوق تمييز** (highlight-box).
+   - **أسئلة وأجوبة** (qa) 2-3 أسئلة. - **callout** تحذيري أو معلوماتي.
+   - **اقتباس** (quote) ملهم. - **خاتمة** (paragraph) موجزة وعملية.
+3. اكتب كل فقرة بـ **60-100 كلمة** ركيزة. الجودة تفوق الكمية.
+4. استخدم direction = "rtl" للمحتوى العربي.
+5. اضبط theme = "${request.theme || 'dark'}" و pageSize = "${request.pageSize || 'a4'}" في JSON.
+6. ميّز المصطلحات الهامة بـ ==نص==. كل section يحتوي id و type و content دائمًا.
 
 أمثلة JSON للأنواع الجديدة:
 
@@ -803,33 +787,19 @@ Include cover page: ${request.includeCoverPage ? "yes" : "no"}
 Preferred document theme: ${request.theme || "dark"}
 Preferred page size: ${request.pageSize || "a4"}
 
-Mandatory rules for maximum creativity, density, and professional structure (designed to scale to 25-35 printed pages):
-1. **FIRST**, you MUST think, brainstorm, and plan your document inside a \`<pdf-plan>...</pdf-plan>\` block. In this plan, explicitly outline a unique and creative color palette (avoid boring default colors, invent stunning professional harmonies), decide the best chart types for the data, and build a narrative flow that ensures the document feels unique and NOT like a repetitive template. Be free and creative!
-2. **SECOND**, after closing the \`</pdf-plan>\` block, output exactly one fenced block named \`\`\`pdf-document.
-3. Inside the block, output valid JSON only with no prose.
-4. Structure the document into 35 to 55 logical sections representing a complete enterprise-grade report. Deep dive into topics with paragraphs of 200-300 words. Avoid abbreviations.
-   - Premium cover page and comprehensive Executive Summary / Introduction.
-   - **Stat cards** (type: "stat-card") with at least 4 cards showing creative metrics. Use diverse and thoughtful colors for each card!
-   - **Timeline** (type: "timeline") with at least 6 events.
-   - **SVG Charts** (type: "chart-svg") with at least 2 different chart types (e.g. line for trends, donut for distributions). Create a stunning, non-repetitive color harmony for the \`ChartDataPoint\`s. Do not use standard default colors!
-   - **Two-column layout** (type: "two-column") for smart side-by-side comparisons.
-   - **Numbered lists** (type: "numbered-list") with detailed descriptions.
-   - **Highlight boxes** (type: "highlight-box") in various harmonious colors to emphasize critical points.
-   - **Badges** (type: "badge") for categorizing information creatively.
-   - Deep dive analysis, background context, and detailed core methodologies.
-   - Informative tables comparing features, metrics, or benchmarks, containing extensive rows/columns with complete datasets. Add "totalRow": true for summary rows.
-   - Detailed code blocks with comments, and mathematical proofs using LaTeX formatting (if applicable).
-   - A dedicated Q&A section (type: "qa") containing at least 5 detailed, long-form questions and answers.
-   - Important warnings, notes, or tips using callouts (info, warning, success, error).
-   - Key quotes from literature or industry standards, separated by structural dividers.
-   - Practical recommendations, a detailed conclusion, and references or appendix.
-5. Match the user's language exactly, and use RTL direction for Arabic text.
-6. You MUST set the document theme to "${request.theme || "dark"}" and page size to "${request.pageSize || "a4"}" in the JSON.
-7. Highlight key terms using ==highlighted text==.
-8. Include inline mathematical formulas using \\( ... \\) or $...$ syntax.
-9. Do not output any text before or after the \`\`\`pdf-document block.
-10. Follow the PDFDocument shape exactly.
-11. Every section must include id, type, and content (except qa which uses question/answer, stat-card which uses cards, timeline which uses events).
+Mandatory rules for producing a high-quality professional document within the available token budget:
+1. Output exactly one \`\`\`pdf-document block with valid JSON only. No text outside the block.
+2. Structure the document into **12 to 18 logical sections** covering the topic's core:
+   - Comprehensive introduction (heading + paragraph). - **Stat cards** (stat-card) 4+ cards with diverse colors.
+   - **Timeline** (timeline) 4-5 events. - **SVG chart** (chart-svg) 1-2 charts best-fit for data.
+   - **Two-column** layout for one key comparison. - **Table** with real data rows/columns.
+   - **Numbered list** (numbered-list) for steps. - **Highlight box** for critical insight.
+   - **Q&A** (qa) 2-3 questions with detailed answers. - **Callout** (info or warning).
+   - **Quote** (quote) one inspiring quote. - **Conclusion** (paragraph) concise and actionable.
+3. Write each paragraph in **60-100 focused words**. Quality over quantity.
+4. Use RTL direction for Arabic content.
+5. Set theme = "${request.theme || 'dark'}" and pageSize = "${request.pageSize || 'a4'}" in JSON.
+6. Highlight key terms using ==term==. Every section must include id, type, and content.
 
 JSON examples for new section types:
 
@@ -1410,6 +1380,95 @@ export function repairJsonText(jsonString: string): string {
   return cleaned;
 }
 
+/**
+ * repairTruncatedJson – closes unclosed JSON from token-limit cutoffs.
+ *
+ * When an LLM hits max_tokens mid-JSON, the output ends abruptly with
+ * unclosed strings, arrays, or objects. Standard JSON.parse() throws.
+ * This function:
+ *  1. Closes any unclosed string literal (drops partial last token)
+ *  2. Removes any trailing comma / colon after the last complete value
+ *  3. Closes all unclosed [ and { in correct order
+ *
+ * Always wrap calls in try-catch – result may still be invalid in edge cases.
+ */
+export function repairTruncatedJson(raw: string): string {
+  // Strip trailing markdown fence if present
+  let s = raw.trim().replace(/\s*```\s*$/, "").trim();
+  // Basic cleanup
+  s = s.replace(/,\s*([\]}])/g, "$1").replace(/,\s*,/g, ",");
+
+  // ── Step 1: Scan to find unclosed string and build bracket stack ───────────
+  const stack: Array<"{" | "["> = [];
+  let inStr = false;
+  let esc = false;
+  let lastCompleteEnd = 0; // byte index just after last fully-closed value
+
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (esc) { esc = false; continue; }
+    if (c === "\\" && inStr) { esc = true; continue; }
+    if (c === '"') {
+      inStr = !inStr;
+      if (!inStr) lastCompleteEnd = i + 1;
+      continue;
+    }
+    if (inStr) continue;
+    if (c === "{" || c === "[") {
+      stack.push(c === "{" ? "{" : "[");
+    } else if (c === "}" || c === "]") {
+      stack.pop();
+      lastCompleteEnd = i + 1;
+    }
+  }
+
+  // ── Step 2: If still inside a string, truncate at the last opening quote ──
+  let result = s;
+  if (inStr) {
+    // Find the last unmatched opening quote
+    let qCount = 0, lastOpenQ = -1, esc2 = false;
+    for (let i = 0; i < s.length; i++) {
+      if (esc2) { esc2 = false; continue; }
+      if (s[i] === "\\") { esc2 = true; continue; }
+      if (s[i] === '"') {
+        qCount++;
+        if (qCount % 2 !== 0) lastOpenQ = i;
+      }
+    }
+    if (lastOpenQ > 0) {
+      // Truncate just before the unclosed string, then close it
+      let truncated = s.slice(0, lastOpenQ).trimEnd();
+      // Remove dangling key separator
+      truncated = truncated.replace(/[,:]\s*$/, "");
+      truncated += '"';
+      // Rebuild stack for the truncated string
+      const st2: Array<"{" | "["> = [];
+      let inS2 = false, es2 = false;
+      for (let i = 0; i < truncated.length; i++) {
+        const c = truncated[i];
+        if (es2) { es2 = false; continue; }
+        if (c === "\\" && inS2) { es2 = true; continue; }
+        if (c === '"') { inS2 = !inS2; continue; }
+        if (inS2) continue;
+        if (c === "{" || c === "[") st2.push(c === "{" ? "{" : "[");
+        else if (c === "}" || c === "]") st2.pop();
+      }
+      result = truncated + st2.reverse().map(b => b === "{" ? "}" : "]").join("");
+      return result;
+    }
+  }
+
+  // ── Step 3: Close remaining open brackets ─────────────────────────────────
+  if (stack.length > 0) {
+    let trimmed = result.trimEnd().replace(/[,:]\s*$/, "");
+    result = trimmed + stack.reverse().map(b => b === "{" ? "}" : "]").join("");
+  } else {
+    result = result.trimEnd().replace(/[,:]\s*$/, "");
+  }
+
+  return result;
+}
+
 // ─── Parse Helpers ────────────────────────────────────────────────────────────
 export function tryParsePdfFromText(content: string, request: ParsedPdfRequest): PDFDocument | null {
   const candidateText = extractPdfJsonText(content);
@@ -1420,6 +1479,7 @@ export function tryParsePdfFromText(content: string, request: ParsedPdfRequest):
   }
 
   for (const attempt of parseAttempts) {
+    // Pass 1: standard whitespace/comma repair
     try {
       const repaired = repairJsonText(attempt);
       const parsed = JSON.parse(repaired);
@@ -1430,9 +1490,23 @@ export function tryParsePdfFromText(content: string, request: ParsedPdfRequest):
         includeTableOfContents: request.includeTableOfContents,
       });
       if (normalized) return normalized;
-    } catch {
-      // ignore malformed attempts
-    }
+    } catch { /* fall through */ }
+
+    // Pass 2: truncation repair – closes unclosed brackets from token-limit cutoffs
+    try {
+      const repaired = repairTruncatedJson(repairJsonText(attempt));
+      const parsed = JSON.parse(repaired);
+      const normalized = normalizePdfObject(parsed, {
+        topic: request.topic,
+        language: request.language,
+        includeCoverPage: request.includeCoverPage,
+        includeTableOfContents: request.includeTableOfContents,
+      });
+      if (normalized) {
+        console.log("[PDF Parser] ✅ Recovered truncated JSON via repairTruncatedJson");
+        return normalized;
+      }
+    } catch { /* ignore */ }
   }
 
   return null;
@@ -1447,14 +1521,24 @@ export function tryParseAnyPdfFromText(content: string): PDFDocument | null {
   }
 
   for (const attempt of parseAttempts) {
+    // Pass 1: standard repair
     try {
       const repaired = repairJsonText(attempt);
       const parsed = JSON.parse(repaired);
       const normalized = normalizePdfObject(parsed);
       if (normalized) return normalized;
-    } catch {
-      // ignore malformed attempts
-    }
+    } catch { /* fall through */ }
+
+    // Pass 2: truncation repair
+    try {
+      const repaired = repairTruncatedJson(repairJsonText(attempt));
+      const parsed = JSON.parse(repaired);
+      const normalized = normalizePdfObject(parsed);
+      if (normalized) {
+        console.log("[PDF Parser] ✅ Recovered truncated JSON via repairTruncatedJson (any)");
+        return normalized;
+      }
+    } catch { /* ignore */ }
   }
 
   return null;
