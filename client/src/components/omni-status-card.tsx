@@ -139,6 +139,37 @@ function ActiveStepProgress({ agentKey, color }: { agentKey: string; color: stri
   );
 }
 
+// ─── Collapsible reasoning block component ───────────────────────────────
+function AgentReasoningToggle({ reasoning, color }: { reasoning: string; color: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="mt-2 pt-2 border-t border-white/5">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-wider transition-colors hover:opacity-80"
+        style={{ color }}
+      >
+        <span>{isOpen ? "▼ Hide Thinking Process" : "▶ Show Thinking Process"}</span>
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden mt-1.5"
+          >
+            <div className="p-2.5 border-l-2 bg-white/[0.005] font-sans text-[10px] text-white/40 leading-relaxed italic whitespace-pre-wrap pl-3" style={{ borderLeftColor: color }}>
+              {reasoning}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 // ─── Main Component ────────────────────────────────────────────────────────
 export function OmniStatusCard({ state }: OmniStatusCardProps) {
   const [showSources, setShowSources] = useState(false);
@@ -455,6 +486,9 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
                             <p className="font-sans text-[10.5px] text-white/50 leading-relaxed line-clamp-3">
                               {agentData.response}
                             </p>
+                            {(agentData as any).reasoning && (
+                              <AgentReasoningToggle reasoning={(agentData as any).reasoning} color={meta.color} />
+                            )}
                           </motion.div>
                         )}
                       </div>

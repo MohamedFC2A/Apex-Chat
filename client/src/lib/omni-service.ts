@@ -7,6 +7,7 @@ export interface AgentDraft {
   status: "loading" | "drafting" | "complete";
   draft: string;
   response?: string;
+  reasoning?: string;
 }
 
 export interface OmniState {
@@ -109,7 +110,7 @@ async function callAgent(
   message: string,
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>,
   searchContext?: string
-): Promise<string> {
+): Promise<{ content: string; reasoning?: string }> {
   const config = AGENT_CONFIGS[agentType];
   
   try {
@@ -126,6 +127,8 @@ async function callAgent(
       customPrompt += `\n\n=== GOOGLE REAL-TIME SEARCH RESULTS ===\nUse the following real-time data to answer the user request:\n${searchContext}`;
     }
 
+    const isProModel = config.model === "apex-pro";
+
     const response = await sendAIMessage(
       `${customPrompt}\n\nUser: ${message}`,
       config.model,
@@ -133,14 +136,17 @@ async function callAgent(
       "standard",
       false,
       {
-        thinking: false,
+        thinking: isProModel,
         deepResearch: false,
         godMode: false
       },
-      "none"
+      isProModel ? "thinking" : "none"
     );
     
-    return response.content;
+    return {
+      content: response.content,
+      reasoning: (response as any).reasoningContent || undefined
+    };
   } catch (error) {
     console.error(`Agent ${agentType} failed:`, error);
     throw error;
@@ -223,7 +229,12 @@ export async function processOmniRequest(
       
       await minDisplayTime;
       
-      const response = responseOrTimeout === "__TIMEOUT__" ? "" : (responseOrTimeout as string);
+      const resultObj = responseOrTimeout === "__TIMEOUT__" 
+        ? { content: "", reasoning: "" } 
+        : (responseOrTimeout as { content: string; reasoning?: string });
+      const response = resultObj.content;
+      const reasoning = resultObj.reasoning;
+      
       if (responseOrTimeout === "__TIMEOUT__") {
         console.warn(`[Omni Service] Agent ${agentType} timed out after 45s.`);
       }
@@ -237,6 +248,7 @@ export async function processOmniRequest(
             status: "complete",
             draft: response ? response.substring(0, 60) + "..." : "Timeout",
             response,
+            reasoning,
           },
         },
       };
@@ -254,6 +266,7 @@ export async function processOmniRequest(
             status: "complete",
             draft: "Unavailable",
             response: "",
+            reasoning: "",
           },
         },
       };
