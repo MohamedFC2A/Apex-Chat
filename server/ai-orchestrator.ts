@@ -18,7 +18,7 @@ import {
   normalizePdfObject,
 } from "@shared/pdf";
 import { runApexOmniPipeline } from "./apex-omni/pipeline.js";
-import { getDeepSeekRequestParams, mapDeepSeekModelForTask } from "./deepseek-model-router.js";
+import { getDeepSeekRequestParams, getDeepSeekStructuredParams, mapDeepSeekModelForTask } from "./deepseek-model-router.js";
 import { runApexSearch, buildApexSearchContext, extractBase64Images } from "./apex-search-engine.js";
 import { buildApexFootballContext } from "./apex-football-engine.js";
 import { sanitizeContextPayload } from "./context-sanitizer.js";
@@ -128,7 +128,7 @@ Return only one valid \`\`\`mcq-quiz fenced block with valid JSON.`
     messages: formatterMessages,
     max_tokens: 4096,
     stream: false,
-    ...getDeepSeekRequestParams(model, 0.4),
+    ...getDeepSeekStructuredParams(0.4),
   });
 
   return formatted.choices[0]?.message?.content || responseText;
@@ -151,8 +151,8 @@ async function generateDedicatedQuizResponse(
   onChunk?: (chunk: { content?: string; reasoningContent?: string }) => void
 ): Promise<OrchestratorResponse> {
   const quizRequest = parseQuizRequest(request.message, request.conversationHistory);
-  const maxTokens = Math.min(getModelParameters(request.model).maxTokens, 4096);
-  const baseParams = getDeepSeekRequestParams(actualModel, 0.2);
+  const maxTokens = 8192; // Use full 8K for MCQ to ensure complete JSON output
+  const baseParams = getDeepSeekStructuredParams(0.2); // Thinking disabled: avoids reasoning token overhead
 
   const buildMessages = (userContent: string) => [
     {
@@ -236,8 +236,8 @@ async function generateDedicatedPdfResponse(
   onChunk?: (chunk: { content?: string; reasoningContent?: string }) => void
 ): Promise<OrchestratorResponse> {
   const pdfRequest = parsePdfRequest(request.message);
-  const maxTokens = 8192; // DeepSeek chat and reasoner support up to 8K output tokens for large content capacity
-  const baseParams = getDeepSeekRequestParams(actualModel, 0.2);
+  const maxTokens = 8192; // Full 8K output capacity for large PDF documents
+  const baseParams = getDeepSeekStructuredParams(0.2); // Thinking disabled: prevents CoT tokens from eating into JSON output capacity
 
   const buildMessages = (userContent: string) => [
     {
@@ -1636,7 +1636,9 @@ export async function processMessage(
       baseURL: "https://api.deepseek.com/v1",
     });
 
-    const pdfModel = "deepseek-v4-pro";
+    // Use flash model for PDF generation: thinking is disabled so all 8K tokens go to JSON output.
+    // Using pro would waste ~3-6K tokens on CoT reasoning, leaving insufficient space for large documents.
+    const pdfModel = "deepseek-v4-flash";
     return await generateDedicatedPdfResponse(pdfClient, pdfModel, request, onChunk);
   }
 
@@ -1652,8 +1654,8 @@ export async function processMessage(
       baseURL: "https://api.deepseek.com/v1",
     });
 
-    const quizTask = request.model === "apex-flash" ? "generation" : "reasoning";
-    const quizModel = mapDeepSeekModelForTask(request.model, quizTask);
+    // Always use flash model for MCQ: thinking disabled ensures all 8K tokens go to JSON quiz output.
+    const quizModel = "deepseek-v4-flash";
     return await generateDedicatedQuizResponse(quizClient, quizModel, request, onChunk);
   }
 
@@ -2218,12 +2220,13 @@ ${prompt}`;
 
   try {
     const response = await client.chat.completions.create({
-      model: "deepseek-v4-pro",
+      model: "deepseek-v4-flash",
+      max_tokens: 8192,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
       ],
-      ...getDeepSeekRequestParams("deepseek-v4-pro"),
+      ...getDeepSeekStructuredParams(0.2),
     });
 
     const content = response.choices[0]?.message?.content || "";
@@ -2293,12 +2296,13 @@ Generate a cohesive title and cover page config. Respond ONLY with the \`\`\`pdf
 
   try {
     const response = await client.chat.completions.create({
-      model: "deepseek-v4-pro",
+      model: "deepseek-v4-flash",
+      max_tokens: 8192,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: text }
       ],
-      ...getDeepSeekRequestParams("deepseek-v4-pro"),
+      ...getDeepSeekStructuredParams(0.2),
     });
 
     const content = response.choices[0]?.message?.content || "";
@@ -2334,8 +2338,10 @@ export async function generateMcqResponse(
     baseURL: "https://api.deepseek.com/v1",
   });
 
-  const task = request.model === "apex-omni" ? "reasoning" : "generation";
-  const actualModel = mapDeepSeekModelForTask(request.model, task);
+  // Always use flash model for quiz generation via the dedicated endpoint.
+  // Thinking disabled ensures all 8K output tokens go to the JSON quiz body,
+  // preventing incomplete/truncated mcq-quiz blocks.
+  const actualModel = "deepseek-v4-flash";
 
   return generateDedicatedQuizResponse(client, actualModel, request, onChunk);
 }

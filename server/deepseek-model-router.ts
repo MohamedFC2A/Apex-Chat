@@ -23,19 +23,27 @@ export function mapDeepSeekModelForTask(
   return APEX_MODEL_ALIASES[requestedModel] || requestedModel;
 }
 
+/**
+ * Returns the correct API parameters for DeepSeek V4 models.
+ *
+ * IMPORTANT: For DeepSeek OpenAI-compatible SDK:
+ * - `reasoning_effort` must be inside `extra_body`, NOT at top-level.
+ *   (Top-level reasoning_effort is silently ignored and can cause 400 errors on some API versions.)
+ * - `temperature` is ignored when thinking mode is enabled.
+ * - Both `deepseek-v4-pro` and `deepseek-v4-flash` support the same parameter structure.
+ */
 export function getDeepSeekRequestParams(
   model: string,
   temperature = 0.7,
   enableThinking = false
 ): Record<string, any> {
-  // deepseek-v4-pro: Chain of Thought is always enabled by default
+  // deepseek-v4-pro: Always use thinking mode with max reasoning effort
   if (model === "deepseek-v4-pro") {
     return {
-      reasoning_effort: "max",
+      temperature: 0.6,
       extra_body: {
-        thinking: {
-          type: "enabled",
-        },
+        thinking: { type: "enabled" },
+        reasoning_effort: "high",
       },
     };
   }
@@ -44,24 +52,35 @@ export function getDeepSeekRequestParams(
   if (model === "deepseek-v4-flash") {
     if (enableThinking) {
       return {
-        reasoning_effort: "high",
+        temperature: 0.6,
         extra_body: {
-          thinking: {
-            type: "enabled",
-          },
+          thinking: { type: "enabled" },
+          reasoning_effort: "high",
         },
       };
     } else {
       return {
         temperature,
         extra_body: {
-          thinking: {
-            type: "disabled",
-          },
+          thinking: { type: "disabled" },
         },
       };
     }
   }
 
   return { temperature };
+}
+
+/**
+ * Returns DeepSeek params optimized for structured JSON generation (PDF/MCQ).
+ * Always uses flash model to maximize output tokens and avoid reasoning token overhead.
+ * Thinking is disabled to prevent truncated JSON from CoT reasoning tokens.
+ */
+export function getDeepSeekStructuredParams(temperature = 0.3): Record<string, any> {
+  return {
+    temperature,
+    extra_body: {
+      thinking: { type: "disabled" },
+    },
+  };
 }
