@@ -10,24 +10,25 @@ interface OmniStatusCardProps {
   state: OmniState;
 }
 
-// ─── Agent metadata ────────────────────────────────────────────────────────
+// ─── Agent metadata with Brand Colors ────────────────────────────────────────
 const agentMeta: Record<string, {
   icon: React.ComponentType<any>;
   name: string;
   role: string;
   desc: string;
   output: string;
+  color: string;
 }> = {
-  architect:    { icon: Layers,         name: "Architect",    role: "System Design",       desc: "Analyzing system structure, validating dependencies, and defining architecture blueprint.",          output: "Architecture Blueprint" },
-  coder:        { icon: Code2,          name: "Coder",        role: "Implementation",      desc: "Generating structural logic, drafting execution paths, writing clean optimized components.",        output: "Code Artifact" },
-  security:     { icon: Shield,         name: "Security",     role: "Threat Analysis",     desc: "Performing vulnerability scanning, assessing attack surfaces, verifying authorization checks.",      output: "Risk Assessment" },
-  researcher:   { icon: Search,         name: "Researcher",   role: "Data Retrieval",      desc: "Querying search index, fetching high-quality organic results, validating external facts.",           output: "Research Report" },
-  creative:     { icon: PaletteIcon,    name: "Creative",     role: "Conceptual Thinking", desc: "Synthesizing lateral concepts, brainstorming alternatives, planning creative execution.",            output: "Creative Brief" },
-  linguist:     { icon: MessageSquare,  name: "Linguist",     role: "Language Polish",     desc: "Calibrating linguistic accuracy, refining tone, checking grammar and multilingual precision.",       output: "Polished Draft" },
-  skeptic:      { icon: FlaskConical,   name: "Skeptic",      role: "Logic Validation",    desc: "Challenging assumptions, testing edge cases, detecting logical contradictions.",                    output: "Validation Report" },
-  psychologist: { icon: Brain,          name: "Psychologist", role: "User Empathy",        desc: "Modeling user intent, tailoring context, aligning response to user expectations.",                  output: "Context Model" },
-  futurist:     { icon: TrendingUp,     name: "Futurist",     role: "Scalability",         desc: "Evaluating scalability, forecasting implications, future-proofing outputs for longevity.",          output: "Future Forecast" },
-  optimizer:    { icon: Zap,            name: "Optimizer",    role: "Performance",         desc: "Optimizing resource efficiency, reducing computational overhead, minimizing latency.",              output: "Optimization Plan" },
+  architect:    { icon: Layers,         name: "Architect",    role: "System Design",       desc: "Analyzing system structure, validating dependencies, and defining architecture blueprint.",          output: "Architecture Blueprint", color: "#10a37f" },
+  coder:        { icon: Code2,          name: "Coder",        role: "Implementation",      desc: "Generating structural logic, drafting execution paths, writing clean optimized components.",        output: "Code Artifact",          color: "#3b82f6" },
+  security:     { icon: Shield,         name: "Security",     role: "Threat Analysis",     desc: "Performing vulnerability scanning, assessing attack surfaces, verifying authorization checks.",      output: "Risk Assessment",         color: "#ef4444" },
+  researcher:   { icon: Search,         name: "Researcher",   role: "Data Retrieval",      desc: "Querying search index, fetching high-quality organic results, validating external facts.",           output: "Research Report",        color: "#a855f7" },
+  creative:     { icon: PaletteIcon,    name: "Creative",     role: "Conceptual Thinking", desc: "Synthesizing lateral concepts, brainstorming alternatives, planning creative execution.",            output: "Creative Brief",         color: "#f59e0b" },
+  linguist:     { icon: MessageSquare,  name: "Linguist",     role: "Language Polish",     desc: "Calibrating linguistic accuracy, refining tone, checking grammar and multilingual precision.",       output: "Polished Draft",         color: "#10b981" },
+  skeptic:      { icon: FlaskConical,   name: "Skeptic",      role: "Logic Validation",    desc: "Challenging assumptions, testing edge cases, detecting logical contradictions.",                    output: "Validation Report",       color: "#f43f5e" },
+  psychologist: { icon: Brain,          name: "Psychologist", role: "User Empathy",        desc: "Modeling user intent, tailoring context, aligning response to user expectations.",                  output: "Context Model",          color: "#ec4899" },
+  futurist:     { icon: TrendingUp,     name: "Futurist",     role: "Scalability",         desc: "Evaluating scalability, forecasting implications, future-proofing outputs for longevity.",          output: "Future Forecast",         color: "#06b6d4" },
+  optimizer:    { icon: Zap,            name: "Optimizer",    role: "Performance",         desc: "Optimizing resource efficiency, reducing computational overhead, minimizing latency.",              output: "Optimization Plan",       color: "#84cc16" },
 };
 
 // Fixed agent order to match processOmniRequest execution order
@@ -73,8 +74,28 @@ function AnimatedNumber({ value }: { value: number }) {
   return <>{display}</>;
 }
 
+// ─── Typewriter Text component for Gradual Thinking ─────────────────────────
+function TypewriterText({ text, speed = 15 }: { text: string; speed?: number }) {
+  const [displayed, setDisplayed] = useState("");
+
+  useEffect(() => {
+    setDisplayed("");
+    let idx = 0;
+    const interval = setInterval(() => {
+      setDisplayed((prev) => prev + text.charAt(idx));
+      idx++;
+      if (idx >= text.length) {
+        clearInterval(interval);
+      }
+    }, speed);
+    return () => clearInterval(interval);
+  }, [text, speed]);
+
+  return <span>{displayed}</span>;
+}
+
 // ─── Active step sub-progress simulation ──────────────────────────────────
-function ActiveStepProgress({ agentKey }: { agentKey: string }) {
+function ActiveStepProgress({ agentKey, color }: { agentKey: string; color: string }) {
   const [pct, setPct] = useState(0);
 
   useEffect(() => {
@@ -100,7 +121,8 @@ function ActiveStepProgress({ agentKey }: { agentKey: string }) {
       </div>
       <div className="h-[3px] bg-white/8 rounded-full overflow-hidden mb-3">
         <motion.div
-          className="h-full bg-white rounded-full"
+          className="h-full rounded-full"
+          style={{ backgroundColor: color }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 0.08 }}
         />
@@ -127,6 +149,11 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
   const draftingKey    = agentRows.find(a => a.status === "drafting")?.key ?? null;
   const totalAgents    = agentRows.length;
 
+  // Filter rows: only show completed or active (drafting) agents (hide loading ones)
+  const visibleAgentRows = agentRows
+    .map((row, idx) => ({ ...row, originalIndex: idx }))
+    .filter(row => row.status === "complete" || row.status === "drafting");
+
   // Progress calculation based on real state
   const progressValue = isComplete
     ? 100
@@ -136,6 +163,9 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
 
   const TOTAL_BLOCKS = 48;
   const activeBlocks = Math.round((progressValue / 100) * TOTAL_BLOCKS);
+
+  // Brand color of the active agent
+  const activeAgentColor = draftingKey ? agentMeta[draftingKey]?.color : "#ffffff";
 
   // Source extraction
   const extractSources = (final?: string, researcher?: string) => {
@@ -176,24 +206,17 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
 
   return (
     <motion.div
-      className="relative font-mono text-xs my-4 w-full"
+      className="relative font-mono text-xs my-2 w-full"
       initial={{ opacity: 0, y: 8, scale: 0.99 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.28, ease: "easeOut" }}
     >
-      <div className="w-full border border-white/8 bg-[#050505] shadow-2xl relative overflow-hidden">
-
-        {/* Top accent line */}
-        <motion.div
-          className="absolute top-0 left-0 right-0 h-[1px]"
-          animate={{ backgroundColor: isComplete ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.15)" }}
-          transition={{ duration: 0.6 }}
-        />
-
+      {/* Container is borderless and transparent to span the chat naturally */}
+      <div className="w-full bg-transparent border-0 shadow-none relative overflow-hidden">
         <div className="flex flex-col gap-0 divide-y divide-white/5">
 
           {/* ── SECTION 1: Header ── */}
-          <div className="px-6 pt-5 pb-4">
+          <div className="px-0 pt-3 pb-3">
             <div className="flex items-center justify-between mb-1">
               <motion.h2
                 key={isComplete ? "done" : isSynthesizing ? "synth" : draftingKey ?? "init"}
@@ -221,8 +244,8 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
           </div>
 
           {/* ── SECTION 2: Pixel Progress Bar ── */}
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between mb-2.5">
+          <div className="px-0 py-3">
+            <div className="flex items-center justify-between mb-2">
               <span className="font-mono text-[9px] tracking-[0.2em] text-white/30 uppercase font-bold">
                 Cognitive Load
               </span>
@@ -233,19 +256,19 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
             <div className="flex gap-[2px] w-full">
               {Array.from({ length: TOTAL_BLOCKS }).map((_, i) => {
                 const on = i < activeBlocks;
-                const isFront = on && i >= activeBlocks - 4;
                 return (
                   <div key={i} className="flex-1 flex flex-col gap-[2px]">
-                    <div className={`h-2 transition-all duration-300 ${
-                      on
-                        ? isComplete
-                          ? "bg-white"
-                          : isFront
-                            ? "bg-white/90"
-                            : "bg-white/65"
-                        : "bg-white/6"
-                    }`} />
-                    <div className={`h-1 ${on ? (isComplete ? "bg-white/35" : "bg-white/18") : "bg-white/4"}`} />
+                    <div 
+                      className="h-2 transition-all duration-300 rounded-sm"
+                      style={{
+                        backgroundColor: on
+                          ? isComplete
+                            ? "#ffffff"
+                            : activeAgentColor
+                          : "rgba(255,255,255,0.06)"
+                      }}
+                    />
+                    <div className={`h-0.5 ${on ? (isComplete ? "bg-white/35" : "bg-white/10") : "bg-white/4"}`} />
                   </div>
                 );
               })}
@@ -253,155 +276,189 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
           </div>
 
           {/* ── SECTION 3: Vertical Timeline ── */}
-          <div className="px-4 py-4 relative">
-            {agentRows.map(({ key, status }, index) => {
-              const meta = agentMeta[key];
-              if (!meta) return null;
-              const AgentIcon = meta.icon;
+          <div className="px-0 py-3 relative">
+            <AnimatePresence initial={false}>
+              {visibleAgentRows.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="py-6 text-center text-white/40 font-mono text-[11px]"
+                >
+                  Initializing cognitive pipeline...
+                </motion.div>
+              ) : (
+                visibleAgentRows.map(({ key, agentData, status, originalIndex }, index) => {
+                  const meta = agentMeta[key];
+                  if (!meta) return null;
+                  const AgentIcon = meta.icon;
 
-              const isDone    = status === "complete";
-              const isActive  = status === "drafting";
-              const isPending = status === "loading";
-              const isLast    = index === agentRows.length - 1;
-              const lineProgress = getLineProgress(index);
+                  const isDone    = status === "complete";
+                  const isActive  = status === "drafting";
+                  const isLast    = index === visibleAgentRows.length - 1;
+                  const lineProgress = getLineProgress(originalIndex);
 
-              return (
-                <div key={key} className="relative flex gap-0">
-
-                  {/* ── Left: node + vertical connector ── */}
-                  <div className="flex flex-col items-center w-8 shrink-0">
-
-                    {/* Node */}
-                    <div className="relative z-10 my-1">
-                      {isDone ? (
-                        <motion.div
-                          initial={{ scale: 0.4, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ type: "spring", stiffness: 600, damping: 22 }}
-                          className="w-5 h-5 rounded-full bg-white flex items-center justify-center"
-                        >
-                          <CheckCircle2 className="w-3 h-3 text-black" strokeWidth={3} />
-                        </motion.div>
-                      ) : isActive ? (
-                        <div className="relative w-5 h-5 flex items-center justify-center">
-                          <span className="absolute inset-0 rounded-full bg-white/20 animate-ping" />
-                          <div className="w-5 h-5 rounded-full border-2 border-white bg-black flex items-center justify-center">
-                            <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="w-5 h-5 rounded-full border border-white/12 bg-transparent flex items-center justify-center">
-                          <span className="font-mono text-[8px] font-bold text-white/20">{index + 1}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Vertical connector */}
-                    {!isLast && (
-                      <div className="w-[1px] flex-1 bg-white/6 relative overflow-hidden min-h-[24px]">
-                        <motion.div
-                          className="absolute top-0 left-0 right-0 bg-white/40"
-                          initial={{ height: "0%" }}
-                          animate={{ height: `${lineProgress}%` }}
-                          transition={{ duration: 0.5, ease: "easeOut" }}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* ── Right: content ── */}
-                  <div className={`flex-1 min-w-0 pb-3 pl-3 ${isLast ? "pb-1" : ""}`}>
-
-                    {/* Step header */}
-                    <div className="flex items-center justify-between py-1">
-                      <div className="flex items-center gap-2">
-                        <AgentIcon className={`w-3.5 h-3.5 shrink-0 transition-colors duration-300 ${
-                          isDone ? "text-white/70" : isActive ? "text-white" : "text-white/18"
-                        }`} />
-                        <span className={`font-mono text-[11px] font-bold tracking-wider uppercase transition-colors duration-300 ${
-                          isDone ? "text-white/65" : isActive ? "text-white" : "text-white/22"
-                        }`}>
-                          {meta.name}
-                        </span>
-                        <span className={`font-mono text-[9px] tracking-wide lowercase transition-colors duration-300 hidden sm:inline ${
-                          isDone ? "text-white/25" : isActive ? "text-white/45" : "text-white/12"
-                        }`}>
-                          ({meta.role})
-                        </span>
-                      </div>
-
-                      {/* Status badge */}
-                      <AnimatePresence mode="wait">
-                        <motion.span
-                          key={status}
-                          initial={{ opacity: 0, scale: 0.7 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.15 }}
-                          className={`font-mono text-[8px] font-black uppercase tracking-widest px-2 py-0.5 ${
-                            isDone
-                              ? "bg-white/8 text-white/40"
-                              : isActive
-                                ? "bg-white text-black"
-                                : "text-white/12"
-                          }`}
-                        >
-                          {isDone ? "done" : isActive ? "live" : String(index + 1).padStart(2, "0")}
-                        </motion.span>
-                      </AnimatePresence>
-                    </div>
-
-                    {/* Active step expansion */}
-                    <AnimatePresence>
-                      {isActive && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.2, ease: "easeOut" }}
-                          className="overflow-hidden"
-                        >
-                          <div className="mt-1.5 mr-2 p-3.5 border border-white/10 bg-white/3">
-
-                            {/* Description */}
-                            <p className="font-mono text-[10px] text-white/55 leading-relaxed mb-3">
-                              {meta.desc}
-                              <motion.span
-                                animate={{ opacity: [1, 0, 1] }}
-                                transition={{ repeat: Infinity, duration: 1.0 }}
-                                className="inline-block ml-1 text-white/80"
-                              >_</motion.span>
-                            </p>
-
-                            {/* Sub-progress */}
-                            <ActiveStepProgress agentKey={key} />
-
-                            {/* Output type */}
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-[8px] text-white/25 uppercase tracking-wider">Output →</span>
-                              <span className="font-mono text-[8px] font-bold text-white/60 border border-white/15 px-2 py-0.5 bg-white/4">
-                                {meta.output}
-                              </span>
+                  return (
+                    <motion.div
+                      key={key}
+                      layout
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 280,
+                        damping: 26
+                      }}
+                      className="relative flex gap-0 mb-1"
+                    >
+                      {/* ── Left: node + vertical connector ── */}
+                      <div className="flex flex-col items-center w-8 shrink-0">
+                        {/* Node */}
+                        <div className="relative z-10 my-1">
+                          {isDone ? (
+                            <motion.div
+                              initial={{ scale: 0.4, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ type: "spring", stiffness: 600, damping: 22 }}
+                              className="w-5 h-5 rounded-full flex items-center justify-center border"
+                              style={{ backgroundColor: meta.color, borderColor: meta.color }}
+                            >
+                              <CheckCircle2 className="w-3 h-3 text-black" strokeWidth={3} />
+                            </motion.div>
+                          ) : isActive ? (
+                            <div className="relative w-5 h-5 flex items-center justify-center">
+                              <span className="absolute inset-0 rounded-full animate-ping" style={{ backgroundColor: `${meta.color}25` }} />
+                              <div className="w-5 h-5 rounded-full border-2 bg-black flex items-center justify-center" style={{ borderColor: meta.color }}>
+                                <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: meta.color }} />
+                              </div>
                             </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                          ) : (
+                            <div className="w-5 h-5 rounded-full border border-white/12 bg-transparent flex items-center justify-center">
+                              <span className="font-mono text-[8px] font-bold text-white/20">{originalIndex + 1}</span>
+                            </div>
+                          )}
+                        </div>
 
-                    {/* Completed step snippet */}
-                    {isDone && agentRows[index].agentData?.draft && (
-                      <p className="font-mono text-[9px] text-white/20 leading-relaxed truncate max-w-xs mt-0.5 ml-0.5">
-                        {agentRows[index].agentData?.draft}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                        {/* Vertical connector */}
+                        {!isLast && (
+                          <div className="w-[1px] flex-1 bg-white/6 relative overflow-hidden min-h-[28px]">
+                            <motion.div
+                              className="absolute top-0 left-0 right-0"
+                              style={{ backgroundColor: meta.color }}
+                              initial={{ height: "0%" }}
+                              animate={{ height: `${lineProgress}%` }}
+                              transition={{ duration: 0.5, ease: "easeOut" }}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* ── Right: content ── */}
+                      <div className={`flex-1 min-w-0 pb-3 pl-3 ${isLast ? "pb-1" : ""}`}>
+                        {/* Step header */}
+                        <div className="flex items-center justify-between py-1">
+                          <div className="flex items-center gap-2">
+                            <AgentIcon 
+                              className={`w-3.5 h-3.5 shrink-0 transition-colors duration-300 ${
+                                isActive ? "animate-pulse" : ""
+                              }`} 
+                              style={{ color: isDone || isActive ? meta.color : "rgba(255,255,255,0.18)" }}
+                            />
+                            <span 
+                              className="font-mono text-[11px] font-bold tracking-wider uppercase transition-colors duration-300"
+                              style={{ color: isDone || isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.22)" }}
+                            >
+                              {meta.name}
+                            </span>
+                            <span 
+                              className="font-mono text-[9px] tracking-wide lowercase transition-colors duration-300 hidden sm:inline"
+                              style={{ color: isDone || isActive ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.12)" }}
+                            >
+                              ({meta.role})
+                            </span>
+                          </div>
+
+                          {/* Status badge */}
+                          <AnimatePresence mode="wait">
+                            <motion.span
+                              key={status}
+                              initial={{ opacity: 0, scale: 0.7 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.15 }}
+                              className="font-mono text-[8px] font-black uppercase tracking-widest px-2 py-0.5"
+                              style={{
+                                backgroundColor: isActive ? meta.color : "rgba(255,255,255,0.06)",
+                                color: isActive ? "#000000" : "rgba(255,255,255,0.4)"
+                              }}
+                            >
+                              {isDone ? "done" : isActive ? "live" : String(originalIndex + 1).padStart(2, "0")}
+                            </motion.span>
+                          </AnimatePresence>
+                        </div>
+
+                        {/* Active step expansion */}
+                        <AnimatePresence>
+                          {isActive && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2, ease: "easeOut" }}
+                              className="overflow-hidden"
+                            >
+                              <div className="mt-1.5 mr-2 p-3.5 border border-white/10 bg-white/3">
+                                {/* Description using Typewriter effect */}
+                                <p className="font-mono text-[10px] text-white/60 leading-relaxed mb-3">
+                                  <TypewriterText text={meta.desc} />
+                                  <motion.span
+                                    animate={{ opacity: [1, 0, 1] }}
+                                    transition={{ repeat: Infinity, duration: 1.0 }}
+                                    className="inline-block ml-1"
+                                    style={{ color: meta.color }}
+                                  >_</motion.span>
+                                </p>
+
+                                {/* Sub-progress */}
+                                <ActiveStepProgress agentKey={key} color={meta.color} />
+
+                                {/* Output type */}
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono text-[8px] text-white/25 uppercase tracking-wider">Output →</span>
+                                  <span className="font-mono text-[8px] font-bold text-white/60 border border-white/15 px-2 py-0.5 bg-white/4">
+                                    {meta.output}
+                                  </span>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        {/* Completed step snippet (expanded summary card for maximum context width) */}
+                        {isDone && agentData?.response && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mt-1.5 mr-2 p-3 border border-white/5 bg-white/[0.01] rounded-lg max-w-full hover:border-white/10 transition-all duration-200"
+                          >
+                            <span className="font-mono text-[8px] uppercase tracking-wider block mb-1" style={{ color: meta.color }}>
+                              {meta.name} Insights Summary
+                            </span>
+                            <p className="font-sans text-[10.5px] text-white/50 leading-relaxed line-clamp-3">
+                              {agentData.response}
+                            </p>
+                          </motion.div>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })
+              )}
+            </AnimatePresence>
           </div>
 
           {/* ── SECTION 4: Footer ── */}
-          <div className="px-6 py-3 flex items-center justify-between">
+          <div className="px-0 py-3 flex items-center justify-between">
             <div>
               <span className={`font-mono text-[9px] font-black tracking-widest uppercase ${isComplete ? "text-white/60" : "text-white/25"}`}>
                 {isComplete

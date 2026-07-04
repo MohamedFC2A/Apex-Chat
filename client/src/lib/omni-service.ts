@@ -552,7 +552,7 @@ CRITICAL INSTRUCTIONS FOR SYNTHESIS:
    - Fill the table with complete, accurate, and comprehensive data (no placeholders like "...", "etc.").
    - Support bilingual formatting: if the text is Arabic, align the table logically for RTL rendering. Keep English technical terms in parentheses next to the Arabic translation if it aids clarity.
 4. DO NOT mention agent names, rankings, or the fact that you received individual drafts in your final response. Write as a single, omniscient intelligence.
-5. Do not summarize or omit important details from any agent; make the final output the absolute best, most detailed, and complete answer possible.
+5. Do not summarize or omit important details from any agent. Make the final master response extremely detailed, exhaustive, and rich in depth (aim for a highly comprehensive, long-form output that is at least 2x more detailed than a standard response, preserving all technical arguments, code snippets, security considerations, and detailed logical reasoning provided by the individual agents).
 6. ALWAYS append a clear, dedicated '### Sources / المصادر' section at the very end of your response listing the reference websites, papers, or documentation sources used for compiling the answer (including domain name and links in markdown format \`[Site Name](url)\`). Make sure these are real, high-quality reference websites (e.g., github.com, stackoverflow.com, MDN Web Docs, Wikipedia, and relevant official project pages).
 7. You can highlight critical concepts, key terms, or major points dynamically. However, you must use highlights VERY SPARINGLY and INTELLIGENTLY:
    - Use at most ONE highlight per paragraph, and ONLY if that paragraph contains something truly important.

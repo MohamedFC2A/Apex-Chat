@@ -2713,7 +2713,8 @@ function AssistantMessage({
     <motion.div
       className={cn(
         "flex gap-3 md:gap-4 group p-3.5 md:p-4 rounded-2xl border border-zinc-900 bg-neutral-950 transition-all duration-500 shadow-2xl",
-        isStreaming && "bg-neutral-950 border-zinc-800"
+        isStreaming && "bg-neutral-950 border-zinc-800",
+        model === "apex-omni" && "border-transparent bg-transparent shadow-none p-0 md:p-0"
       )}
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
