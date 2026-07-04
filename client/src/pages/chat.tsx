@@ -773,13 +773,6 @@ removeGodModeTheme();
                 </motion.div>
               )}
 
-              {/* Logo mark */}
-              <div className="hidden md:flex items-center gap-2 mr-0.5">
-                <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center">
-                  <Zap className="w-3.5 h-3.5 text-violet-400" strokeWidth={2} />
-                </div>
-              </div>
-
               <div className="flex-1 min-w-[160px] sm:flex-none sm:min-w-[200px]">
                 <ModelSelector
                   selectedModel={selectedModel}
@@ -793,20 +786,6 @@ removeGodModeTheme();
             {/* Right: live status + theme */}
             <div className="hidden sm:flex items-center gap-2 shrink-0">
 
-              <AnimatePresence>
-                {isGenerating && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.85, x: 6 }}
-                    animate={{ opacity: 1, scale: 1, x: 0 }}
-                    exit={{ opacity: 0, scale: 0.85, x: 6 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                    className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/12 border border-violet-500/25 text-violet-300"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-                    <span className="text-[10px] font-bold tracking-widest uppercase">Live</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
               <div className="hidden sm:block">
                 <ContextMeter />
               </div>

@@ -257,9 +257,6 @@ export function ChatSidebar() {
           {/* ── Header ── */}
           <div className="flex items-center justify-between px-4 py-3.5 relative z-10 flex-shrink-0">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-900 border border-white/8 flex items-center justify-center shadow-sm">
-                <Zap className="w-4 h-4 text-violet-400" strokeWidth={2.5} />
-              </div>
               <div>
                 <h2 className="text-sm font-bold tracking-tight text-white leading-none">ApexChat</h2>
                 <p className="text-[10px] text-white/30 tracking-widest uppercase mt-0.5">AI Studio</p>
