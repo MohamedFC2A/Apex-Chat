@@ -1660,7 +1660,7 @@ export async function processMessage(
   // ── APEX OMNI: Route through full AI pipeline ──────────────────────────────
   if (model === "apex-omni") {
     const OpenAI = (await import("openai")).default;
-    let omniActualModel = "deepseek-v4-flash";
+    let omniActualModel = "deepseek-v4-pro";
     const isOpenRouter = false;
 
     let omniClient: any;

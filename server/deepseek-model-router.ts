@@ -7,7 +7,7 @@ const APEX_MODEL_ALIASES: Record<string, string> = {
   "apex-flash": "deepseek-v4-flash",
   "apex-pro": "deepseek-v4-pro",
   "apex-elite": "deepseek-v4-pro",
-  "apex-omni": "deepseek-v4-flash",
+  "apex-omni": "deepseek-v4-pro",
   "apex-unbound": "deepseek-v4-pro",
 };
 

@@ -796,8 +796,8 @@ JSON structure:
   app.get("/api/health", (_req, res) => {
     res.json({
       status: "ok",
-      provider: "cerebras",
-      apiConfigured: !!process.env.CEREBRAS_API_KEY,
+      provider: "deepseek",
+      apiConfigured: !!process.env.DEEPSEEK_API_KEY,
     });
   });
 
