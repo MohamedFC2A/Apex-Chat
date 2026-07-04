@@ -308,9 +308,10 @@ export default function ChatPage() {
           }
 
           // Force full-state complete update inside DB and store
-          if (lastReportedState) {
+          const resolvedState = lastReportedState;
+          if (resolvedState) {
             setOmniStateForConv(thisConvId, {
-              ...lastReportedState,
+              ...(resolvedState as OmniState),
               step: "complete",
               finalResponse: response.content,
               totalDuration: (response as any).totalDuration || undefined,
