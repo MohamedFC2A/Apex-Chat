@@ -2175,7 +2175,7 @@ export function ChatMessages({
         ))}
 
         {isStreaming && !streamingContent && !streamingReasoning &&
-          selectedModel !== "apex-unbound" && (
+          selectedModel !== "apex-unbound" && selectedModel !== "apex-omni" && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -2721,14 +2721,16 @@ function AssistantMessage({
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
     >
       {/* Model avatar — pure black/white */}
-      <Avatar className={cn(
-        "w-8 h-8 flex-shrink-0 transition-all duration-300 rounded-sm",
-        isStreaming && "ring-1 ring-white/10"
-      )}>
-        <AvatarFallback className="bg-[#111] border border-white/10 rounded-sm">
-          <ModelIcon className={cn("w-4 h-4", nameColor)} />
-        </AvatarFallback>
-      </Avatar>
+      {model !== "apex-omni" && (
+        <Avatar className={cn(
+          "w-8 h-8 flex-shrink-0 transition-all duration-300 rounded-sm",
+          isStreaming && "ring-1 ring-white/10"
+        )}>
+          <AvatarFallback className="bg-[#111] border border-white/10 rounded-sm">
+            <ModelIcon className={cn("w-4 h-4", nameColor)} />
+          </AvatarFallback>
+        </Avatar>
+      )}
 
       <div className="flex-1 space-y-2 min-w-0">
         {/* Model label with status dot */}
