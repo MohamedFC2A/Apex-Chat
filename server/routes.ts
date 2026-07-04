@@ -42,7 +42,7 @@ function normalizeStructuredPdfDocument(raw: unknown): PDFDocument {
   };
 }
 
-function normalizeChatPdfResponse(userMessage: string, content: string): string {
+async function normalizeChatPdfResponse(userMessage: string, content: string): Promise<string> {
   const parsed = tryParseAnyPdfFromText(content);
   if (parsed) {
     return formatPdfAsCodeBlock(parsed);
@@ -54,6 +54,7 @@ function normalizeChatPdfResponse(userMessage: string, content: string): string 
       ? `مستند ${request.topic}`
       : `${request.topic || "Document"} PDF`;
 
+  const { markdownToPdfDocument } = await import("./markdown-to-pdf.js");
   const fallbackDoc = markdownToPdfDocument(content, {
     title,
     language: request.language,
