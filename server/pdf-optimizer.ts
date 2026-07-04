@@ -6,7 +6,7 @@
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  */
 
-import type { PDFDocument, PDFSection, PDFSectionType } from "@shared/pdf";
+import type { PDFDocument, PDFSection, PDFSectionType } from "../shared/pdf";
 import { generatePdf } from "./pdf-engine.js";
 
 // ─── Section Weight Map ────────────────────────────────────────────────────────

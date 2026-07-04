@@ -1,4 +1,4 @@
-import type { AIModel, ServiceMode, FeatureToggles, SubscriptionTier, ModelTierMap } from "@shared/schema";
+import type { AIModel, ServiceMode, FeatureToggles, SubscriptionTier, ModelTierMap } from "../shared/schema";
 import {
   buildQuizGenerationInstructions,
   buildQuizRepairInstructions,
@@ -7,7 +7,7 @@ import {
   parseQuizRequest,
   tryParseQuizFromText,
   extractQuizTopic,
-} from "@shared/mcq";
+} from "../shared/mcq";
 import {
   buildPdfGenerationInstructions,
   buildPdfRepairInstructions,
@@ -16,7 +16,7 @@ import {
   parsePdfRequest,
   tryParsePdfFromText,
   normalizePdfObject,
-} from "@shared/pdf";
+} from "../shared/pdf";
 import { runApexOmniPipeline } from "./apex-omni/pipeline.js";
 import { getDeepSeekRequestParams, getDeepSeekStructuredParams, mapDeepSeekModelForTask } from "./deepseek-model-router.js";
 import { runApexSearch, buildApexSearchContext, extractBase64Images } from "./apex-search-engine.js";

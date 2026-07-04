@@ -1,4 +1,4 @@
-import type { User, InsertUser } from "@shared/schema";
+import type { User, InsertUser } from "../shared/schema";
 import { randomUUID } from "crypto";
 
 // Storage interface for CRUD operations

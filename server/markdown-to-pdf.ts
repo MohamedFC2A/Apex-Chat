@@ -6,9 +6,9 @@
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  */
 
-import type { Message } from "@shared/schema";
-import type { PDFDocument, PDFDocumentLanguage, PDFSection } from "@shared/pdf";
-import { detectPdfLanguage } from "@shared/pdf";
+import type { Message } from "../shared/schema";
+import type { PDFDocument, PDFDocumentLanguage, PDFSection } from "../shared/pdf";
+import { detectPdfLanguage } from "../shared/pdf";
 
 interface ConversationMessageLike {
   role: "user" | "assistant";

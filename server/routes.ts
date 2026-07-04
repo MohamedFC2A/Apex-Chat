@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import type { Server } from "http";
-import { chatRequestSchema } from "@shared/schema";
-import { detectPdfIntent, formatPdfAsCodeBlock, parsePdfRequest, tryParseAnyPdfFromText, type PDFDocument } from "@shared/pdf";
+import { chatRequestSchema } from "../shared/schema";
+import { detectPdfIntent, formatPdfAsCodeBlock, parsePdfRequest, tryParseAnyPdfFromText, type PDFDocument } from "../shared/pdf";
 import { processMessage, validateModelAccess, refinePdfDocumentWithAI, generateStructuredPdfFromText, generateMcqResponse } from "./ai-orchestrator.js";
 import { randomUUID } from "crypto";
 import { runUnboundPipeline } from "./apex-unbound/pipeline.js";
