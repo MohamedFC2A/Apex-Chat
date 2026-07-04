@@ -8,7 +8,7 @@
  */
 
 import type { Browser } from "puppeteer";
-import puppeteer from "puppeteer";
+// Puppeteer imported dynamically in initBrowser to avoid Vercel crashes
 import katex from "katex";
 import Prism from "prismjs";
 import loadLanguages from "prismjs/components/index.js";
@@ -2249,6 +2249,7 @@ export function buildPdfHtml(doc: PDFDocument): string {
 // ─── Browser Lifecycle ─────────────────────────────────────────────────────────
 export async function initBrowser(): Promise<Browser> {
   if (!browserPromise) {
+    const puppeteer = (await import("puppeteer")).default;
     browserPromise = puppeteer.launch({
       headless: true,
       args: [
