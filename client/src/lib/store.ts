@@ -24,6 +24,7 @@ interface ChatState {
 
   activeQuizProgress: { current: number; total: number } | null;
   activePdfProgress: { current: number; total: number } | null;
+  omniStates: Record<string, any>; // Persisted omniStates
 
   // Actions
   setSelectedModel: (model: AIModel) => void;
@@ -33,6 +34,7 @@ interface ChatState {
   setIsGenerating: (generating: boolean) => void;
   setActiveQuizProgress: (progress: { current: number; total: number } | null) => void;
   setActivePdfProgress: (progress: { current: number; total: number } | null) => void;
+  setOmniState: (convId: string, state: any) => void;
 
   // Conversation actions
   createConversation: () => string;
@@ -63,6 +65,7 @@ export const useChatStore = create<ChatState>()(
       isGenerating: false,
       activeQuizProgress: null,
       activePdfProgress: null,
+      omniStates: {},
       
       // Cloud Sync State
       isSyncing: false,
@@ -104,6 +107,17 @@ export const useChatStore = create<ChatState>()(
         if (!current && !progress) return;
         if (current && progress && current.current === progress.current && current.total === progress.total) return;
         set({ activePdfProgress: progress });
+      },
+      setOmniState: (convId, state) => {
+        set((s) => {
+          const next = { ...s.omniStates };
+          if (state === null) {
+            delete next[convId];
+          } else {
+            next[convId] = state;
+          }
+          return { omniStates: next };
+        });
       },
 
       createConversation: () => {
@@ -224,8 +238,12 @@ export const useChatStore = create<ChatState>()(
         });
         
         const newConversations = state.conversations.filter((c) => c.id !== id);
+        const nextOmniStates = { ...state.omniStates };
+        delete nextOmniStates[id];
+
         set({
           conversations: newConversations,
+          omniStates: nextOmniStates,
           activeConversationId:
             state.activeConversationId === id
               ? newConversations[0]?.id || null
@@ -282,7 +300,7 @@ export const useChatStore = create<ChatState>()(
         set({ conversations });
       },
       clearStore: () => {
-        set({ conversations: [], activeConversationId: null, messages: [] });
+        set({ conversations: [], activeConversationId: null, messages: [], omniStates: {} });
       },
     }),
     {
@@ -293,7 +311,8 @@ export const useChatStore = create<ChatState>()(
         reasoningLevel: state.reasoningLevel,
         conversations: state.conversations,
         activeConversationId: state.activeConversationId,
-        messages: state.messages
+        messages: state.messages,
+        omniStates: state.omniStates
       }),
     }
   )

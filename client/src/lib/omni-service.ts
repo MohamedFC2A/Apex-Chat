@@ -156,7 +156,8 @@ async function callAgent(
 export async function processOmniRequest(
   message: string,
   onStateUpdate: (state: OmniState) => void,
-  conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>
+  conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>,
+  existingState?: OmniState | null
 ): Promise<ChatResponse> {
   // Perform search once for the original user message at the very beginning of the pipeline
   let searchContext = "";
@@ -172,8 +173,11 @@ export async function processOmniRequest(
     console.error("Search failed in processOmniRequest:", err);
   }
 
-  // Initialize state
-  const initialState: OmniState = {
+  // Initialize state, merging any existing state if we are resuming
+  const initialState: OmniState = existingState ? {
+    ...existingState,
+    step: existingState.step === "complete" ? "complete" : "drafting",
+  } : {
     step: "dispatch",
     agents: {
       architect: { model: "architect", status: "loading", draft: "" },
@@ -191,8 +195,10 @@ export async function processOmniRequest(
   
   onStateUpdate(initialState);
   
-  // Stage 1: Dispatch (brief pause)
-  await delay(300);
+  // Stage 1: Dispatch (brief pause only if not resuming)
+  if (!existingState) {
+    await delay(300);
+  }
   
   // Stage 2: TERRIFYING BACKEND - 10-Agent Cognitive Architecture
   let currentState: OmniState = { ...initialState, step: "drafting" };
@@ -204,6 +210,22 @@ export async function processOmniRequest(
   
   // Execute sequentially (one by one) to show a clean step-by-step progress
   for (const agentType of agentTypes) {
+    // If we are resuming, and this agent was already completed, restore it and skip API call!
+    if (existingState?.agents?.[agentType]?.status === "complete" && existingState.agents[agentType].response) {
+      currentState = {
+        ...currentState,
+        agents: {
+          ...currentState.agents,
+          [agentType]: {
+            ...existingState.agents[agentType]
+          }
+        }
+      };
+      onStateUpdate(currentState);
+      agentResults.push({ agentType, response: existingState.agents[agentType].response || "" });
+      continue;
+    }
+
     const minDisplayTime = delay(1200); // Give user enough time to see the beautiful timeline animation
     
     currentState = {

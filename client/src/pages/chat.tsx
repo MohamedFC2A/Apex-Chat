@@ -62,10 +62,8 @@ function calculatePdfProgress(text: string): number {
 export default function ChatPage() {
   const isInitialRender = useRef(true);
   const {
-    activeConversationId,
     conversations,
-    createConversation,
-    addMessage,
+    activeConversationId,
     selectedModel,
     setSelectedModel,
     serviceMode,
@@ -74,6 +72,8 @@ export default function ChatPage() {
     sidebarOpen,
     setSidebarOpen,
     reasoningLevel,
+    omniStates,
+    setOmniState,
   } = useChatStore();
 
   const { tier } = useSubscriptionStore();
@@ -108,8 +108,7 @@ export default function ChatPage() {
   const [lastError, setLastError] = useState<string | null>(null);
   const [isExportingConversation, setIsExportingConversation] = useState(false);
 
-  const [omniStateMap, setOmniStateMap] = useState<Record<string, OmniState>>({});
-  const omniState = activeConversationId ? omniStateMap[activeConversationId] ?? null : null;
+  const omniState = activeConversationId ? omniStates[activeConversationId] ?? null : null;
 
   // Interactive Grid Spotlight Tracking
   const gridRef = useRef<HTMLDivElement>(null);
@@ -220,15 +219,8 @@ export default function ChatPage() {
   }, []);
 
   const setOmniStateForConv = useCallback((convId: string, state: OmniState | null) => {
-    setOmniStateMap(prev => {
-      if (state === null) {
-        const next = { ...prev };
-        delete next[convId];
-        return next;
-      }
-      return { ...prev, [convId]: state };
-    });
-  }, []);
+    setOmniState(convId, state);
+  }, [setOmniState]);
 
   useEffect(() => {
     const status = getAIClientStatus();
@@ -316,6 +308,7 @@ removeGodModeTheme();
 
         if (selectedModel === "apex-omni") {
           let lastReportedState: OmniState | null = null;
+          const existingOmniState = omniStates[thisConvId] || null;
           response = await processOmniRequest(
             content,
             (state) => {
@@ -325,7 +318,8 @@ removeGodModeTheme();
                 setStreamingContentForConv(thisConvId, state.finalResponse);
               }
             },
-            compactHistory
+            compactHistory,
+            existingOmniState
           );
 
           if ((response as any).error) {
@@ -485,7 +479,7 @@ removeGodModeTheme();
           model: selectedModel,
           reasoningContent: response.reasoningContent,
           timestamp: Date.now(),
-          omniState: selectedModel === "apex-omni" ? (omniStateMap[thisConvId] || undefined) : undefined,
+          omniState: selectedModel === "apex-omni" ? (omniStates[thisConvId] || undefined) : undefined,
         };
         addMessage(thisConvId!, assistantMessage);
         setIsGenerating(false);
