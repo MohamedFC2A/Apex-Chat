@@ -16,6 +16,7 @@ interface ModelSelectorProps {
   selectedModel: AIModel;
   onSelectModel: (model: AIModel) => void;
   disabled?: boolean;
+  isLocked?: boolean;
 }
 
 // Tier config — label + accent color (white shades only)
@@ -32,7 +33,7 @@ const TIERS: {
   { id: "starter", label: "STARTER", tag: "TIER 1", brightness: "text-white/50",  tagBg: "bg-white/8 text-white/40"  },
 ];
 
-export function ModelSelector({ selectedModel, onSelectModel, disabled }: ModelSelectorProps) {
+export function ModelSelector({ selectedModel, onSelectModel, disabled, isLocked }: ModelSelectorProps) {
   const { canAccessModel } = useSubscriptionStore();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -45,8 +46,19 @@ export function ModelSelector({ selectedModel, onSelectModel, disabled }: ModelS
 
   return (
     <DropdownMenu
-      open={isOpen && !disabled}
-      onOpenChange={(open) => !disabled && setIsOpen(open)}
+      open={isOpen && !disabled && !isLocked}
+      onOpenChange={(open) => {
+        if (isLocked && open) {
+          toast({
+            title: "تغيير النموذج مقفل",
+            description: "لتغيير نموذج الذكاء الاصطناعي، يرجى إنشاء محادثة جديدة للبدء بموديل آخر.",
+          });
+          return;
+        }
+        if (!disabled && !isLocked) {
+          setIsOpen(open);
+        }
+      }}
     >
       {/* ─── Trigger button ─── */}
       <DropdownMenuTrigger asChild disabled={disabled}>
@@ -68,15 +80,20 @@ export function ModelSelector({ selectedModel, onSelectModel, disabled }: ModelS
               hover:bg-white/5 hover:border-white/25
               transition-all duration-150 rounded-sm
               ${disabled ? "opacity-40 cursor-not-allowed" : ""}
+              ${isLocked ? "opacity-75 cursor-pointer border-dashed border-zinc-800" : ""}
             `}
           >
             <span className="text-white/25 text-[11px]">▶</span>
             <span className="flex-1 text-left truncate font-bold">
               {currentModelInfo?.name?.toUpperCase() ?? "SELECT MODEL"}
             </span>
-            <ChevronDown
-              className={`w-3.5 h-3.5 text-white/35 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-            />
+            {isLocked ? (
+              <Lock className="w-3.5 h-3.5 text-zinc-500 shrink-0 animate-pulse" />
+            ) : (
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-white/35 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+              />
+            )}
           </Button>
         </motion.div>
       </DropdownMenuTrigger>

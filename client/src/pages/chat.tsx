@@ -260,12 +260,12 @@ export default function ChatPage() {
     if (isGodModeModel && !currentlyApplied) {
       applyGodModeTheme();
     } else if (!isGodModeModel && currentlyApplied) {
-      removeGodModeTheme();
+removeGodModeTheme();
     }
   }, [selectedModel]);
 
   const handleSendMessage = useCallback(
-    async (content: string, displayContent?: string) => {
+    async (content: string, displayContent?: string, isRetry = false) => {
       let conversationId = activeConversationId;
       const store = useChatStore.getState();
       let existingMessages: Message[] = [];
@@ -273,20 +273,26 @@ export default function ChatPage() {
       if (!conversationId) {
         conversationId = createConversation();
       } else {
-        const conversation = store.conversations.find(c => c.id === conversationId);
+        const conversation = store.conversations.find(c => c.id === activeConversationId);
         existingMessages = conversation?.messages || [];
       }
 
       const thisConvId = conversationId;
-      const userMessage: Message = {
-        id: crypto.randomUUID(),
-        role: "user",
-        content: displayContent || content,
-        contextContent: displayContent ? content : undefined,
-        timestamp: Date.now(),
-      };
 
-      addMessage(thisConvId, userMessage);
+      if (isRetry && existingMessages.length > 0) {
+        existingMessages = existingMessages.slice(0, -1);
+      }
+
+      if (!isRetry) {
+        const userMessage: Message = {
+          id: crypto.randomUUID(),
+          role: "user",
+          content: displayContent || content,
+          contextContent: displayContent ? content : undefined,
+          timestamp: Date.now(),
+        };
+        addMessage(thisConvId, userMessage);
+      }
       setIsGenerating(true);
       setLastError(null);
       setStreamingContentForConv(thisConvId, "");
@@ -492,6 +498,25 @@ export default function ChatPage() {
         setStreamingContentForConv(thisConvId, "");
         setStreamingReasoningForConv(thisConvId, "");
 
+        const isOffline = !navigator.onLine || error.message?.includes("Failed to fetch") || error.message?.includes("network");
+        if (isOffline) {
+          toast({
+            title: "عذراً، انقطع الاتصال بالإنترنت",
+            description: "سيتم إعادة محاولة إرسال رسالتك تلقائياً فور استعادة الاتصال بالإنترنت، لا داعي لإعادة إرسالها.",
+            variant: "destructive",
+          });
+
+          const retryOnConnect = () => {
+            toast({
+              title: "تم استعادة الاتصال بالإنترنت",
+              description: "جاري استئناف إرسال الرسالة المعلقة تلقائياً...",
+            });
+            handleSendMessage(content, displayContent, true);
+          };
+          window.addEventListener("online", retryOnConnect, { once: true });
+          return;
+        }
+
         if (error.message?.includes("DeepSeek") || error.message?.includes("DEEPSEEK")) {
           toast({ title: "Cloud AI Error", description: error.message || "DeepSeek API request failed.", variant: "destructive" });
           return;
@@ -511,6 +536,27 @@ export default function ChatPage() {
     },
     [activeConversationId, createConversation, addMessage, selectedModel, serviceMode, tier, features, setIsGenerating, toast, setLocation, reasoningLevel, setOmniStateForConv, setUnboundStateForConv, setStreamingContentForConv, setStreamingReasoningForConv, streamingContentMap]
   );
+
+  useEffect(() => {
+    if (!activeConversationId || isGenerating) return;
+    const activeConv = conversations.find(c => c.id === activeConversationId);
+    if (!activeConv || activeConv.messages.length === 0) return;
+    
+    const lastMsg = activeConv.messages[activeConv.messages.length - 1];
+    if (lastMsg.role === "user") {
+      console.log("🔄 Autodetected unfinished user prompt on load/refresh. Resuming generation in 1s...");
+      const timer = setTimeout(() => {
+        const currentConv = useChatStore.getState().conversations.find(c => c.id === activeConversationId);
+        const currentLast = currentConv?.messages[currentConv.messages.length - 1];
+        if (currentLast && currentLast.role === "user" && !useChatStore.getState().isGenerating) {
+          const content = currentLast.contextContent || currentLast.content;
+          const displayContent = currentLast.contextContent ? currentLast.content : undefined;
+          handleSendMessage(content, displayContent, true);
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [activeConversationId, conversations, isGenerating, handleSendMessage]);
 
   const handleStopGenerating = useCallback(() => {
     setIsGenerating(false);
@@ -735,7 +781,12 @@ export default function ChatPage() {
               </div>
 
               <div className="flex-1 min-w-[160px] sm:flex-none sm:min-w-[200px]">
-                <ModelSelector selectedModel={selectedModel} onSelectModel={handleModelSelect} disabled={isGenerating} />
+                <ModelSelector
+                  selectedModel={selectedModel}
+                  onSelectModel={handleModelSelect}
+                  disabled={isGenerating}
+                  isLocked={!!activeConversation && activeConversation.messages.length > 0}
+                />
               </div>
             </div>
 

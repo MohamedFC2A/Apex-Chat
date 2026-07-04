@@ -388,7 +388,7 @@ export function ChatInput({
                 </TooltipContent>
               </Tooltip>
 
-              {/* Capsule: DeepSearch */}
+              {/* Capsule: Search */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -409,37 +409,11 @@ export function ChatInput({
                     )}
                   >
                     <Search className="w-3.5 h-3.5" />
-                    <span>DeepSearch</span>
+                    <span>Search</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Deep Web Research Mode</p>
-                </TooltipContent>
-              </Tooltip>
-
-              {/* Capsule: Think */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      const isCurrentlyActive = reasoningLevel === "thinking" || reasoningLevel === "overthinking";
-                      setReasoningLevel(isCurrentlyActive ? "none" : "thinking");
-                    }}
-                    className={cn(
-                      "h-8 px-3.5 rounded-full border text-[11px] font-bold transition-all duration-200 flex items-center gap-1.5 font-mono uppercase tracking-wider",
-                      (reasoningLevel === "thinking" || reasoningLevel === "overthinking")
-                        ? "border-amber-500 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-                        : "border-zinc-900 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 hover:border-zinc-800"
-                    )}
-                  >
-                    <Brain className="w-3.5 h-3.5" />
-                    <span>Think</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Chain of Thought / System Reasoning</p>
+                  <p>Web Search Mode</p>
                 </TooltipContent>
               </Tooltip>
 
@@ -500,36 +474,6 @@ export function ChatInput({
                   <p>Styled Document Compilation (PDF)</p>
                 </TooltipContent>
               </Tooltip>
-
-              {/* Capsule: Unbound (Only if canUseGodMode() is true) */}
-              {canUseGodMode() && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const isCurrentlyActive = selectedModel === "apex-unbound";
-                        setSelectedModel(isCurrentlyActive ? "apex-flash" : "apex-unbound");
-                        // Turn off other generators when turning on unbound
-                        setSelectedGenType(null);
-                      }}
-                      className={cn(
-                        "h-8 px-3.5 rounded-full border text-[11px] font-bold transition-all duration-200 flex items-center gap-1.5 font-mono uppercase tracking-wider",
-                        selectedModel === "apex-unbound"
-                          ? "border-purple-500 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20"
-                          : "border-zinc-900 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 hover:border-zinc-800"
-                      )}
-                    >
-                      <Code2 className="w-3.5 h-3.5" />
-                      <span>Unbound</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Multi-agent interface builder</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
             </div>
 
             {/* Omni-Status Card Sources button helper inside input row if needed */}

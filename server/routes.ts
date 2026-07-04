@@ -336,6 +336,16 @@ export async function registerRoutes(
         enrichToc: true,
       });
 
+      if (process.env.VERCEL) {
+        console.log("ℹ️ Vercel environment detected. Bypassing Puppeteer to return styled HTML print fallback.");
+        const html = buildPdfHtml(optimizedDoc);
+        return res.status(200).json({
+          fallbackHtml: true,
+          html,
+          title: pdfDocument.title,
+        });
+      }
+
       const pdfBuffer = await generateOptimizedPdf(optimizedDoc, {
         theme: options?.theme === "light" ? "light" : options?.theme === "dark" ? "dark" : pdfDocument.theme,
         pageSize: options?.pageSize === "letter" ? "letter" : "a4",
