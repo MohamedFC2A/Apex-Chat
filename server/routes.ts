@@ -347,7 +347,38 @@ export async function registerRoutes(
       res.setHeader("Content-Length", pdfBuffer.length);
       res.send(pdfBuffer);
     } catch (error) {
-      console.error("PDF generation failed:", error);
+      console.error("PDF generation failed, falling back to styled HTML:", error);
+      
+      try {
+        const { document, content, messages, exportType } = req.body || {};
+        let pdfDocument: PDFDocument;
+
+        if (exportType === "structured" && document) {
+          pdfDocument = normalizeStructuredPdfDocument(document);
+        } else if (exportType === "conversation") {
+          pdfDocument = conversationToPdfDocument(Array.isArray(messages) ? messages : content);
+        } else if (exportType === "message" && typeof content === "string") {
+          pdfDocument = markdownToPdfDocument(content);
+        } else {
+          throw new Error("Invalid export request type for fallback");
+        }
+
+        const optimizedDoc = optimizePdfDocument(pdfDocument, {
+          deduplication: true,
+          mergeShortParagraphs: true,
+          enrichToc: true,
+        });
+
+        const html = buildPdfHtml(optimizedDoc);
+        return res.status(200).json({
+          fallbackHtml: true,
+          html,
+          title: pdfDocument.title,
+        });
+      } catch (fallbackErr: any) {
+        console.error("HTML Fallback generation failed:", fallbackErr.message);
+      }
+
       res.status(500).json({
         error: "Failed to generate PDF",
         message: error instanceof Error ? error.message : "Unknown error",

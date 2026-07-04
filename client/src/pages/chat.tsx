@@ -612,6 +612,27 @@ export default function ChatPage() {
         throw new Error(error?.message || `PDF export failed with status ${response.status}`);
       }
 
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        const data = await response.json();
+        if (data.fallbackHtml && data.html) {
+          toast({
+            title: "تصدير مباشر عبر المتصفح",
+            description: "سيتم فتح نافذة الطباعة الخاصة بالمتصفح تلقائياً. يرجى اختيار 'حفظ بتنسيق PDF'.",
+          });
+          const printWindow = window.open("", "_blank");
+          if (printWindow) {
+            printWindow.document.write(data.html);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+              printWindow.print();
+            }, 1000);
+          }
+          return;
+        }
+      }
+
       const blob = await response.blob();
       const disposition = response.headers.get("content-disposition") || "";
       let filename = "apex-conversation.pdf";

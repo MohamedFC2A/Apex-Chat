@@ -2461,6 +2461,29 @@ function AssistantMessage({
         throw new Error(error?.message || `PDF export failed with status ${response.status}`);
       }
 
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        const data = await response.json();
+        if (data.fallbackHtml && data.html) {
+          toast({
+            title: isRtlMessage ? "تصدير مباشر عبر المتصفح" : "Browser Direct Export",
+            description: isRtlMessage
+              ? "سيتم فتح نافذة الطباعة الخاصة بالمتصفح تلقائياً. يرجى اختيار 'حفظ بتنسيق PDF'."
+              : "Opening browser print dialog automatically. Select 'Save as PDF' to save.",
+          });
+          const printWindow = window.open("", "_blank");
+          if (printWindow) {
+            printWindow.document.write(data.html);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+              printWindow.print();
+            }, 1000);
+          }
+          return;
+        }
+      }
+
       const blob = await response.blob();
       const disposition = response.headers.get("content-disposition") || "";
       let filename = "apex-message.pdf";

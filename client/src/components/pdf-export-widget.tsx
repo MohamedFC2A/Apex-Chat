@@ -536,6 +536,28 @@ export function PDFExportWidget({ jsonText, intentVerified }: { jsonText: string
             throw new Error(error?.message || `PDF export failed with status ${response.status}`);
           }
 
+          if (contentType.includes("application/json")) {
+            const data = await response.json();
+            if (data.fallbackHtml && data.html) {
+              toast({
+                title: doc.language !== "en" ? "تصدير مباشر عبر المتصفح" : "Browser Direct Export",
+                description: doc.language !== "en"
+                  ? "سيتم فتح نافذة الطباعة الخاصة بالمتصفح تلقائياً. يرجى اختيار 'حفظ بتنسيق PDF'."
+                  : "Opening browser print dialog automatically. Select 'Save as PDF' to save.",
+              });
+              const printWindow = window.open("", "_blank");
+              if (printWindow) {
+                printWindow.document.write(data.html);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => {
+                  printWindow.print();
+                }, 1000);
+              }
+              return;
+            }
+          }
+
           const blob = await response.blob();
           const filename = `${doc.title.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "").trim() || "apex-document"}.pdf`;
           setProgress(100);
@@ -672,6 +694,28 @@ export function PDFExportWidget({ jsonText, intentVerified }: { jsonText: string
       if (!response.ok) {
         const error = await response.json().catch(() => null);
         throw new Error(error?.message || `PDF export failed with status ${response.status}`);
+      }
+
+      if (contentType.includes("application/json")) {
+        const data = await response.json();
+        if (data.fallbackHtml && data.html) {
+          toast({
+            title: isRtl ? "تصدير مباشر عبر المتصفح" : "Browser Direct Export",
+            description: isRtl
+              ? "سيتم فتح نافذة الطباعة الخاصة بالمتصفح تلقائياً. يرجى اختيار 'حفظ بتنسيق PDF'."
+              : "Opening browser print dialog automatically. Select 'Save as PDF' to save.",
+          });
+          const printWindow = window.open("", "_blank");
+          if (printWindow) {
+            printWindow.document.write(data.html);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+              printWindow.print();
+            }, 1000);
+          }
+          return;
+        }
       }
 
       const blob = await response.blob();
