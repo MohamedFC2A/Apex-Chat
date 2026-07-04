@@ -7,7 +7,7 @@
  */
 
 import type { PDFDocument, PDFSection, PDFSectionType } from "../shared/pdf.js";
-import { generatePdf } from "./pdf-engine.js";
+// generatePdf is loaded dynamically in processNext to prevent eager loading of pdf-engine and its heavy dependencies
 
 // ─── Section Weight Map ────────────────────────────────────────────────────────
 // Each section type has an estimated "height unit" (relative to a page ≈ 2200u)
@@ -296,7 +296,8 @@ class PdfWorkerPool {
       return;
     }
 
-    generatePdf(job.doc, job.overrides)
+    import("./pdf-engine.js")
+      .then(({ generatePdf }) => generatePdf(job.doc, job.overrides))
       .then((buffer) => {
         job.resolve(buffer);
       })
