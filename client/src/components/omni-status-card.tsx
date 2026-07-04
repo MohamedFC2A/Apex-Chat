@@ -100,14 +100,22 @@ function ActiveStepProgress({ agentKey, color }: { agentKey: string; color: stri
 
   useEffect(() => {
     setPct(0);
-    const duration = 12000; // match the 1200ms minDisplayTime in processOmniRequest
+    // Realistically, the agent takes between 1.2s and 4s to run.
+    // We climb quickly to 60% in 500ms, then to 85% in the next 1000ms,
+    // and then crawl slowly (e.g. 1% every 350ms) up to 98% until it completes.
     const startTime = Date.now();
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
-      const computed = Math.min(95, Math.round((elapsed / duration) * 100));
+      let computed = 0;
+      if (elapsed < 500) {
+        computed = Math.round((elapsed / 500) * 60);
+      } else if (elapsed < 1500) {
+        computed = 60 + Math.round(((elapsed - 500) / 1000) * 25);
+      } else {
+        computed = 85 + Math.min(13, Math.floor((elapsed - 1500) / 350));
+      }
       setPct(computed);
-      if (elapsed >= duration) clearInterval(interval);
-    }, 80);
+    }, 50);
     return () => clearInterval(interval);
   }, [agentKey]);
 
