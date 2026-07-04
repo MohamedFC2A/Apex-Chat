@@ -215,20 +215,16 @@ function QuizOptionCard({
 }
 
 export function MCQQuizLoadingCard() {
-  const [progress, setProgress] = useState(0);
+  const activeQuizProgress = useChatStore((state) => state.activeQuizProgress);
+  const progress = activeQuizProgress ? Math.min(99, Math.round((activeQuizProgress.current / activeQuizProgress.total) * 100)) : 10;
   const [factIndex, setFactIndex] = useState(0);
 
   useEffect(() => {
-    const progressInterval = setInterval(() => {
-      setProgress((prev) => (prev < 98 ? prev + Math.floor(Math.random() * 4) + 1 : 98));
-    }, 120);
-
     const factInterval = setInterval(() => {
       setFactIndex((prev) => (prev + 1) % factsArabic.length);
     }, 3000);
 
     return () => {
-      clearInterval(progressInterval);
       clearInterval(factInterval);
     };
   }, []);

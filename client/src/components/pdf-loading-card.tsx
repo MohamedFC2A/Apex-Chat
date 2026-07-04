@@ -17,12 +17,15 @@ const factsEnglish = [
   "Code highlighting is prepared server-side for stable PDF output.",
 ];
 
+import { useChatStore } from "@/lib/store";
+
 interface PDFLoadingCardProps {
   language?: "ar" | "en" | "mixed";
 }
 
 export function PDFLoadingCard({ language = "ar" }: PDFLoadingCardProps) {
-  const [progress, setProgress] = useState(10);
+  const activePdfProgress = useChatStore((state) => state.activePdfProgress);
+  const progress = activePdfProgress ? Math.min(99, Math.round((activePdfProgress.current / activePdfProgress.total) * 100)) : 10;
   const [stepIndex, setStepIndex] = useState(0);
   const [factIndex, setFactIndex] = useState(0);
 
@@ -44,10 +47,6 @@ export function PDFLoadingCard({ language = "ar" }: PDFLoadingCardProps) {
   const facts = language === "en" ? factsEnglish : factsArabic;
 
   useEffect(() => {
-    const progressTimer = window.setInterval(() => {
-      setProgress((value) => (value >= 92 ? value : value + Math.floor(Math.random() * 10) + 2));
-    }, 220);
-
     const stepTimer = window.setInterval(() => {
       setStepIndex((value) => (value + 1) % steps.length);
     }, 1800);
@@ -57,7 +56,6 @@ export function PDFLoadingCard({ language = "ar" }: PDFLoadingCardProps) {
     }, 2600);
 
     return () => {
-      window.clearInterval(progressTimer);
       window.clearInterval(stepTimer);
       window.clearInterval(factTimer);
     };

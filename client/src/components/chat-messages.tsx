@@ -1997,12 +1997,14 @@ export function ChatMessages({
 
   const isQuizRequest = useMemo(() => {
     if (!lastUserMessage) return false;
-    return detectQuizIntent(lastUserMessage.content);
+    const promptText = lastUserMessage.contextContent ?? lastUserMessage.content ?? "";
+    return detectQuizIntent(promptText);
   }, [lastUserMessage]);
 
   const isPdfRequest = useMemo(() => {
     if (!lastUserMessage) return false;
-    return detectPdfIntent(lastUserMessage.content);
+    const promptText = lastUserMessage.contextContent ?? lastUserMessage.content ?? "";
+    return detectPdfIntent(promptText);
   }, [lastUserMessage]);
 
   useEffect(() => {
@@ -2823,12 +2825,14 @@ function AssistantMessage({
             <div className="prose dark:prose-invert max-w-none">
               {mcqState.hasPendingBlock && isStreaming && <MCQQuizLoadingCard />}
               {pdfState.hasPendingBlock && isStreaming && <PDFLoadingCard language={/[\u0600-\u06FF]/.test(cleanContent) ? "ar" : "en"} />}
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={markdownComponents}
-              >
-                {cleanedMarkdown}
-              </ReactMarkdown>
+              {!(isStreaming && (mcqState.hasPendingBlock || pdfState.hasPendingBlock)) && (
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={markdownComponents}
+                >
+                  {cleanedMarkdown}
+                </ReactMarkdown>
+              )}
             </div>
             {/* Website Preview Banner — appears for ANY model that generates HTML */}
             {detectedHtml && !isStreaming && !isPipelineActive && (

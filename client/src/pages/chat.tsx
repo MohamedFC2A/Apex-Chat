@@ -29,6 +29,36 @@ import { detectQuizIntent } from "@shared/mcq";
 import { detectPdfIntent } from "@shared/pdf";
 import { useToast } from "@/hooks/use-toast";
 
+function calculateQuizProgress(text: string): number {
+  const matches = text.match(/"question"\s*:/gi) || [];
+  const questionsCount = matches.length;
+  let baseProgress = Math.min(5, questionsCount) * 18;
+  const lastIndex = text.lastIndexOf('"question"');
+  let extraChars = 0;
+  if (lastIndex !== -1) {
+    extraChars = text.length - lastIndex;
+  } else {
+    extraChars = text.length;
+  }
+  const charFactor = Math.min(15, (extraChars / 500) * 15);
+  return Math.min(99, Math.round(5 + baseProgress + charFactor));
+}
+
+function calculatePdfProgress(text: string): number {
+  const matches = text.match(/"title"\s*:/gi) || [];
+  const sectionsCount = Math.max(0, matches.length - 1);
+  let baseProgress = Math.min(6, sectionsCount) * 15;
+  const lastIndex = text.lastIndexOf('"title"');
+  let extraChars = 0;
+  if (lastIndex !== -1) {
+    extraChars = text.length - lastIndex;
+  } else {
+    extraChars = text.length;
+  }
+  const charFactor = Math.min(12, (extraChars / 800) * 12);
+  return Math.min(99, Math.round(5 + baseProgress + charFactor));
+}
+
 export default function ChatPage() {
   const isInitialRender = useRef(true);
   const {
@@ -264,22 +294,11 @@ export default function ChatPage() {
 
       const isQuiz = detectQuizIntent(content);
       const isPdf = detectPdfIntent(content);
-      let progressInterval: any;
 
       if (isQuiz) {
         store.setActiveQuizProgress({ current: 5, total: 100 });
-        let currentProgress = 5;
-        progressInterval = window.setInterval(() => {
-          currentProgress = currentProgress >= 92 ? currentProgress : currentProgress + Math.floor(Math.random() * 4) + 1;
-          store.setActiveQuizProgress({ current: currentProgress, total: 100 });
-        }, 400);
       } else if (isPdf) {
         store.setActivePdfProgress({ current: 5, total: 100 });
-        let currentProgress = 5;
-        progressInterval = window.setInterval(() => {
-          currentProgress = currentProgress >= 92 ? currentProgress : currentProgress + Math.floor(Math.random() * 4) + 1;
-          store.setActivePdfProgress({ current: currentProgress, total: 100 });
-        }, 400);
       }
 
       try {
@@ -400,6 +419,13 @@ export default function ChatPage() {
               (chunkText, chunkReasoning) => {
                 setStreamingContentForConv(thisConvId, chunkText);
                 setStreamingReasoningForConv(thisConvId, chunkReasoning);
+                if (isQuiz) {
+                  const currentProgress = calculateQuizProgress(chunkText);
+                  store.setActiveQuizProgress({ current: currentProgress, total: 100 });
+                } else if (isPdf) {
+                  const currentProgress = calculatePdfProgress(chunkText);
+                  store.setActivePdfProgress({ current: currentProgress, total: 100 });
+                }
               },
               userMemoryContext
             );
@@ -430,6 +456,13 @@ export default function ChatPage() {
             (chunkText, chunkReasoning) => {
               setStreamingContentForConv(thisConvId, chunkText);
               setStreamingReasoningForConv(thisConvId, chunkReasoning);
+              if (isQuiz) {
+                const currentProgress = calculateQuizProgress(chunkText);
+                store.setActiveQuizProgress({ current: currentProgress, total: 100 });
+              } else if (isPdf) {
+                const currentProgress = calculatePdfProgress(chunkText);
+                store.setActivePdfProgress({ current: currentProgress, total: 100 });
+              }
             },
             userMemoryContext
           );
@@ -472,9 +505,6 @@ export default function ChatPage() {
           toast({ title: "Error", description: error.message || "Failed to process message. Please try again.", variant: "destructive" });
         }
       } finally {
-        if (progressInterval) {
-          window.clearInterval(progressInterval);
-        }
         store.setActiveQuizProgress(null);
         store.setActivePdfProgress(null);
       }
