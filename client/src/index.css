@@ -884,3 +884,6 @@ body.god-mode .border {
     rgba(255,255,255,0.012) 4px
   );
 }
+
+/* Hide Replit Badge */
+#__replit_badge, #replit-badge, .replit-badge { display: none !important; pointer-events: none !important; z-index: -1 !important; visibility: hidden !important; opacity: 0 !important; }
