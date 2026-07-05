@@ -74,6 +74,8 @@ export default function ChatPage() {
     reasoningLevel,
     omniStates,
     setOmniState,
+    createConversation,
+    addMessage,
   } = useChatStore();
 
   const { tier } = useSubscriptionStore();
@@ -224,7 +226,6 @@ export default function ChatPage() {
 
   useEffect(() => {
     const status = getAIClientStatus();
-    console.log("AI Client Status:", status);
 
     // Prune any empty conversations from local storage/store on page load
     const state = useChatStore.getState();
@@ -269,7 +270,7 @@ removeGodModeTheme();
         existingMessages = conversation?.messages || [];
       }
 
-      const thisConvId = conversationId;
+      const thisConvId = conversationId!;
 
       if (isRetry && existingMessages.length > 0) {
         existingMessages = existingMessages.slice(0, -1);
@@ -528,7 +529,7 @@ removeGodModeTheme();
         store.setActivePdfProgress(null);
       }
     },
-    [activeConversationId, createConversation, addMessage, selectedModel, serviceMode, tier, features, setIsGenerating, toast, setLocation, reasoningLevel, setOmniStateForConv, setUnboundStateForConv, setStreamingContentForConv, setStreamingReasoningForConv, streamingContentMap]
+    [activeConversationId, selectedModel, serviceMode, tier, features, setIsGenerating, toast, setLocation, reasoningLevel, setOmniStateForConv, setUnboundStateForConv, setStreamingContentForConv, setStreamingReasoningForConv, streamingContentMap, createConversation, addMessage]
   );
 
   useEffect(() => {
@@ -538,7 +539,6 @@ removeGodModeTheme();
     
     const lastMsg = activeConv.messages[activeConv.messages.length - 1];
     if (lastMsg.role === "user") {
-      console.log("🔄 Autodetected unfinished user prompt on load/refresh. Resuming generation in 1s...");
       const timer = setTimeout(() => {
         const currentConv = useChatStore.getState().conversations.find(c => c.id === activeConversationId);
         const currentLast = currentConv?.messages[currentConv.messages.length - 1];

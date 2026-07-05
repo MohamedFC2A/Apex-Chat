@@ -4,9 +4,9 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
-.env.local
-.env.production
 .env
+.env.*
+!.env.example
 .firebase
 .playwright-cli
 output/*.pdf

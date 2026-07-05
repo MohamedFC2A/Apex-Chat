@@ -45,7 +45,7 @@ export const useAuthStore = create<AuthStore>()(
       user: null,
       isLoading: true,
 
-      setUser: (supabaseUser, tier = "omni", walletData) => {
+      setUser: (supabaseUser, tier = "starter", walletData) => {
         if (!supabaseUser) {
           set({ user: null, isLoading: false });
           return;
@@ -56,7 +56,7 @@ export const useAuthStore = create<AuthStore>()(
           email: supabaseUser.email || null,
           displayName: supabaseUser.user_metadata?.display_name || supabaseUser.user_metadata?.full_name || null,
           photoURL: supabaseUser.user_metadata?.avatar_url || null,
-          tier: "omni",
+          tier,
           createdAt: Date.now(),
           wallet: walletData?.wallet || DEFAULT_WALLET,
           subscription: walletData?.subscription || DEFAULT_SUBSCRIPTION,
@@ -68,7 +68,7 @@ export const useAuthStore = create<AuthStore>()(
 
       updateTier: (tier) =>
         set((state) => ({
-          user: state.user ? { ...state.user, tier: "omni" } : null,
+          user: state.user ? { ...state.user, tier } : null,
         })),
 
       updateWallet: (wallet) =>

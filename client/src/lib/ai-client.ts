@@ -475,7 +475,7 @@ async function generateDedicatedPdfDirect(
   };
 }
 
-const SERPER_API_KEY = import.meta.env.VITE_SERPER_API_KEY || "0adc781c41f363a53ce1f72f199f494b9436bafd";
+const SERPER_API_KEY = import.meta.env.VITE_SERPER_API_KEY || "";
 
 function scoreSerperImage(img: any, query: string): number {
   if (!img.imageUrl) return -9999;
@@ -648,7 +648,6 @@ Output ONLY a raw JSON object in this format (no markdown, no backticks, no wrap
       const cleanJson = content.replace(/```json|```/g, "").trim();
       const parsed = JSON.parse(cleanJson);
       if (parsed.textQuery && parsed.imageQuery) {
-        console.log(`[Client Query Optimizer] Optimized queries: text="${parsed.textQuery}", image="${parsed.imageQuery}"`);
         return {
           textQuery: parsed.textQuery,
           imageQuery: parsed.imageQuery
@@ -677,7 +676,6 @@ export async function clientPerformSerperSearch(query: string, deepseekKey: stri
 }> {
   try {
     const { textQuery, imageQuery } = await clientOptimizeSearchQueries(query, deepseekKey);
-    console.log(`[Client Serper API] Performing full search: textQuery="${textQuery}", imageQuery="${imageQuery}"...`);
     
     // 1. Text Search request (fetch 100 results to filter and deduplicate down to top 60)
     const searchPromise = fetch("https://google.serper.dev/search", {
@@ -812,9 +810,7 @@ export async function clientPerformSerperSearch(query: string, deepseekKey: stri
       }));
       scoredImages.sort((a: any, b: any) => b.score - a.score);
       
-      console.log(`[Client Serper API] Scored images for optimized image query: "${imageQuery}"`);
       scoredImages.slice(0, 3).forEach((item: any, idx: number) => {
-        console.log(`  Candidate ${idx + 1}: ${item.img.imageUrl} (Score: ${item.score}, Source: ${item.img.source})`);
       });
 
       const bestImage = scoredImages[0];
@@ -998,7 +994,6 @@ export async function callDeepSeekDirect(
       }
       if (searchData.image) {
         foundImage = searchData.image;
-        console.log(`[Client Serper API] Found highly matching image to embed: title="${foundImage.title}", url="${foundImage.imageUrl}"`);
       }
     } catch (searchErr) {
       console.error("Client search fetch failed, continuing without search results:", searchErr);
@@ -1118,8 +1113,6 @@ Do not repeat or generate another markdown image for this URL in your response c
     { role: "user", content: effectiveUserMessage }
   ];
 
-  console.log(`☁️ Directly calling DeepSeek Cloud (${actualModel}) from browser...`);
-
   const shouldEnableThinking = model === "apex-omni" || features.thinking || features.deepResearch || reasoningLevel !== "none";
 
   const requestBody: any = {
@@ -1235,7 +1228,6 @@ Do not repeat or generate another markdown image for this URL in your response c
     }
   } else {
     const data = await response.json();
-    console.log("✅ DeepSeek response received directly");
     let content = data.choices[0].message.content || "";
     const reasoningContent = data.choices[0].message.reasoning_content || undefined;
 
@@ -1278,7 +1270,6 @@ export async function sendAIMessage(
   userMemoryContext?: Array<{ title: string; lastQuery: string; summary?: string; relevance?: number; updatedAt?: number }>
 ): Promise<ChatResponse> {
   try {
-    console.log(`☁️ Cloud AI: Routing to backend proxy for DeepSeek (${model}) (stream: ${!!onChunk})`);
     
     let response;
     try {

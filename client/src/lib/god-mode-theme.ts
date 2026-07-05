@@ -21,7 +21,6 @@ export const godModeTheme = {
 export function applyGodModeTheme() {
     // DO NOTHING - We don't want to change the global theme anymore
     // The bug was caused by applying the 'god-mode' class to body
-    console.log("⚡ God Mode ACTIVE - Subtle UI indicators only");
 }
 
 /**
@@ -30,5 +29,4 @@ export function applyGodModeTheme() {
 export function removeGodModeTheme() {
     // Clean up in case the old god-mode class was applied
     document.body.classList.remove("god-mode");
-    console.log("✅ God Mode INACTIVE");
 }

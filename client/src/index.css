@@ -887,3 +887,35 @@ body.god-mode .border {
 
 /* Hide Replit Badge */
 #__replit_badge, #replit-badge, .replit-badge { display: none !important; pointer-events: none !important; z-index: -1 !important; visibility: hidden !important; opacity: 0 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODEL SELECTOR — Premium Dark Dropdown Styles
+════════════════════════════════════════════════════════════════════ */
+
+/* Glowing pulse dot in the dropdown header */
+@keyframes apex-pulse-glow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(99,102,241,0.8); }
+  50%       { opacity: 0.55; box-shadow: 0 0 4px rgba(99,102,241,0.4); }
+}
+
+/* Custom scrollbar for the model list */
+[data-radix-popper-content-wrapper] *::-webkit-scrollbar {
+  width: 4px;
+}
+[data-radix-popper-content-wrapper] *::-webkit-scrollbar-track {
+  background: transparent;
+}
+[data-radix-popper-content-wrapper] *::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 999px;
+}
+[data-radix-popper-content-wrapper] *::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.6);
+}
+
+/* Trigger button glow on open state */
+.model-selector-btn[data-state="open"] {
+  border-color: rgba(139,92,246,0.5) !important;
+  box-shadow: 0 0 0 1px rgba(139,92,246,0.4), 0 0 14px rgba(139,92,246,0.15) !important;
+}
+

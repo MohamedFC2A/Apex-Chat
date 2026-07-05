@@ -21,9 +21,9 @@ const tierHierarchy = { starter: 0, pro: 1, elite: 2, omni: 3 };
 export const useSubscriptionStore = create<SubscriptionStore>()(
     persist(
         (set, get) => ({
-            tier: "omni", // Temporarily forced to highest tier
+            tier: "starter",
 
-            setTier: (tier) => set({ tier: "omni" }),
+            setTier: (tier) => set({ tier }),
 
             redeemVoucher: async (code) => {
                 try {
