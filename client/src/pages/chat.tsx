@@ -74,6 +74,8 @@ export default function ChatPage() {
     reasoningLevel,
     omniStates,
     setOmniState,
+    createConversation,
+    addMessage,
   } = useChatStore();
 
   const { tier } = useSubscriptionStore();
@@ -258,13 +260,11 @@ removeGodModeTheme();
 
   const handleSendMessage = useCallback(
     async (content: string, displayContent?: string, isRetry = false) => {
-      let conversationId = activeConversationId;
+      let conversationId: string = activeConversationId ?? createConversation();
       const store = useChatStore.getState();
       let existingMessages: Message[] = [];
 
-      if (!conversationId) {
-        conversationId = createConversation();
-      } else {
+      if (activeConversationId) {
         const conversation = store.conversations.find(c => c.id === activeConversationId);
         existingMessages = conversation?.messages || [];
       }
@@ -400,7 +400,7 @@ removeGodModeTheme();
                 model: selectedModel,
                 timestamp: Date.now(),
               };
-              addMessage(thisConvId!, unboundMessage);
+              addMessage(thisConvId, unboundMessage);
               setIsGenerating(false);
               setStreamingContentForConv(thisConvId, "");
               setStreamingReasoningForConv(thisConvId, "");
@@ -438,7 +438,7 @@ removeGodModeTheme();
               model: selectedModel,
               timestamp: Date.now(),
             };
-            addMessage(thisConvId!, fallbackMessage);
+            addMessage(thisConvId, fallbackMessage);
             setIsGenerating(false);
             setStreamingContentForConv(thisConvId, "");
             setStreamingReasoningForConv(thisConvId, "");
@@ -481,7 +481,7 @@ removeGodModeTheme();
           timestamp: Date.now(),
           omniState: selectedModel === "apex-omni" ? (omniStates[thisConvId] || undefined) : undefined,
         };
-        addMessage(thisConvId!, assistantMessage);
+        addMessage(thisConvId, assistantMessage);
         setIsGenerating(false);
         setStreamingContentForConv(thisConvId, "");
         setStreamingReasoningForConv(thisConvId, "");
@@ -528,7 +528,7 @@ removeGodModeTheme();
         store.setActivePdfProgress(null);
       }
     },
-    [activeConversationId, createConversation, addMessage, selectedModel, serviceMode, tier, features, setIsGenerating, toast, setLocation, reasoningLevel, setOmniStateForConv, setUnboundStateForConv, setStreamingContentForConv, setStreamingReasoningForConv, streamingContentMap]
+    [activeConversationId, createConversation, addMessage, selectedModel, serviceMode, features, setIsGenerating, toast, setLocation, reasoningLevel, setOmniStateForConv, setUnboundStateForConv, setStreamingContentForConv, setStreamingReasoningForConv, streamingContentMap]
   );
 
   useEffect(() => {
@@ -615,7 +615,7 @@ removeGodModeTheme();
         model: selectedModel,
         timestamp: Date.now(),
       };
-      addMessage(thisConvId!, unboundMessage);
+      addMessage(thisConvId, unboundMessage);
       setIsGenerating(false);
       setStreamingContentForConv(thisConvId, "");
       setStreamingReasoningForConv(thisConvId, "");
