@@ -21,7 +21,7 @@ const tierHierarchy = { starter: 0, pro: 1, elite: 2, omni: 3 };
 export const useSubscriptionStore = create<SubscriptionStore>()(
     persist(
         (set, get) => ({
-            tier: "starter",
+            tier: "omni",
 
             setTier: (tier) => set({ tier }),
 

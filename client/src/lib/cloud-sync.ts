@@ -4,7 +4,7 @@
  * localStorage serves as temporary cache, Supabase is source of truth
  */
 
-import { supabase } from "./supabase";
+import { supabase, isSupabaseConfigured } from "./supabase";
 import type { Conversation } from "@shared/schema";
 
 // ========== TYPES ==========
@@ -105,7 +105,7 @@ function parseSupabaseError(error: any): SyncError {
 }
 
 function shouldAttemptSync(): boolean {
-    return syncState.isOnline && !syncState.permissionDenied;
+    return isSupabaseConfigured && syncState.isOnline && !syncState.permissionDenied;
 }
 
 /**

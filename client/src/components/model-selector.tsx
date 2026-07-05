@@ -230,97 +230,81 @@ export function ModelSelector({
     >
       {/* ─── Trigger ─── */}
       <DropdownMenuTrigger asChild disabled={disabled}>
-        <motion.div
-          whileHover={disabled ? {} : { scale: 1.015 }}
-          whileTap={disabled ? {} : { scale: 0.985 }}
-          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        <Button
+          variant="outline"
+          disabled={disabled}
+          className={[
+            "model-selector-btn h-9 px-3 gap-2.5",
+            "min-w-[170px] sm:min-w-[230px] justify-start",
+            "bg-[#09090b] border border-white/[0.08]",
+            "font-mono text-[11px] tracking-widest uppercase text-white",
+            "hover:bg-white/[0.04] hover:border-white/[0.18]",
+            "transition-all duration-150 rounded-[6px] active:scale-[0.98]",
+            "relative overflow-hidden",
+            disabled ? "opacity-40 cursor-not-allowed" : "",
+            isLocked ? "opacity-70 cursor-pointer border-dashed border-zinc-700" : "",
+          ].join(" ")}
+          style={
+            !disabled && !isLocked
+              ? {
+                  boxShadow: isOpen
+                    ? `0 0 0 1px ${currentCardCfg.iconColor}30, 0 0 12px ${currentCardCfg.iconColor}15`
+                    : "none",
+                  borderColor: isOpen ? `${currentCardCfg.iconColor}50` : undefined,
+                }
+              : {}
+          }
         >
-          <Button
-            variant="outline"
-            disabled={disabled}
-            className={[
-              "model-selector-btn h-9 px-3 gap-2.5",
-              "min-w-[170px] sm:min-w-[230px] justify-start",
-              "bg-[#09090b] border border-white/[0.08]",
-              "font-mono text-[11px] tracking-widest uppercase text-white",
-              "hover:bg-white/[0.04] hover:border-white/[0.18]",
-              "transition-all duration-200 rounded-[6px]",
-              "relative overflow-hidden",
-              disabled ? "opacity-40 cursor-not-allowed" : "",
-              isLocked ? "opacity-70 cursor-pointer border-dashed border-zinc-700" : "",
-            ].join(" ")}
-            style={
-              !disabled && !isLocked
-                ? {
-                    boxShadow: isOpen
-                      ? `0 0 0 1px ${currentCardCfg.activeBorder}, 0 0 16px ${currentCardCfg.activeBorder}33`
-                      : "none",
-                    borderColor: isOpen ? currentCardCfg.activeBorder : undefined,
-                  }
-                : {}
-            }
-          >
-            {/* Animated shimmer strip */}
-            {isOpen && (
-              <span
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background: `linear-gradient(90deg, transparent 0%, ${currentCardCfg.iconColor}08 50%, transparent 100%)`,
-                }}
-              />
-            )}
+          {/* Icon */}
+          <span className="shrink-0 relative z-10 opacity-80">
+            {(() => {
+              const Icon = MODEL_ICONS[selectedModel];
+              return <Icon color={currentCardCfg.iconColor} glow="none" />;
+            })()}
+          </span>
 
-            {/* Icon */}
-            <span className="shrink-0 relative z-10 opacity-80">
-              {(() => {
-                const Icon = MODEL_ICONS[selectedModel];
-                return <Icon color={currentCardCfg.iconColor} glow={currentCardCfg.iconGlow} />;
-              })()}
-            </span>
+          {/* Label */}
+          <span className="flex-1 text-left truncate font-bold relative z-10" style={{ color: "#e2e8f0" }}>
+            {currentModelInfo?.name?.toUpperCase() ?? "SELECT MODEL"}
+          </span>
 
-            {/* Label */}
-            <span className="flex-1 text-left truncate font-bold relative z-10" style={{ color: "#e2e8f0" }}>
-              {currentModelInfo?.name?.toUpperCase() ?? "SELECT MODEL"}
-            </span>
-
-            {/* Right icon */}
-            {isLocked ? (
-              <Lock className="w-3.5 h-3.5 text-zinc-500 shrink-0 animate-pulse relative z-10" />
-            ) : (
-              <ChevronDown
-                className={`w-3.5 h-3.5 text-white/30 transition-transform duration-200 shrink-0 relative z-10 ${isOpen ? "rotate-180" : ""}`}
-              />
-            )}
-          </Button>
-        </motion.div>
+          {/* Right icon */}
+          {isLocked ? (
+            <Lock className="w-3.5 h-3.5 text-zinc-500 shrink-0 animate-pulse relative z-10" />
+          ) : (
+            <ChevronDown
+              className={`w-3.5 h-3.5 text-white/30 transition-transform duration-200 shrink-0 relative z-10 ${isOpen ? "rotate-180" : ""}`}
+            />
+          )}
+        </Button>
       </DropdownMenuTrigger>
 
       {/* ─── Dropdown Panel ─── */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.97 }}
-            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.1, ease: "easeOut" }}
           >
             <DropdownMenuContent
               forceMount
               align="start"
-              sideOffset={8}
+              sideOffset={6}
               className="p-0 gap-0 border-0 bg-transparent shadow-none"
-              style={{ width: "min(28rem, calc(100vw - 1.5rem))" }}
+              style={{ width: "min(22rem, calc(100vw - 1.5rem))" }}
             >
               {/* Outer shell */}
               <div
                 style={{
                   background: "#09090b",
                   border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: "12px",
+                  borderRadius: "10px",
                   boxShadow:
-                    "0 32px 96px rgba(0,0,0,0.92), 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.05)",
+                    "0 20px 40px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.02), inset 0 1px 0 rgba(255,255,255,0.03)",
                   overflow: "hidden",
-                  maxHeight: "min(84vh, 38rem)",
+                  maxHeight: "min(84vh, 36rem)",
                   display: "flex",
                   flexDirection: "column",
                 }}
@@ -331,23 +315,19 @@ export function ModelSelector({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    padding: "12px 18px 10px",
+                    padding: "10px 14px",
                     borderBottom: "1px solid rgba(255,255,255,0.05)",
-                    background:
-                      "linear-gradient(180deg, rgba(255,255,255,0.025) 0%, transparent 100%)",
+                    background: "rgba(255, 255, 255, 0.01)",
                     flexShrink: 0,
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    {/* Pulsing dot */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <span
                       style={{
-                        width: 6,
-                        height: 6,
+                        width: 5,
+                        height: 5,
                         borderRadius: "50%",
                         background: "#6366f1",
-                        boxShadow: "0 0 8px rgba(99,102,241,0.8)",
-                        animation: "pulse 2s ease-in-out infinite",
                         display: "inline-block",
                         flexShrink: 0,
                       }}
@@ -355,9 +335,9 @@ export function ModelSelector({
                     <span
                       style={{
                         fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-                        fontSize: 10,
+                        fontSize: 9,
                         fontWeight: 700,
-                        letterSpacing: "0.22em",
+                        letterSpacing: "0.15em",
                         color: "rgba(255,255,255,0.3)",
                         textTransform: "uppercase",
                       }}
@@ -368,13 +348,13 @@ export function ModelSelector({
                   <span
                     style={{
                       fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-                      fontSize: 9,
-                      letterSpacing: "0.18em",
+                      fontSize: 8,
+                      letterSpacing: "0.12em",
                       color: "rgba(255,255,255,0.15)",
                       textTransform: "uppercase",
                     }}
                   >
-                    APEX·AI·STUDIO
+                    APEX·AI
                   </span>
                 </div>
 
@@ -411,23 +391,22 @@ export function ModelSelector({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    padding: "10px 18px",
+                    padding: "10px 14px",
                     borderTop: "1px solid rgba(255,255,255,0.05)",
-                    background:
-                      "linear-gradient(0deg, rgba(255,255,255,0.018) 0%, transparent 100%)",
+                    background: "rgba(255, 255, 255, 0.01)",
                     flexShrink: 0,
                   }}
                 >
                   <span
                     style={{
                       fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-                      fontSize: 9,
-                      letterSpacing: "0.2em",
+                      fontSize: 8,
+                      letterSpacing: "0.15em",
                       color: "rgba(255,255,255,0.18)",
                       textTransform: "uppercase",
                     }}
                   >
-                    APEX-CHAT // AI-STUDIO
+                    APEX-CHAT
                   </span>
 
                   {/* Upgrade button */}
@@ -435,40 +414,30 @@ export function ModelSelector({
                     type="button"
                     style={{
                       fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-                      fontSize: 9,
+                      fontSize: 8,
                       fontWeight: 700,
-                      letterSpacing: "0.12em",
+                      letterSpacing: "0.08em",
                       textTransform: "uppercase",
-                      padding: "4px 10px",
-                      borderRadius: 5,
-                      background:
-                        "linear-gradient(135deg, rgba(99,102,241,0.25) 0%, rgba(168,85,247,0.25) 100%)",
-                      border: "1px solid rgba(139,92,246,0.4)",
+                      padding: "4px 8px",
+                      borderRadius: 4,
+                      background: "rgba(139,92,246,0.1)",
+                      border: "1px solid rgba(139,92,246,0.3)",
                       color: "#c4b5fd",
                       cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      boxShadow: "0 0 10px rgba(139,92,246,0.15)",
+                      transition: "all 0.15s ease",
                     }}
                     onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.background =
-                        "linear-gradient(135deg, rgba(99,102,241,0.45) 0%, rgba(168,85,247,0.45) 100%)";
-                      (e.currentTarget as HTMLButtonElement).style.boxShadow =
-                        "0 0 16px rgba(139,92,246,0.4)";
-                      (e.currentTarget as HTMLButtonElement).style.borderColor =
-                        "rgba(139,92,246,0.7)";
+                      (e.currentTarget as HTMLButtonElement).style.background = "rgba(139,92,246,0.2)";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(139,92,246,0.5)";
                       (e.currentTarget as HTMLButtonElement).style.color = "#e9d5ff";
                     }}
                     onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.background =
-                        "linear-gradient(135deg, rgba(99,102,241,0.25) 0%, rgba(168,85,247,0.25) 100%)";
-                      (e.currentTarget as HTMLButtonElement).style.boxShadow =
-                        "0 0 10px rgba(139,92,246,0.15)";
-                      (e.currentTarget as HTMLButtonElement).style.borderColor =
-                        "rgba(139,92,246,0.4)";
+                      (e.currentTarget as HTMLButtonElement).style.background = "rgba(139,92,246,0.1)";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(139,92,246,0.3)";
                       (e.currentTarget as HTMLButtonElement).style.color = "#c4b5fd";
                     }}
                   >
-                    UPGRADE إشتراك ترقية
+                    UPGRADE ترقية
                   </button>
                 </div>
               </div>
@@ -480,9 +449,6 @@ export function ModelSelector({
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   Tier Section sub-component
-───────────────────────────────────────────────────────────────── */
 function TierSection({
   tier,
   models,
@@ -511,36 +477,36 @@ function TierSection({
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 10,
-          padding: "14px 18px 8px",
+          gap: 8,
+          padding: "12px 14px 6px",
         }}
       >
         <span
           style={{
             fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-            fontSize: 10,
-            fontWeight: 800,
-            letterSpacing: "0.3em",
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: "0.2em",
             textTransform: "uppercase",
-            color: tier.labelColor,
+            color: "rgba(255,255,255,0.4)",
           }}
         >
           {tier.label}
         </span>
 
-        {/* Holographic tier badge */}
+        {/* Flat tier badge */}
         <span
           style={{
             fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
             fontSize: 8,
-            fontWeight: 700,
-            letterSpacing: "0.18em",
+            fontWeight: 600,
+            letterSpacing: "0.1em",
             textTransform: "uppercase",
-            padding: "3px 9px",
-            borderRadius: 20,
-            background: tier.badgeGradient,
-            boxShadow: tier.badgeShadow,
-            color: "#fff",
+            padding: "2px 6px",
+            borderRadius: 4,
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            color: "rgba(255,255,255,0.5)",
             flexShrink: 0,
           }}
         >
@@ -552,13 +518,13 @@ function TierSection({
           style={{
             flex: 1,
             height: 1,
-            background: `linear-gradient(90deg, ${tier.dividerColor} 0%, transparent 100%)`,
+            background: "linear-gradient(90deg, rgba(255,255,255,0.05) 0%, transparent 100%)",
           }}
         />
       </div>
 
       {/* Model cards */}
-      <div style={{ padding: "0 10px 6px" }}>
+      <div style={{ padding: "0 8px 4px" }}>
         {models.map((model) => (
           <ModelCard
             key={model}
@@ -574,9 +540,6 @@ function TierSection({
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   Model Card sub-component
-───────────────────────────────────────────────────────────────── */
 function ModelCard({
   model,
   isSelected,
@@ -596,7 +559,6 @@ function ModelCard({
   const Icon = MODEL_ICONS[model];
 
   const isActive = isSelected;
-  const show = isActive || hovered;
 
   return (
     <button
@@ -614,65 +576,51 @@ function ModelCard({
         width: "100%",
         display: "flex",
         alignItems: "center",
-        gap: 14,
-        padding: "11px 12px",
-        borderRadius: 9,
+        gap: 12,
+        padding: "8px 12px",
+        borderRadius: 8,
         textAlign: "left",
         cursor: "pointer",
         position: "relative",
-        marginBottom: 3,
-        transition: "all 0.2s cubic-bezier(0.16,1,0.3,1)",
+        marginBottom: 4,
+        transition: "all 0.15s ease",
         background: isActive
-          ? `linear-gradient(135deg, ${cfg.iconColor}12 0%, ${cfg.iconColor}06 100%)`
+          ? "rgba(255, 255, 255, 0.05)"
           : hovered
-          ? "rgba(255,255,255,0.04)"
+          ? "rgba(255, 255, 255, 0.03)"
           : "transparent",
         border: isActive
-          ? `1px solid ${cfg.activeBorder}`
+          ? `1px solid ${cfg.iconColor}50`
           : hovered
-          ? "1px solid rgba(255,255,255,0.08)"
+          ? "1px solid rgba(255, 255, 255, 0.08)"
           : "1px solid transparent",
-        boxShadow: isActive ? cfg.activeGlow : "none",
         opacity: !canAccess ? 0.38 : 1,
       }}
     >
-      {/* Glow shimmer overlay on active */}
-      {isActive && (
-        <span
-          style={{
-            position: "absolute",
-            inset: 0,
-            borderRadius: 9,
-            background: `radial-gradient(ellipse at 20% 50%, ${cfg.iconColor}0a 0%, transparent 70%)`,
-            pointerEvents: "none",
-          }}
-        />
-      )}
-
       {/* Icon container */}
       <span
         style={{
-          width: 42,
-          height: 42,
-          borderRadius: 10,
+          width: 36,
+          height: 36,
+          borderRadius: 8,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           flexShrink: 0,
           background: isActive
             ? `radial-gradient(circle, ${cfg.iconColor}22 0%, ${cfg.iconColor}0a 100%)`
-            : show
+            : hovered
             ? `rgba(255,255,255,0.04)`
-            : `rgba(255,255,255,0.025)`,
+            : `rgba(255,255,255,0.02)`,
           border: isActive
-            ? `1px solid ${cfg.iconColor}40`
-            : `1px solid rgba(255,255,255,0.06)`,
-          transition: "all 0.2s ease",
+            ? `1px solid ${cfg.iconColor}30`
+            : `1px solid rgba(255,255,255,0.05)`,
+          transition: "all 0.15s ease",
           position: "relative",
           zIndex: 1,
         }}
       >
-        <Icon color={cfg.iconColor} glow={show ? cfg.iconGlow : "none"} />
+        <Icon color={cfg.iconColor} glow="none" />
       </span>
 
       {/* Text block */}
@@ -680,14 +628,13 @@ function ModelCard({
         <p
           style={{
             fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: 700,
-            letterSpacing: "0.12em",
+            letterSpacing: "0.08em",
             textTransform: "uppercase",
-            color: isActive ? "#f1f5f9" : "rgba(255,255,255,0.82)",
+            color: isActive ? "#ffffff" : "rgba(255,255,255,0.85)",
             lineHeight: 1.2,
             margin: 0,
-            transition: "color 0.15s ease",
           }}
         >
           {info.name}
@@ -695,42 +642,19 @@ function ModelCard({
         <p
           style={{
             fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-            fontSize: 10,
-            letterSpacing: "0.05em",
+            fontSize: 9,
+            letterSpacing: "0.02em",
             color: isActive
-              ? `${cfg.iconColor}cc`
+              ? `${cfg.iconColor}b3`
               : hovered
-              ? "rgba(255,255,255,0.45)"
-              : "rgba(255,255,255,0.30)",
-            margin: "3px 0 0",
-            lineHeight: 1.3,
-            transition: "color 0.15s ease",
+              ? "rgba(255,255,255,0.4)"
+              : "rgba(255,255,255,0.25)",
+            margin: "2px 0 0",
+            lineHeight: 1.2,
           }}
         >
           {info.subtitle}
         </p>
-        {/* Description */}
-        {show && (
-          <motion.p
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
-            style={{
-              fontFamily:
-                "var(--font-sans, 'Inter', -apple-system, sans-serif)",
-              fontSize: 10.5,
-              color: isActive
-                ? "rgba(255,255,255,0.55)"
-                : "rgba(255,255,255,0.38)",
-              margin: "5px 0 0",
-              lineHeight: 1.5,
-              overflow: "hidden",
-            }}
-          >
-            {cfg.description}
-          </motion.p>
-        )}
       </div>
 
       {/* Right badge / lock */}
@@ -745,23 +669,21 @@ function ModelCard({
       >
         {!canAccess ? (
           <Lock
-            style={{ width: 14, height: 14, color: "rgba(255,255,255,0.22)" }}
+            style={{ width: 12, height: 12, color: "rgba(255,255,255,0.25)" }}
           />
         ) : isActive ? (
           <span
             style={{
-              fontFamily:
-                "var(--font-mono, 'JetBrains Mono', monospace)",
+              fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
               fontSize: 8,
               fontWeight: 700,
-              letterSpacing: "0.18em",
+              letterSpacing: "0.1em",
               textTransform: "uppercase",
-              padding: "4px 10px",
-              borderRadius: 20,
-              background: `linear-gradient(135deg, ${cfg.iconColor}50 0%, ${cfg.iconColor}30 100%)`,
-              border: `1px solid ${cfg.iconColor}60`,
-              color: cfg.iconColor,
-              boxShadow: `0 0 10px ${cfg.iconColor}40`,
+              padding: "2px 6px",
+              borderRadius: 4,
+              background: "rgba(255, 255, 255, 0.08)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              color: "rgba(255, 255, 255, 0.8)",
               whiteSpace: "nowrap",
             }}
           >
