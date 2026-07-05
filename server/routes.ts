@@ -1,4 +1,4 @@
-import type { Express } from "express";
+﻿import type { Express } from "express";
 import type { Server } from "http";
 import { chatRequestSchema } from "../shared/schema.js";
 import { detectPdfIntent, formatPdfAsCodeBlock, parsePdfRequest, tryParseAnyPdfFromText, type PDFDocument } from "../shared/pdf.js";
@@ -642,7 +642,7 @@ JSON structure:
 }`;
 
       const response = await client.chat.completions.create({
-        model: "deepseek-v4-flash",
+        model: "deepseek-chat",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Generate a question and 3 choices for: "${prompt}"` },
@@ -959,3 +959,4 @@ function getFallbackConcepts(prompt: string) {
 
   return { question, choices };
 }
+

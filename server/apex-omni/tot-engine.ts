@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Tree of Thoughts (ToT) / Graph of Thoughts (GoT) Engine — Apex Omni
  *
  * Implements the ToT algorithm (Yao et al., 2023) and GoT extensions.
@@ -133,7 +133,7 @@ Generate your ${thoughtType} thought process in 2-4 focused paragraphs. Be speci
   let currentThought = "";
   try {
     const response = await client.chat.completions.create({
-      model: actualModel === "deepseek-v4-pro" ? "deepseek-v4-flash" : actualModel,
+      model: actualModel === "deepseek-chat" ? "deepseek-chat" : actualModel,
       messages: [
         {
           role: "system",
@@ -166,7 +166,7 @@ Identify critical flaws, missing details, or errors. Be concise but rigorous. If
     try {
       const isOpenRouter = actualModel.includes("/") || actualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
       const response = await client.chat.completions.create({
-        model: isOpenRouter ? actualModel : "deepseek-v4-flash", // Fast critic unless OpenRouter
+        model: isOpenRouter ? actualModel : "deepseek-chat", // Fast critic unless OpenRouter
         messages: [
           { role: "system", content: "You are a strict, adversarial Critic sub-agent. Identify logical flaws, syntax errors, and edge cases. Output 'PASSED' only if there are absolutely no flaws." },
           { role: "user", content: criticPrompt }
@@ -200,7 +200,7 @@ Provide the complete refactored thought process addressing all the critic's poin
 
     try {
       const response = await client.chat.completions.create({
-        model: actualModel === "deepseek-v4-pro" ? "deepseek-v4-flash" : actualModel,
+        model: actualModel === "deepseek-chat" ? "deepseek-chat" : actualModel,
         messages: [
           { role: "system", content: proposerSystem },
           { role: "user", content: refactorPrompt }
@@ -262,7 +262,7 @@ Rate this thought. Output JSON with:
 
     const isOpenRouter = actualModel.includes("/") || actualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
     const response = await client.chat.completions.create({
-      model: isOpenRouter ? actualModel : "deepseek-v4-flash", // Use fast model for evaluation unless OpenRouter
+      model: isOpenRouter ? actualModel : "deepseek-chat", // Use fast model for evaluation unless OpenRouter
       messages: [
         { role: "system", content: "You are a strict thought evaluator. Output only valid JSON." },
         { role: "user", content: evalPrompt },
@@ -348,7 +348,7 @@ Output your synthesized compound thought:`;
 
   try {
     const response = await client.chat.completions.create({
-      model: actualModel === "deepseek-v4-pro" ? "deepseek-v4-flash" : actualModel,
+      model: actualModel === "deepseek-chat" ? "deepseek-chat" : actualModel,
       messages: [
         {
           role: "system",
@@ -475,3 +475,4 @@ export async function runToTGoT(
 
   return { synthesizedThought, allNodes, selectedNodes: finalSelected, mergedNode };
 }
+

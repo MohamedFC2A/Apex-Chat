@@ -190,10 +190,10 @@ Output a concise but comprehensive response plan (3-7 bullet points):`;
   const proposerSystem = "You are a strategic response planner Proposer. Create structured plans for answering queries.";
 
   let currentPlan = "";
-  const isOpenRouter = actualModel.includes("/") || actualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
+  const isOpenRouter = actualModel.includes("/");
   try {
     const response = await client.chat.completions.create({
-      model: isOpenRouter ? actualModel : (actualModel === "deepseek-v4-pro" ? "deepseek-v4-flash" : actualModel),
+      model: isOpenRouter ? actualModel : "deepseek-chat",
       messages: [
         {
           role: "system",
@@ -203,8 +203,7 @@ Output a concise but comprehensive response plan (3-7 bullet points):`;
       ],
       max_tokens: config.maxTokensPerNode,
       temperature: 0.7,
-      ...(Object.keys(logitBias).length > 0 ? { logit_bias: logitBias } : {}),
-    } as any);
+      } as any);
     currentPlan = response.choices[0]?.message?.content || "";
   } catch (err) {
     console.warn("[MCTS Proposer] Expansion failed:", err);
@@ -224,7 +223,7 @@ Check if this plan misses any key aspects of the query, has logical flaws, or ha
     let critique = "";
     try {
       const response = await client.chat.completions.create({
-        model: isOpenRouter ? actualModel : "deepseek-v4-flash", // Fast critic unless OpenRouter
+        model: isOpenRouter ? actualModel : "deepseek-chat", // Fast critic unless OpenRouter
         messages: [
           { role: "system", content: "You are a strict, adversarial plan Critic. Output 'PASSED' if there are no flaws in the plan." },
           { role: "user", content: criticPrompt }
@@ -258,15 +257,14 @@ Provide the complete refactored plan.`;
 
     try {
       const response = await client.chat.completions.create({
-        model: isOpenRouter ? actualModel : (actualModel === "deepseek-v4-pro" ? "deepseek-v4-flash" : actualModel),
+        model: isOpenRouter ? actualModel : "deepseek-chat",
         messages: [
           { role: "system", content: proposerSystem },
           { role: "user", content: refactorPrompt },
         ],
         max_tokens: config.maxTokensPerNode,
         temperature: 0.5,
-        ...(Object.keys(logitBias).length > 0 ? { logit_bias: logitBias } : {}),
-      } as any);
+        } as any);
       currentPlan = response.choices[0]?.message?.content || currentPlan;
     } catch (err) {
       console.warn(`[MCTS Proposer] Refactoring failed on attempt ${attempt}:`, err);
@@ -316,7 +314,7 @@ Rate this plan. Output JSON with:
 
     const isOpenRouter = actualModel.includes("/") || actualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
     const response = await client.chat.completions.create({
-      model: isOpenRouter ? actualModel : "deepseek-v4-flash",
+      model: isOpenRouter ? actualModel : "deepseek-chat",
       messages: [
         { role: "system", content: "You are a plan quality evaluator. Output only valid JSON." },
         { role: "user", content: simPrompt },
@@ -452,3 +450,5 @@ export async function runMCTS(
     bestNode,
   };
 }
+
+

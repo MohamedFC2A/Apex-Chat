@@ -183,9 +183,9 @@ Be strict and differentiate scores.`;
       maxTokens: 300,
     });
 
-    const isOpenRouter = actualModel.includes("/") || actualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
+    const isOpenRouter = actualModel.includes("/");
     const evalResponse = await client.chat.completions.create({
-      model: isOpenRouter ? actualModel : "deepseek-v4-flash", // Use fast model for evaluation unless OpenRouter
+      model: isOpenRouter ? actualModel : "deepseek-chat", // Use deepseek-chat (real model name) for evaluation
       messages: [
         { role: "system", content: "You are a strict AI response evaluator. Output only valid JSON." },
         { role: "user", content: evaluationPrompt },
@@ -380,13 +380,8 @@ export async function runGRPO(
 ): Promise<GRPOResult> {
   console.log(`[GRPO] Starting with G=${config.groupSize}, T=${config.temperature}, neural=${config.useNeuralReward}`);
 
-  const logitBias = getLogitBiasProfile(domain, true);
-  const constraintParams = buildConstrainedAPIParams({
-    logitBias,
-    maxTokens: config.maxTokens,
-  });
-
   // ── Step 1: Sample G outputs in parallel ──
+  // NOTE: logit_bias is NOT supported by DeepSeek API - removed to prevent 400 errors
   const generationPromises = Array.from({ length: config.groupSize }, async (_, i) => {
     try {
       const response = await client.chat.completions.create({
@@ -394,7 +389,6 @@ export async function runGRPO(
         messages,
         temperature: config.temperature + (i * 0.05), // Slight variation per sample
         max_tokens: config.maxTokens,
-        ...(constraintParams.logit_bias ? { logit_bias: constraintParams.logit_bias } : {}),
       } as any);
       return response.choices[0]?.message?.content || "";
     } catch (err) {

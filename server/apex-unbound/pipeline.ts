@@ -1,4 +1,4 @@
-/**
+﻿/**
  * APEX Unbound Pipeline Orchestrator
  *
  * Master coordinator for the 6-phase multi-agent web generation system:
@@ -530,8 +530,8 @@ export async function runUnboundPipeline(
   const pipelineStart = Date.now();
 
   const isOfficial = isOfficialDeepSeekEndpoint(client.baseURL);
-  const architectModel = isOfficial ? "deepseek-v4-pro" : "deepseek-v4-pro";
-  const specialistModel = isOfficial ? "deepseek-v4-flash" : "deepseek-v4-flash";
+  const architectModel = isOfficial ? "deepseek-chat" : "deepseek-chat";
+  const specialistModel = isOfficial ? "deepseek-chat" : "deepseek-chat";
 
   const isResumed = !!request.spec;
   const isFollowUp = !!request.isFollowUp;
@@ -903,3 +903,4 @@ ${jsCode}
     formattedOutput,
   };
 }
+

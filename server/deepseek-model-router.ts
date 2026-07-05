@@ -1,14 +1,20 @@
 export type DeepSeekTask = "reasoning" | "generation";
 
-// DeepSeek Official API (V4 Series) supports two main model identifiers:
-// - deepseek-v4-flash  (fast, efficient, non-reasoning by default)
-// - deepseek-v4-pro    (larger, reasoning model with CoT enabled)
+// DeepSeek Official API model identifiers (real names as of 2025/2026):
+// - deepseek-chat        → V3 (fast, efficient, general purpose)
+// - deepseek-reasoner    → R1 (advanced CoT reasoning, slower)
+//
+// All apex-* model aliases map to deepseek-chat for stability and cost efficiency.
+// For queries requiring deep reasoning, the pipeline itself handles multi-agent orchestration.
 const APEX_MODEL_ALIASES: Record<string, string> = {
-  "apex-flash": "deepseek-v4-flash",
-  "apex-pro": "deepseek-v4-pro",
-  "apex-elite": "deepseek-v4-pro",
-  "apex-omni": "deepseek-v4-pro",
-  "apex-unbound": "deepseek-v4-pro",
+  "apex-flash":   "deepseek-chat",
+  "apex-pro":     "deepseek-chat",
+  "apex-elite":   "deepseek-chat",
+  "apex-omni":    "deepseek-chat",
+  "apex-unbound": "deepseek-chat",
+  // Legacy fallbacks
+  "deepseek-v4-flash": "deepseek-chat",
+  "deepseek-v4-pro":   "deepseek-chat",
 };
 
 export function isOfficialDeepSeekEndpoint(baseURL?: string): boolean {
@@ -24,63 +30,36 @@ export function mapDeepSeekModelForTask(
 }
 
 /**
- * Returns the correct API parameters for DeepSeek V4 models.
+ * Returns clean API parameters for DeepSeek models.
  *
- * IMPORTANT: For DeepSeek OpenAI-compatible SDK:
- * - `reasoning_effort` must be inside `extra_body`, NOT at top-level.
- *   (Top-level reasoning_effort is silently ignored and can cause 400 errors on some API versions.)
- * - `temperature` is ignored when thinking mode is enabled.
- * - Both `deepseek-v4-pro` and `deepseek-v4-flash` support the same parameter structure.
+ * CRITICAL: DeepSeek official API does NOT support:
+ * - `logit_bias` (causes 400 errors)
+ * - `extra_body.thinking` (not a real parameter on their API)
+ * - `reasoning_effort` (not supported)
+ *
+ * deepseek-chat: standard chat completion with temperature control
+ * deepseek-reasoner: reasoning built-in, does NOT support temperature param in some versions
  */
 export function getDeepSeekRequestParams(
   model: string,
   temperature = 0.7,
-  enableThinking = false
+  _enableThinking = false
 ): Record<string, any> {
-  // deepseek-v4-pro: Always use thinking mode with max reasoning effort
-  if (model === "deepseek-v4-pro") {
-    return {
-      temperature: 0.6,
-      extra_body: {
-        thinking: { type: "enabled" },
-        reasoning_effort: "high",
-      },
-    };
+  const resolvedModel = APEX_MODEL_ALIASES[model] || model;
+
+  if (resolvedModel === "deepseek-reasoner") {
+    // Reasoner model: reasoning is always on, temperature not needed
+    return {};
   }
 
-  // deepseek-v4-flash: supports standard parameters and optional thinking mode
-  if (model === "deepseek-v4-flash") {
-    if (enableThinking) {
-      return {
-        temperature: 0.6,
-        extra_body: {
-          thinking: { type: "enabled" },
-          reasoning_effort: "high",
-        },
-      };
-    } else {
-      return {
-        temperature,
-        extra_body: {
-          thinking: { type: "disabled" },
-        },
-      };
-    }
-  }
-
+  // deepseek-chat and all others: standard params
   return { temperature };
 }
 
 /**
  * Returns DeepSeek params optimized for structured JSON generation (PDF/MCQ).
- * Always uses flash model to maximize output tokens and avoid reasoning token overhead.
- * Thinking is disabled to prevent truncated JSON from CoT reasoning tokens.
+ * Low temperature for deterministic, valid JSON output.
  */
 export function getDeepSeekStructuredParams(temperature = 0.3): Record<string, any> {
-  return {
-    temperature,
-    extra_body: {
-      thinking: { type: "disabled" },
-    },
-  };
+  return { temperature };
 }

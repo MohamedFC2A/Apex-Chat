@@ -1,4 +1,4 @@
-import type { AIModel, ServiceMode, FeatureToggles, SubscriptionTier, ModelTierMap } from "../shared/schema.js";
+﻿import type { AIModel, ServiceMode, FeatureToggles, SubscriptionTier, ModelTierMap } from "../shared/schema.js";
 import {
   buildQuizGenerationInstructions,
   buildQuizRepairInstructions,
@@ -545,7 +545,7 @@ async function optimizeSearchQueries(message: string): Promise<{ textQuery: stri
     });
 
     const response = await client.chat.completions.create({
-      model: "deepseek-v4-flash",
+      model: "deepseek-chat",
       messages: [
         {
           role: "system",
@@ -1638,7 +1638,7 @@ export async function processMessage(
 
     // Use flash model for PDF generation: thinking is disabled so all 8K tokens go to JSON output.
     // Using pro would waste ~3-6K tokens on CoT reasoning, leaving insufficient space for large documents.
-    const pdfModel = "deepseek-v4-flash";
+    const pdfModel = "deepseek-chat";
     return await generateDedicatedPdfResponse(pdfClient, pdfModel, request, onChunk);
   }
 
@@ -1655,34 +1655,20 @@ export async function processMessage(
     });
 
     // Always use flash model for MCQ: thinking disabled ensures all 8K tokens go to JSON quiz output.
-    const quizModel = "deepseek-v4-flash";
+    const quizModel = "deepseek-chat";
     return await generateDedicatedQuizResponse(quizClient, quizModel, request, onChunk);
   }
 
   // ── APEX OMNI: Route through full AI pipeline ──────────────────────────────
   if (model === "apex-omni") {
     const OpenAI = (await import("openai")).default;
-    let omniActualModel = "deepseek-v4-pro";
-    const isOpenRouter = false;
+    // FIXED: Use real DeepSeek API model name (deepseek-chat = V3, works reliably)
+    const omniActualModel = "deepseek-chat";
 
-    let omniClient: any;
-    if (isOpenRouter) {
-      const openRouterKey = process.env.OPENROUTER_API_KEY;
-      if (!openRouterKey) throw new Error("OPENROUTER_API_KEY is not configured.");
-      omniClient = new OpenAI({
-        apiKey: openRouterKey,
-        baseURL: "https://openrouter.ai/api/v1",
-        defaultHeaders: {
-          "HTTP-Referer": "https://apex-chat.vercel.app",
-          "X-Title": "Apex Chat",
-        }
-      });
-    } else {
-      const deepseekKey = process.env.DEEPSEEK_API_KEY;
-      if (!deepseekKey) throw new Error("DEEPSEEK_API_KEY is not configured.");
-      omniClient = new OpenAI({ apiKey: deepseekKey, baseURL: "https://api.deepseek.com/v1" });
-    }
-    
+    const deepseekKey = process.env.DEEPSEEK_API_KEY;
+    if (!deepseekKey) throw new Error("DEEPSEEK_API_KEY is not configured.");
+    const omniClient = new OpenAI({ apiKey: deepseekKey, baseURL: "https://api.deepseek.com/v1" });
+
     // Evaluate Prompt Complexity
     const evaluatePromptComplexity = (msg: string, hist: Array<{ role: string; content: string }> = []): number => {
       let score = 1;
@@ -1707,8 +1693,6 @@ export async function processMessage(
     // Level 1 Stream: Direct Token Return (Complexity <= 3)
     if (complexity <= 3) {
       console.log(`[Orchestrator] Level 1 Stream: Direct Token Return (Complexity ${complexity} <= 3)`);
-      const fastModel = isOpenRouter ? omniActualModel : "deepseek-v4-pro";
-      const fastModelParams = getDeepSeekRequestParams(fastModel, 0.5);
       const messages = [
         { role: "system" as const, content: buildCerebrasSystemPrompt("apex-omni", mode, features, request.clientLocalTime) },
         ...(request.conversationHistory || []).map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
@@ -1718,11 +1702,11 @@ export async function processMessage(
       let content = "";
       if (onChunk) {
         const stream = await omniClient.chat.completions.create({
-          model: fastModel,
+          model: omniActualModel,
           messages,
-          max_tokens: 2048,
+          max_tokens: 4096,
+          temperature: 0.5,
           stream: true,
-          ...fastModelParams
         });
         for await (const chunk of stream as any) {
           const text = chunk.choices[0]?.delta?.content || "";
@@ -1733,18 +1717,18 @@ export async function processMessage(
         }
       } else {
         const response = await omniClient.chat.completions.create({
-          model: fastModel,
+          model: omniActualModel,
           messages,
-          max_tokens: 2048,
+          max_tokens: 4096,
+          temperature: 0.5,
           stream: false,
-          ...fastModelParams
         });
         content = response.choices[0]?.message?.content || "";
       }
       return { content };
     }
 
-    // Level 2 Stream: RAG + Vision Reranking (3 < Complexity < 7)
+    // Level 2 Stream: Focused Reasoning (3 < Complexity < 7)
     if (complexity > 3 && complexity < 7) {
       console.log(`[Orchestrator] Level 2 Stream: Focused Reasoning (Complexity ${complexity})`);
 
@@ -1762,16 +1746,14 @@ export async function processMessage(
         { role: "user" as const, content: buildMultimodalUserMessage(request.message) }
       ];
 
-      const focusedModel = isOpenRouter ? omniActualModel : "deepseek-v4-pro";
-      const focusedModelParams = getDeepSeekRequestParams(focusedModel, 0.6);
       let content = "";
       if (onChunk) {
         const stream = await omniClient.chat.completions.create({
-          model: focusedModel,
+          model: omniActualModel,
           messages,
-          max_tokens: 3072,
+          max_tokens: 6144,
+          temperature: 0.6,
           stream: true,
-          ...focusedModelParams
         });
         for await (const chunk of stream as any) {
           const text = chunk.choices[0]?.delta?.content || "";
@@ -1782,23 +1764,23 @@ export async function processMessage(
         }
       } else {
         const response = await omniClient.chat.completions.create({
-          model: focusedModel,
+          model: omniActualModel,
           messages,
-          max_tokens: 3072,
+          max_tokens: 6144,
+          temperature: 0.6,
           stream: false,
-          ...focusedModelParams
         });
         content = response.choices[0]?.message?.content || "";
       }
       return { content };
     }
 
-    // Level 3 Stream: Full Reasoning Engine (Complexity >= 7)
-    console.log(`[Orchestrator] Level 3 Stream: Full Reasoning Engine (Complexity ${complexity} >= 7)`);
+    // Level 3 Stream: Full 10-Agent Reasoning Engine (Complexity >= 7)
+    console.log(`[Orchestrator] Level 3 Stream: Full 10-Agent Reasoning Engine (Complexity ${complexity} >= 7)`);
     const omniSystemBase = buildCerebrasSystemPrompt(model, mode, features, request.clientLocalTime);
 
     try {
-      console.log("[Orchestrator] Routing apex-omni → Apex Omni Restructured Pipeline (Adaptive Dual-Pass / Native CoT)");
+      console.log("[Orchestrator] Routing apex-omni → Apex Omni 10-Agent Pipeline");
       const omniResult = await runApexOmniPipeline(
         omniClient,
         omniActualModel,
@@ -1819,7 +1801,42 @@ export async function processMessage(
         totalDuration: omniResult.pipelineMetadata.totalDuration,
       };
     } catch (pipelineError: any) {
-      console.error("[Orchestrator] Apex Omni Restructured Pipeline failed, falling back to standard DeepSeek:", pipelineError.message);
+      console.error("[Orchestrator] Apex Omni Pipeline failed, falling back to direct DeepSeek call:", pipelineError.message);
+      // FALLBACK: Direct call with system prompt, so user still gets a response
+      try {
+        const fbMessages = [
+          { role: "system" as const, content: omniSystemBase },
+          ...(request.conversationHistory || []).map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+          { role: "user" as const, content: buildMultimodalUserMessage(request.message) }
+        ];
+        let fbContent = "";
+        if (onChunk) {
+          const fbStream = await omniClient.chat.completions.create({
+            model: omniActualModel,
+            messages: fbMessages,
+            max_tokens: 8192,
+            temperature: 0.7,
+            stream: true,
+          });
+          for await (const chunk of fbStream as any) {
+            const text = chunk.choices[0]?.delta?.content || "";
+            if (text) { fbContent += text; onChunk({ content: text }); }
+          }
+        } else {
+          const fbResponse = await omniClient.chat.completions.create({
+            model: omniActualModel,
+            messages: fbMessages,
+            max_tokens: 8192,
+            temperature: 0.7,
+            stream: false,
+          });
+          fbContent = fbResponse.choices[0]?.message?.content || "";
+        }
+        return { content: fbContent };
+      } catch (fbErr: any) {
+        console.error("[Orchestrator] Apex Omni direct fallback also failed:", fbErr.message);
+        // Will fall through to callCerebras below
+      }
     }
   }
 
@@ -2220,7 +2237,7 @@ ${prompt}`;
 
   try {
     const response = await client.chat.completions.create({
-      model: "deepseek-v4-flash",
+      model: "deepseek-chat",
       max_tokens: 8192,
       messages: [
         { role: "system", content: systemPrompt },
@@ -2296,7 +2313,7 @@ Generate a cohesive title and cover page config. Respond ONLY with the \`\`\`pdf
 
   try {
     const response = await client.chat.completions.create({
-      model: "deepseek-v4-flash",
+      model: "deepseek-chat",
       max_tokens: 8192,
       messages: [
         { role: "system", content: systemPrompt },
@@ -2341,7 +2358,8 @@ export async function generateMcqResponse(
   // Always use flash model for quiz generation via the dedicated endpoint.
   // Thinking disabled ensures all 8K output tokens go to the JSON quiz body,
   // preventing incomplete/truncated mcq-quiz blocks.
-  const actualModel = "deepseek-v4-flash";
+  const actualModel = "deepseek-chat";
 
   return generateDedicatedQuizResponse(client, actualModel, request, onChunk);
 }
+

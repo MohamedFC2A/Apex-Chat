@@ -1,5 +1,5 @@
 /**
- * Apex Omni Multi-Agent Pipeline (V4 - True 10-Agent Intelligent System)
+ * Apex Omni Multi-Agent Pipeline (V5 - Production-Ready 10-Agent System)
  *
  * Architecture: 10 specialized AI agents working in parallel and sequentially
  * with intelligent cost optimization (only activates needed agents per query type).
@@ -18,11 +18,16 @@
  *
  * COST OPTIMIZATION: Simple queries use only agents 1, 4, 8.
  *                    Complex queries use all 10 agents in parallel/sequential hybrid.
+ *
+ * CRITICAL FIXES (V5):
+ * - Uses real DeepSeek API model name: "deepseek-chat" (NOT deepseek-v4-pro/flash)
+ * - Removed unsupported logit_bias and extra_body.thinking parameters
+ * - Fixed agent calls to use clean, compatible API parameters
+ * - Improved error handling and fallback logic
  */
 
 import OpenAI from "openai";
 import { analyzeQuery, buildSFTPrompt, type SFTPromptConfig } from "./sft-prompt-builder.js";
-import { buildConstrainedAPIParams, getLogitBiasProfile } from "./constraint-engine.js";
 import { extractBase64Images } from "../apex-search-engine.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -104,6 +109,8 @@ function classifyQuery(message: string): QueryProfile {
 }
 
 // ── Single Agent Call ─────────────────────────────────────────────────────────
+// FIXED: Removed logit_bias and extra_body parameters that DeepSeek doesn't support.
+// Using clean, minimal API parameters for maximum compatibility.
 
 async function callAgent(
   client: OpenAI,
@@ -122,8 +129,8 @@ async function callAgent(
         { role: "user", content: userMessage },
       ],
       max_tokens: maxTokens,
-      stream: false,
       temperature,
+      stream: false,
     } as any);
     const content = response.choices[0]?.message?.content || "";
     console.log(`[Agent ${agentName}] ✅ Done (${content.length} chars)`);
@@ -132,27 +139,6 @@ async function callAgent(
     console.warn(`[Agent ${agentName}] ⚠️ Failed: ${err.message}`);
     return "";
   }
-}
-
-// ── Format Correctness Check ──────────────────────────────────────────────────
-
-function checkFormatCorrectness(text: string): { valid: boolean; reason?: string } {
-  const backticksCount = (text.match(/```/g) || []).length;
-  if (backticksCount % 2 !== 0) {
-    return { valid: false, reason: "Unbalanced markdown code blocks (unclosed triple backticks)" };
-  }
-  const htmlBlocks = text.match(/```html\b([\s\S]*?)```/gi);
-  if (htmlBlocks) {
-    for (const block of htmlBlocks) {
-      const code = block.replace(/```html\b|```/gi, "").trim();
-      const openTags = (code.match(/<[a-zA-Z1-6]+[^>]*>/g) || []).length;
-      const closeTags = (code.match(/<\/[a-zA-Z1-6]+>/g) || []).length;
-      if (Math.abs(openTags - closeTags) > 5) {
-        return { valid: false, reason: "Malformed HTML tag structure in code block" };
-      }
-    }
-  }
-  return { valid: true };
 }
 
 // ── Main 10-Agent Pipeline ────────────────────────────────────────────────────
@@ -171,13 +157,19 @@ export async function runApexOmniPipeline(
   console.log("╚═══════════════════════════════════════════════╝");
 
   // ── Model setup ──────────────────────────────────────────────────────────────
-  const isOpenRouterModel = actualModel.includes("/") || actualModel === "nvidia/llama-nemotron-rerank-vl-1b-v2:free";
-  let completionsModel = actualModel;
+  // Resolve real model name: deepseek-chat is the correct DeepSeek API identifier
+  const resolveModel = (m: string): string => {
+    const aliases: Record<string, string> = {
+      "deepseek-v4-flash": "deepseek-chat",
+      "deepseek-v4-pro": "deepseek-chat",
+      "deepseek-v3": "deepseek-chat",
+      "deepseek-r1": "deepseek-reasoner",
+    };
+    return aliases[m] || m;
+  };
 
-  if (completionsModel.includes("rerank")) {
-    console.warn(`[Omni Pipeline] Reranker model detected. Falling back to deepseek-v4-flash.`);
-    completionsModel = "deepseek-v4-flash";
-  }
+  const isOpenRouterModel = actualModel.includes("/");
+  let completionsModel = resolveModel(actualModel);
 
   // Key validation
   if (isOpenRouterModel) {
@@ -212,9 +204,11 @@ export async function runApexOmniPipeline(
   techniquesUsed.push("10-Agent Intelligent Orchestration");
 
   console.log(`[Omni Pipeline] Profile: complex=${profile.isComplex} code=${profile.needsCode} math=${profile.needsMath} arabic=${profile.needsArabic}`);
+  console.log(`[Omni Pipeline] Using model: ${completionsModel}`);
 
   // ── Native reasoning model: single-pass streaming ─────────────────────────────
   const isNativeReasoningModel =
+    completionsModel === "deepseek-reasoner" ||
     completionsModel.toLowerCase().includes("reasoner") ||
     completionsModel.toLowerCase().includes("o1") ||
     completionsModel.toLowerCase().includes("o3");
@@ -258,17 +252,12 @@ export async function runApexOmniPipeline(
     }
   }
 
-  // ── Simple queries: fast 3-agent path (cost-optimized) ───────────────────────
+  // ── Simple queries: fast single-pass (cost-optimized) ─────────────────────────
   if (!profile.isComplex) {
-    console.log("[Omni Pipeline] 🚀 Simple query → 3-Agent fast path (Analyst + Writer + Formatter)");
-    techniquesUsed.push("3-Agent Fast Path (Cost Optimized)");
+    console.log("[Omni Pipeline] 🚀 Simple query → Fast single-pass (cost-optimized)");
+    techniquesUsed.push("Fast Single-Pass (Cost Optimized)");
 
     const { systemPrompt, userMessage } = buildSFTPrompt(request.message, queryConfig, request.conversationHistory);
-    const logitBias = getLogitBiasProfile(queryConfig.domain, true);
-    const constraintParams = buildConstrainedAPIParams({
-      logitBias: Object.keys(logitBias).length > 0 ? logitBias : undefined,
-      maxTokens: 4096,
-    });
 
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       { role: "system", content: `${request.systemPromptBase}\n\n${systemPrompt}` },
@@ -284,9 +273,9 @@ export async function runApexOmniPipeline(
         const stream = await activeClient.chat.completions.create({
           model: completionsModel,
           messages,
-          max_tokens: constraintParams.max_tokens,
+          max_tokens: 4096,
+          temperature: 0.6,
           stream: true,
-          ...(constraintParams.logit_bias ? { logit_bias: constraintParams.logit_bias } : {}),
         } as any);
         for await (const chunk of stream as any) {
           const text = chunk.choices[0]?.delta?.content || "";
@@ -298,9 +287,9 @@ export async function runApexOmniPipeline(
         const response = await activeClient.chat.completions.create({
           model: completionsModel,
           messages,
-          max_tokens: constraintParams.max_tokens,
+          max_tokens: 4096,
+          temperature: 0.6,
           stream: false,
-          ...(constraintParams.logit_bias ? { logit_bias: constraintParams.logit_bias } : {}),
         } as any);
         content = response.choices[0]?.message?.content || "";
         reasoningContent = (response.choices[0]?.message as any)?.reasoning_content || "";
@@ -312,7 +301,7 @@ export async function runApexOmniPipeline(
       };
     } catch (err: any) {
       if (isAuthOrRateLimitError(err)) throw err;
-      console.error("[Omni Pipeline] 3-Agent fast path failed:", err);
+      console.error("[Omni Pipeline] Fast path failed:", err);
       // fall through to full 10-agent below
     }
   }
@@ -375,7 +364,6 @@ Output 3-5 specific critique points (max 150 words). Be constructive and precise
     console.log("[Omni Pipeline] Phase 2: Running specialist agents...");
 
     const specialistPromises: Promise<string>[] = [];
-    const specialistLabels: string[] = [];
 
     // Agent 4: Expert Writer – always active
     specialistPromises.push(callAgent(
@@ -389,7 +377,6 @@ Critic Notes: ${criticFeedback}`,
       baseQuery,
       2500, 0.65
     ));
-    specialistLabels.push("Expert Writing");
 
     // Agent 5: Code Specialist – only if code needed
     if (profile.needsCode) {
@@ -402,7 +389,6 @@ Base your code on the analysis: ${analystPlan}`,
         baseQuery,
         2000, 0.3
       ));
-      specialistLabels.push("Code Generation");
       techniquesUsed.push("Code Specialist (Agent 5)");
     }
 
@@ -417,7 +403,6 @@ Be rigorous and precise.`,
         baseQuery,
         1500, 0.2
       ));
-      specialistLabels.push("Math Solutions");
       techniquesUsed.push("Math Specialist (Agent 6)");
     }
 
@@ -432,7 +417,6 @@ Research to check: ${researchNotes}`,
         baseQuery,
         400, 0.3
       ));
-      specialistLabels.push("Fact Checking");
       techniquesUsed.push("Fact Checker (Agent 7)");
     }
 
@@ -440,9 +424,10 @@ Research to check: ${researchNotes}`,
     console.log("[Omni Pipeline] Phase 2 complete.");
 
     const writerOutput = specialistResults[0] || "";
-    const codeOutput = profile.needsCode ? specialistResults[1] || "" : "";
-    const mathOutput = profile.needsMath ? (profile.needsCode ? specialistResults[2] : specialistResults[1]) || "" : "";
-    const factCheckOutput = profile.needsFactCheck ? specialistResults[specialistResults.length - 1] || "" : "";
+    let resultIdx = 1;
+    const codeOutput = profile.needsCode ? specialistResults[resultIdx++] || "" : "";
+    const mathOutput = profile.needsMath ? specialistResults[resultIdx++] || "" : "";
+    const factCheckOutput = profile.needsFactCheck ? specialistResults[resultIdx++] || "" : "";
 
     // ────────────────────────────────────────────────────────────────────────────
     // PHASE 3 (Sequential): Formatter → Language Agent → QA
@@ -572,6 +557,8 @@ User Query: ${request.message}`,
             ...(request.conversationHistory || []).map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
             { role: "user", content: buildMultimodalContent(userMessage) },
           ],
+          max_tokens: 4096,
+          temperature: 0.7,
           stream: true,
         } as any);
         for await (const chunk of stream as any) {
@@ -586,6 +573,8 @@ User Query: ${request.message}`,
             ...(request.conversationHistory || []).map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
             { role: "user", content: buildMultimodalContent(userMessage) },
           ],
+          max_tokens: 4096,
+          temperature: 0.7,
           stream: false,
         } as any);
         finalContent = response.choices[0]?.message?.content || "";
