@@ -82,7 +82,8 @@ export default function ChatPage() {
   const features = useFeatureToggleStore();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const omniAbortControllerRef = useRef<AbortController | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const activeEventSourceRef = useRef<EventSource | null>(null);
 
   const {
     streamingContentMap,
@@ -300,6 +301,12 @@ removeGodModeTheme();
         store.setActivePdfProgress({ current: 5, total: 100 });
       }
 
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
       try {
         const compactHistory = buildCompactConversationHistory(existingMessages);
         const userMemoryContext = buildRelevantMemoryContext(store.conversations, thisConvId, content);
@@ -308,48 +315,36 @@ removeGodModeTheme();
         const isGodModeModel = selectedModel === "apex-unbound";
 
         if (selectedModel === "apex-omni") {
-          if (omniAbortControllerRef.current) {
-            omniAbortControllerRef.current.abort();
-          }
-          const controller = new AbortController();
-          omniAbortControllerRef.current = controller;
-
           let lastReportedState: OmniState | null = null;
           const existingOmniState = omniStates[thisConvId] || null;
-          try {
-            response = await processOmniRequest(
-              content,
-              (state) => {
-                if (controller.signal.aborted) return;
-                lastReportedState = state;
-                setOmniStateForConv(thisConvId, state);
-                if (state.finalResponse) {
-                  setStreamingContentForConv(thisConvId, state.finalResponse);
-                }
-              },
-              compactHistory,
-              existingOmniState,
-              controller.signal
-            );
+          response = await processOmniRequest(
+            content,
+            (state) => {
+              if (controller.signal.aborted) return;
+              lastReportedState = state;
+              setOmniStateForConv(thisConvId, state);
+              if (state.finalResponse) {
+                setStreamingContentForConv(thisConvId, state.finalResponse);
+              }
+            },
+            compactHistory,
+            existingOmniState,
+            controller.signal
+          );
 
-            if ((response as any).error) {
-              throw new Error((response as any).message || (response as any).error);
-            }
+          if ((response as any).error) {
+            throw new Error((response as any).message || (response as any).error);
+          }
 
-            // Force full-state complete update inside DB and store
-            const resolvedState = lastReportedState;
-            if (resolvedState && !controller.signal.aborted) {
-              setOmniStateForConv(thisConvId, {
-                ...(resolvedState as OmniState),
-                step: "complete",
-                finalResponse: response.content,
-                totalDuration: (response as any).totalDuration || undefined,
-              });
-            }
-          } finally {
-            if (omniAbortControllerRef.current === controller) {
-              omniAbortControllerRef.current = null;
-            }
+          // Force full-state complete update inside DB and store
+          const resolvedState = lastReportedState;
+          if (resolvedState && !controller.signal.aborted) {
+            setOmniStateForConv(thisConvId, {
+              ...(resolvedState as OmniState),
+              step: "complete",
+              finalResponse: response.content,
+              totalDuration: (response as any).totalDuration || undefined,
+            });
           }
         } else if (selectedModel === "apex-unbound") {
           // ── APEX Unbound: route through the new multi-agent pipeline ──
@@ -432,6 +427,7 @@ removeGodModeTheme();
               features,
               reasoningLevel,
               (chunkText, chunkReasoning) => {
+                if (controller.signal.aborted) return;
                 setStreamingContentForConv(thisConvId, chunkText);
                 setStreamingReasoningForConv(thisConvId, chunkReasoning);
                 if (isQuiz) {
@@ -443,7 +439,8 @@ removeGodModeTheme();
                 }
               },
               userMemoryContext,
-              assistantMsgId
+              assistantMsgId,
+              controller.signal
             );
             if ((response as any).error) throw new Error((response as any).message || (response as any).error);
 
@@ -470,6 +467,7 @@ removeGodModeTheme();
             features,
             reasoningLevel,
             (chunkText, chunkReasoning) => {
+              if (controller.signal.aborted) return;
               setStreamingContentForConv(thisConvId, chunkText);
               setStreamingReasoningForConv(thisConvId, chunkReasoning);
               if (isQuiz) {
@@ -481,7 +479,8 @@ removeGodModeTheme();
               }
             },
             userMemoryContext,
-            assistantMsgId
+            assistantMsgId,
+            controller.signal
           );
 
           if ((response as any).error) {
@@ -550,6 +549,9 @@ removeGodModeTheme();
           toast({ title: "Error", description: error.message || "Failed to process message. Please try again.", variant: "destructive" });
         }
       } finally {
+        if (abortControllerRef.current === controller) {
+          abortControllerRef.current = null;
+        }
         store.setActiveQuizProgress(null);
         store.setActivePdfProgress(null);
       }
@@ -608,11 +610,11 @@ removeGodModeTheme();
           const existingOmniState = omniStates[activeConvId] || null;
           console.log("[Resume System] Resuming Omni agent sequence...", existingOmniState);
           
-          if (omniAbortControllerRef.current) {
-            omniAbortControllerRef.current.abort();
+          if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
           }
           const controller = new AbortController();
-          omniAbortControllerRef.current = controller;
+          abortControllerRef.current = controller;
 
           (async () => {
             try {
@@ -662,8 +664,8 @@ removeGodModeTheme();
                 console.error("[Resume System] Omni resume failed:", err);
               }
             } finally {
-              if (omniAbortControllerRef.current === controller) {
-                omniAbortControllerRef.current = null;
+              if (abortControllerRef.current === controller) {
+                abortControllerRef.current = null;
               }
               setIsGenerating(false);
               store.setActiveGenerationId(null);
@@ -678,10 +680,19 @@ removeGodModeTheme();
         setStreamingContentForConv(activeConvId, "");
         setStreamingReasoningForConv(activeConvId, "");
 
+        if (activeEventSourceRef.current) {
+          activeEventSourceRef.current.close();
+        }
+
         const eventSource = new EventSource(`/api/chat/stream/${activeGenId}`);
+        activeEventSourceRef.current = eventSource;
+
         eventSource.onmessage = (event) => {
           if (event.data === "[DONE]") {
             eventSource.close();
+            if (activeEventSourceRef.current === eventSource) {
+              activeEventSourceRef.current = null;
+            }
             setIsGenerating(false);
             store.setActiveGenerationId(null);
             
@@ -704,6 +715,9 @@ removeGodModeTheme();
           if (chunk.error) {
             console.error("Server stream returned error:", chunk.error);
             eventSource.close();
+            if (activeEventSourceRef.current === eventSource) {
+              activeEventSourceRef.current = null;
+            }
             setIsGenerating(false);
             store.setActiveGenerationId(null);
             setLastError(chunk.error);
@@ -722,9 +736,13 @@ removeGodModeTheme();
   }, [activeConversationId, isGenerating, selectedModel]);
 
   const handleStopGenerating = useCallback(async () => {
-    if (omniAbortControllerRef.current) {
-      omniAbortControllerRef.current.abort();
-      omniAbortControllerRef.current = null;
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    if (activeEventSourceRef.current) {
+      activeEventSourceRef.current.close();
+      activeEventSourceRef.current = null;
     }
     const store = useChatStore.getState();
     const activeId = store.activeGenerationId;

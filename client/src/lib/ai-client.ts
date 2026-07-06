@@ -1194,8 +1194,19 @@ export async function sendAIMessage(
       let buffer = "";
       let totalDuration: number | undefined = undefined;
 
+      const abortHandler = () => {
+        reader.cancel().catch(() => {});
+      };
+
+      if (signal) {
+        signal.addEventListener("abort", abortHandler);
+      }
+
       try {
         while (true) {
+          if (signal?.aborted) {
+            throw new Error("Aborted");
+          }
           const { done, value } = await reader.read();
           if (done) break;
 
@@ -1235,6 +1246,9 @@ export async function sendAIMessage(
           }
         }
       } finally {
+        if (signal) {
+          signal.removeEventListener("abort", abortHandler);
+        }
         reader.releaseLock();
       }
 
