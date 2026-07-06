@@ -1,4 +1,4 @@
-﻿import type { Express } from "express";
+import type { Express } from "express";
 import type { Server } from "http";
 import { chatRequestSchema } from "../shared/schema.js";
 import { detectPdfIntent, formatPdfAsCodeBlock, parsePdfRequest, tryParseAnyPdfFromText, type PDFDocument } from "../shared/pdf.js";
@@ -519,9 +519,9 @@ export async function registerRoutes(
       return res.status(400).json({ error: "message is required" });
     }
 
-    const deepseekKey = process.env.DEEPSEEK_API_KEY;
-    if (!deepseekKey) {
-      return res.status(500).json({ error: "DEEPSEEK_API_KEY is not configured" });
+    const openrouterKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
+    if (!openrouterKey) {
+      return res.status(500).json({ error: "OPENROUTER_API_KEY is not configured" });
     }
 
     // Set up SSE for real-time streaming
@@ -539,8 +539,12 @@ export async function registerRoutes(
 
     try {
       const client = new OpenAI({
-        apiKey: deepseekKey,
-        baseURL: "https://api.deepseek.com/v1",
+        apiKey: openrouterKey,
+        baseURL: "https://openrouter.ai/api/v1",
+        defaultHeaders: {
+          "HTTP-Referer": "https://apex-chat.vercel.app",
+          "X-Title": "Apex Chat",
+        }
       });
 
       const result = await runUnboundPipeline(
@@ -613,14 +617,18 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Invalid prompt" });
       }
 
-      const deepseekKey = process.env.DEEPSEEK_API_KEY;
-      if (!deepseekKey) {
+      const openrouterKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
+      if (!openrouterKey) {
         return res.json(getFallbackConcepts(prompt));
       }
 
       const client = new OpenAI({
-        apiKey: deepseekKey,
-        baseURL: "https://api.deepseek.com/v1",
+        apiKey: openrouterKey,
+        baseURL: "https://openrouter.ai/api/v1",
+        defaultHeaders: {
+          "HTTP-Referer": "https://apex-chat.vercel.app",
+          "X-Title": "Apex Chat",
+        }
       });
 
       const systemPrompt = `You are a creative UI/UX web designer and product architect. Given a user's prompt (in Arabic or English) describing a website they want to build, generate a prompt-specific question and exactly 3 highly distinct choices/answers for the user to select from to configure their website design and features.
@@ -642,7 +650,7 @@ JSON structure:
 }`;
 
       const response = await client.chat.completions.create({
-        model: "deepseek-chat",
+        model: "openai/gpt-oss-120b:free",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Generate a question and 3 choices for: "${prompt}"` },
@@ -850,8 +858,8 @@ JSON structure:
   app.get("/api/health", (_req, res) => {
     res.json({
       status: "ok",
-      provider: "deepseek",
-      apiConfigured: !!process.env.DEEPSEEK_API_KEY,
+      provider: "openrouter",
+      apiConfigured: !!(process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY),
     });
   });
 

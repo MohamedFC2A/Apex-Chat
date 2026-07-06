@@ -24,64 +24,26 @@ import {
 
 // ========== CONFIGURATION ==========
 
-const DEEPSEEK_API_KEY = import.meta.env.VITE_DEEPSEEK_API_KEY || "";
-const DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions";
+const DEEPSEEK_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_DEEPSEEK_API_KEY || "";
+const DEEPSEEK_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-// Model mapping: ApexChat model → DeepSeek model ID
+// Model mapping: ApexChat model → OpenRouter free model ID
 const MODEL_MAP: Record<string, string> = {
-  "apex-flash": "deepseek-v4-flash",
-  "apex-pro": "deepseek-v4-pro",
-  "apex-elite": "deepseek-v4-pro",
-  "apex-omni": "deepseek-v4-pro",
-  "apex-unbound": "deepseek-v4-pro",
+  "apex-flash": "poolside/laguna-xs-2.1:free",
+  "apex-pro": "openai/gpt-oss-120b:free",
+  "apex-elite": "openai/gpt-oss-120b:free",
+  "apex-omni": "openai/gpt-oss-120b:free",
+  "apex-unbound": "openai/gpt-oss-120b:free",
 };
 
 type DeepSeekTask = "reasoning" | "generation";
 type LightweightMessage = Pick<Message, "role" | "content">;
 
-// DeepSeek Official API only supports two models:
-// - deepseek-chat    (fast, non-reasoning, gpt-4o equivalent)
-// - deepseek-reasoner (slow, CoT reasoning model)
 function mapDeepSeekModelForClient(model: AIModel, _task: DeepSeekTask): string {
-  return MODEL_MAP[model] || "deepseek-v4-flash";
+  return MODEL_MAP[model] || "poolside/laguna-xs-2.1:free";
 }
 
 function getDeepSeekRequestParams(model: string, enableThinking = false): Record<string, any> {
-  // deepseek-v4-pro: Chain of Thought is always enabled by default
-  if (model === "deepseek-v4-pro") {
-    return {
-      reasoning_effort: "max",
-      extra_body: {
-        thinking: {
-          type: "enabled",
-        },
-      },
-    };
-  }
-
-  // deepseek-v4-flash: supports standard parameters and optional thinking mode
-  if (model === "deepseek-v4-flash") {
-    if (enableThinking) {
-      return {
-        reasoning_effort: "high",
-        extra_body: {
-          thinking: {
-            type: "enabled",
-          },
-        },
-      };
-    } else {
-      return {
-        temperature: 0.7,
-        extra_body: {
-          thinking: {
-            type: "disabled",
-          },
-        },
-      };
-    }
-  }
-
   return {
     temperature: 0.7,
   };
@@ -1398,6 +1360,6 @@ export function getAIClientStatus() {
   return {
     environment: "CLOUD",
     deepseekConfigured: !!DEEPSEEK_API_KEY,
-    expectedProvider: "DeepSeek Cloud"
+    expectedProvider: "OpenRouter Free Models"
   };
 }

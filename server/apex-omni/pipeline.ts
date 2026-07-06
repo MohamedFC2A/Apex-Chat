@@ -157,46 +157,38 @@ export async function runApexOmniPipeline(
   console.log("╚═══════════════════════════════════════════════╝");
 
   // ── Model setup ──────────────────────────────────────────────────────────────
-  // Resolve real model name: deepseek-chat is the correct DeepSeek API identifier
-  const resolveModel = (m: string): string => {
-    const aliases: Record<string, string> = {
-      "deepseek-v4-flash": "deepseek-chat",
-      "deepseek-v4-pro": "deepseek-chat",
-      "deepseek-v3": "deepseek-chat",
-      "deepseek-r1": "deepseek-reasoner",
+  const key = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
+  if (!key || key.trim() === "") {
+    if (onChunk) onChunk({ content: "⚠️ **خطأ في النظام:** مفتاح OpenRouter API Key غير متاح." });
+    throw new Error("OpenRouter API key configuration is missing.");
+  }
+
+  const activeClient = new OpenAI({
+    apiKey: key,
+    baseURL: "https://openrouter.ai/api/v1",
+    defaultHeaders: {
+      "HTTP-Referer": "https://apex-chat.vercel.app",
+      "X-Title": "Apex Chat",
+    },
+  });
+
+  const completionsModel = "openai/gpt-oss-120b:free";
+
+  const getAgentModel = (agentName: string): string => {
+    const agentModelMap: Record<string, string> = {
+      "1-Analyst": "poolside/laguna-xs-2.1:free",
+      "2-Researcher": "poolside/laguna-m.1:free",
+      "3-Critic": "poolside/laguna-xs-2.1:free",
+      "4-ExpertWriter": "openai/gpt-oss-120b:free",
+      "5-CodeSpecialist": "cohere/north-mini-code:free",
+      "6-MathSpecialist": "nvidia/nemotron-3-super-120b-a12b:free",
+      "7-FactChecker": "poolside/laguna-m.1:free",
+      "8-Formatter": "poolside/laguna-xs-2.1:free",
+      "9-LanguageAgent": "poolside/laguna-m.1:free",
+      "10-QA": "openai/gpt-oss-120b:free",
     };
-    return aliases[m] || m;
+    return agentModelMap[agentName] || completionsModel;
   };
-
-  const isOpenRouterModel = actualModel.includes("/");
-  let completionsModel = resolveModel(actualModel);
-
-  // Key validation
-  if (isOpenRouterModel) {
-    const key = process.env.OPENROUTER_API_KEY;
-    if (!key || key.trim() === "") {
-      if (onChunk) onChunk({ content: "⚠️ **خطأ في النظام:** مفتاح OpenRouter API Key غير متاح." });
-      throw new Error("OpenRouter API key configuration is missing.");
-    }
-  } else {
-    const key = process.env.DEEPSEEK_API_KEY || (client as any).apiKey;
-    if (!key || key.trim() === "") {
-      if (onChunk) onChunk({ content: "⚠️ **خطأ في النظام:** مفتاح DeepSeek API Key غير متاح." });
-      throw new Error("DeepSeek API key configuration is missing.");
-    }
-  }
-
-  let activeClient = client;
-  if (isOpenRouterModel) {
-    activeClient = new OpenAI({
-      apiKey: process.env.OPENROUTER_API_KEY || "",
-      baseURL: "https://openrouter.ai/api/v1",
-      defaultHeaders: {
-        "HTTP-Referer": "https://apex-chat.vercel.app",
-        "X-Title": "Apex Chat",
-      },
-    });
-  }
 
   // ── Query classification ──────────────────────────────────────────────────────
   const queryConfig = analyzeQuery(request.message);
@@ -325,7 +317,7 @@ export async function runApexOmniPipeline(
     const [analystPlan, researchNotes, criticFeedback] = await Promise.all([
       // Agent 1: Analyst – creates the execution plan
       callAgent(
-        activeClient, completionsModel,
+        activeClient, getAgentModel("1-Analyst"),
         "1-Analyst",
         `You are Agent 1 (Analyst). Analyze the user's query and create a structured execution plan.
 Output a concise plan (max 200 words) with: (1) Query intent, (2) Key points to cover, (3) Format recommendation (list/prose/code/table), (4) Language (Arabic/English/Mixed).
@@ -336,7 +328,7 @@ Be precise and strategic.`,
 
       // Agent 2: Researcher – gathers core facts
       callAgent(
-        activeClient, completionsModel,
+        activeClient, getAgentModel("2-Researcher"),
         "2-Researcher",
         `You are Agent 2 (Researcher). Given the user's query, output the most important facts, concepts, and knowledge needed to answer it correctly.
 Output structured research notes (max 300 words). Focus on accuracy and relevance. No filler.`,
@@ -346,7 +338,7 @@ Output structured research notes (max 300 words). Focus on accuracy and relevanc
 
       // Agent 3: Critic – challenges assumptions
       callAgent(
-        activeClient, completionsModel,
+        activeClient, getAgentModel("3-Critic"),
         "3-Critic",
         `You are Agent 3 (Critic). Identify any missing angles, potential errors, or improvements that the response should include.
 Output 3-5 specific critique points (max 150 words). Be constructive and precise.`,
@@ -367,7 +359,7 @@ Output 3-5 specific critique points (max 150 words). Be constructive and precise
 
     // Agent 4: Expert Writer – always active
     specialistPromises.push(callAgent(
-      activeClient, completionsModel,
+      activeClient, getAgentModel("4-ExpertWriter"),
       "4-ExpertWriter",
       `You are Agent 4 (Expert Writer). Using the analysis plan and research notes provided, write the core response content.
 Be comprehensive, clear, and well-structured. Use markdown. Write in the language the user used.
@@ -381,7 +373,7 @@ Critic Notes: ${criticFeedback}`,
     // Agent 5: Code Specialist – only if code needed
     if (profile.needsCode) {
       specialistPromises.push(callAgent(
-        activeClient, completionsModel,
+        activeClient, getAgentModel("5-CodeSpecialist"),
         "5-CodeSpecialist",
         `You are Agent 5 (Code Specialist). Generate production-quality code for the user's request.
 Include: proper syntax, comments, error handling, and usage examples. Use the correct language/framework.
@@ -395,7 +387,7 @@ Base your code on the analysis: ${analystPlan}`,
     // Agent 6: Math Specialist – only if math needed
     if (profile.needsMath) {
       specialistPromises.push(callAgent(
-        activeClient, completionsModel,
+        activeClient, getAgentModel("6-MathSpecialist"),
         "6-MathSpecialist",
         `You are Agent 6 (Math Specialist). Solve all mathematical equations, proofs, or derivations in the user's query.
 Show step-by-step working. Use LaTeX notation (\\( ... \\) for inline, $$ ... $$ for block).
@@ -409,7 +401,7 @@ Be rigorous and precise.`,
     // Agent 7: Fact Checker – only for fact-heavy queries
     if (profile.needsFactCheck) {
       specialistPromises.push(callAgent(
-        activeClient, completionsModel,
+        activeClient, getAgentModel("7-FactChecker"),
         "7-FactChecker",
         `You are Agent 7 (Fact Checker). Review the research notes and verify all factual claims.
 Flag any inaccuracies and provide correct information. Output a fact-check report (max 200 words).
@@ -454,7 +446,7 @@ USER QUERY: ${request.message}
 `;
 
     const formattedResponse = await callAgent(
-      activeClient, completionsModel,
+      activeClient, getAgentModel("8-Formatter"),
       "8-Formatter",
       `You are Agent 8 (Formatter). Synthesize all agent outputs into one cohesive, well-structured response.
 Rules:
@@ -473,7 +465,7 @@ Output ONLY the final merged response. No meta-commentary.`,
     let languagePolished = formattedResponse;
     if (profile.needsArabic) {
       languagePolished = await callAgent(
-        activeClient, completionsModel,
+        activeClient, getAgentModel("9-LanguageAgent"),
         "9-LanguageAgent",
         `You are Agent 9 (Arabic Language Specialist). Review the response and ensure:
 1. Arabic text is grammatically correct and natural.
@@ -490,7 +482,7 @@ Output the polished response only.`,
 
     // Agent 10: QA – final quality validation and fix
     const qaResult = await callAgent(
-      activeClient, completionsModel,
+      activeClient, getAgentModel("10-QA"),
       "10-QA",
       `You are Agent 10 (Quality Assurance). Perform a final review of the response:
 1. Check completeness – does it fully answer the user's query?

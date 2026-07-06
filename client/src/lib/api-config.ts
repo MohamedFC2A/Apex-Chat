@@ -1,8 +1,8 @@
-// Hybrid API Configuration - DeepSeek Infrastructure
+// Hybrid API Configuration - OpenRouter Infrastructure
 // Provides model mappings for the APEX AI models
 
 export interface APIProvider {
-  name: "deepseek";
+  name: "openrouter";
   baseURL: string;
   apiKey: string;
   models: Record<string, string>; // Virtual model -> Actual model mapping
@@ -22,19 +22,19 @@ export interface APIConfig {
 export function getAPIProviders(): APIProvider[] {
   const providers: APIProvider[] = [];
 
-  // DeepSeek (Primary Provider)
-  const deepseekKey = import.meta.env.VITE_DEEPSEEK_API_KEY || "";
-  if (deepseekKey) {
+  // OpenRouter (Primary Provider)
+  const openrouterKey = import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_DEEPSEEK_API_KEY || "";
+  if (openrouterKey) {
     providers.push({
-      name: "deepseek",
-      baseURL: "https://api.deepseek.com/v1",
-      apiKey: deepseekKey,
+      name: "openrouter",
+      baseURL: "https://openrouter.ai/api/v1",
+      apiKey: openrouterKey,
       models: {
-        "apex-flash": "deepseek-v4-flash",
-        "apex-pro": "deepseek-v4-pro",
-        "apex-elite": "deepseek-v4-pro",
-        "apex-omni": "deepseek-v4-pro",
-        "apex-unbound": "deepseek-v4-pro",
+        "apex-flash": "poolside/laguna-xs-2.1:free",
+        "apex-pro": "openai/gpt-oss-120b:free",
+        "apex-elite": "openai/gpt-oss-120b:free",
+        "apex-omni": "openai/gpt-oss-120b:free",
+        "apex-unbound": "openai/gpt-oss-120b:free",
       },
       priority: 1,
       available: true,

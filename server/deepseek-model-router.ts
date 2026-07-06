@@ -1,24 +1,25 @@
 export type DeepSeekTask = "reasoning" | "generation";
 
-// DeepSeek Official API model identifiers (real names as of 2025/2026):
-// - deepseek-chat        → V3 (fast, efficient, general purpose)
-// - deepseek-reasoner    → R1 (advanced CoT reasoning, slower)
+// OpenRouter Free Models mapping:
+// - poolside/laguna-xs-2.1:free    → Fastest model
+// - openai/gpt-oss-120b:free        → Strong, intelligent model
 //
-// All apex-* model aliases map to deepseek-chat for stability and cost efficiency.
-// For queries requiring deep reasoning, the pipeline itself handles multi-agent orchestration.
+// All apex-* model aliases map to OpenRouter free models.
 const APEX_MODEL_ALIASES: Record<string, string> = {
-  "apex-flash":   "deepseek-chat",
-  "apex-pro":     "deepseek-chat",
-  "apex-elite":   "deepseek-chat",
-  "apex-omni":    "deepseek-chat",
-  "apex-unbound": "deepseek-chat",
-  // Legacy fallbacks
-  "deepseek-v4-flash": "deepseek-chat",
-  "deepseek-v4-pro":   "deepseek-chat",
+  "apex-flash":   "poolside/laguna-xs-2.1:free",
+  "apex-pro":     "openai/gpt-oss-120b:free",
+  "apex-elite":   "openai/gpt-oss-120b:free",
+  "apex-omni":    "openai/gpt-oss-120b:free",
+  "apex-unbound": "openai/gpt-oss-120b:free",
+  // Legacy fallbacks mapped to free OpenRouter models
+  "deepseek-v4-flash": "poolside/laguna-xs-2.1:free",
+  "deepseek-v4-pro":   "openai/gpt-oss-120b:free",
+  "deepseek-chat":     "openai/gpt-oss-120b:free",
 };
 
 export function isOfficialDeepSeekEndpoint(baseURL?: string): boolean {
-  return (baseURL || process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com").includes("api.deepseek.com");
+  const url = baseURL || process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com";
+  return url.includes("api.deepseek.com") || url.includes("openrouter.ai");
 }
 
 export function mapDeepSeekModelForTask(
@@ -30,36 +31,22 @@ export function mapDeepSeekModelForTask(
 }
 
 /**
- * Returns clean API parameters for DeepSeek models.
- *
- * CRITICAL: DeepSeek official API does NOT support:
- * - `logit_bias` (causes 400 errors)
- * - `extra_body.thinking` (not a real parameter on their API)
- * - `reasoning_effort` (not supported)
- *
- * deepseek-chat: standard chat completion with temperature control
- * deepseek-reasoner: reasoning built-in, does NOT support temperature param in some versions
+ * Returns clean API parameters for OpenRouter/DeepSeek models.
  */
 export function getDeepSeekRequestParams(
   model: string,
   temperature = 0.7,
   _enableThinking = false
 ): Record<string, any> {
-  const resolvedModel = APEX_MODEL_ALIASES[model] || model;
-
-  if (resolvedModel === "deepseek-reasoner") {
-    // Reasoner model: reasoning is always on, temperature not needed
-    return {};
-  }
-
-  // deepseek-chat and all others: standard params
+  // OpenRouter free models: standard parameters
   return { temperature };
 }
 
 /**
- * Returns DeepSeek params optimized for structured JSON generation (PDF/MCQ).
+ * Returns params optimized for structured JSON generation.
  * Low temperature for deterministic, valid JSON output.
  */
 export function getDeepSeekStructuredParams(temperature = 0.3): Record<string, any> {
   return { temperature };
 }
+

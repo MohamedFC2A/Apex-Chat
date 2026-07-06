@@ -1,4 +1,4 @@
-﻿import type { AIModel, ServiceMode, FeatureToggles, SubscriptionTier, ModelTierMap } from "../shared/schema.js";
+import type { AIModel, ServiceMode, FeatureToggles, SubscriptionTier, ModelTierMap } from "../shared/schema.js";
 import {
   buildQuizGenerationInstructions,
   buildQuizRepairInstructions,
@@ -532,7 +532,7 @@ async function performSerperImageSearch(query: string): Promise<SerperImageResul
 }
 
 async function optimizeSearchQueries(message: string): Promise<{ textQuery: string; imageQuery: string }> {
-  const deepseekKey = process.env.DEEPSEEK_API_KEY;
+  const deepseekKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
   if (!deepseekKey) {
     return cleanQueryFallback(message);
   }
@@ -541,11 +541,15 @@ async function optimizeSearchQueries(message: string): Promise<{ textQuery: stri
     const OpenAI = (await import("openai")).default;
     const client = new OpenAI({
       apiKey: deepseekKey,
-      baseURL: "https://api.deepseek.com/v1",
+      baseURL: "https://openrouter.ai/api/v1",
+      defaultHeaders: {
+        "HTTP-Referer": "https://apex-chat.vercel.app",
+        "X-Title": "Apex Chat",
+      }
     });
 
     const response = await client.chat.completions.create({
-      model: "deepseek-chat",
+      model: "poolside/laguna-xs-2.1:free",
       messages: [
         {
           role: "system",
@@ -1184,14 +1188,18 @@ async function runMultiAgentWebGen(
   onChunk?: (chunk: { content?: string; reasoningContent?: string }) => void
 ): Promise<OrchestratorResponse> {
   const OpenAI = (await import("openai")).default;
-  const deepseekKey = process.env.DEEPSEEK_API_KEY;
+  const deepseekKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
   if (!deepseekKey) {
-    throw new Error("DEEPSEEK_API_KEY is not configured.");
+    throw new Error("OPENROUTER_API_KEY is not configured.");
   }
 
   const client = new OpenAI({
     apiKey: deepseekKey,
-    baseURL: "https://api.deepseek.com/v1",
+    baseURL: "https://openrouter.ai/api/v1",
+    defaultHeaders: {
+      "HTTP-Referer": "https://apex-chat.vercel.app",
+      "X-Title": "Apex Chat",
+    }
   });
 
   const actualModel = mapDeepSeekModelForTask(request.model, "reasoning");
@@ -1626,48 +1634,61 @@ export async function processMessage(
 
   if (componentIntent.triggerPDF && detectStructuredPdfIntent(request.message)) {
     const OpenAI = (await import("openai")).default;
-    const deepseekKey = process.env.DEEPSEEK_API_KEY;
+    const deepseekKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
     if (!deepseekKey) {
-      throw new Error("DEEPSEEK_API_KEY is not configured. Please add it to .env.local");
+      throw new Error("OPENROUTER_API_KEY is not configured. Please add it to .env.local");
     }
 
     const pdfClient = new OpenAI({
       apiKey: deepseekKey,
-      baseURL: "https://api.deepseek.com/v1",
+      baseURL: "https://openrouter.ai/api/v1",
+      defaultHeaders: {
+        "HTTP-Referer": "https://apex-chat.vercel.app",
+        "X-Title": "Apex Chat",
+      }
     });
 
-    // Use flash model for PDF generation: thinking is disabled so all 8K tokens go to JSON output.
-    // Using pro would waste ~3-6K tokens on CoT reasoning, leaving insufficient space for large documents.
-    const pdfModel = "deepseek-chat";
+    // Use fast model for PDF generation
+    const pdfModel = "poolside/laguna-xs-2.1:free";
     return await generateDedicatedPdfResponse(pdfClient, pdfModel, request, onChunk);
   }
 
   if (componentIntent.triggerQuiz && detectStructuredQuizIntent(request.message)) {
     const OpenAI = (await import("openai")).default;
-    const deepseekKey = process.env.DEEPSEEK_API_KEY;
+    const deepseekKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
     if (!deepseekKey) {
-      throw new Error("DEEPSEEK_API_KEY is not configured. Please add it to .env.local");
+      throw new Error("OPENROUTER_API_KEY is not configured. Please add it to .env.local");
     }
 
     const quizClient = new OpenAI({
       apiKey: deepseekKey,
-      baseURL: "https://api.deepseek.com/v1",
+      baseURL: "https://openrouter.ai/api/v1",
+      defaultHeaders: {
+        "HTTP-Referer": "https://apex-chat.vercel.app",
+        "X-Title": "Apex Chat",
+      }
     });
 
-    // Always use flash model for MCQ: thinking disabled ensures all 8K tokens go to JSON quiz output.
-    const quizModel = "deepseek-chat";
+    // Always use flash model for MCQ
+    const quizModel = "poolside/laguna-xs-2.1:free";
     return await generateDedicatedQuizResponse(quizClient, quizModel, request, onChunk);
   }
 
   // ── APEX OMNI: Route through full AI pipeline ──────────────────────────────
   if (model === "apex-omni") {
     const OpenAI = (await import("openai")).default;
-    // FIXED: Use real DeepSeek API model name (deepseek-chat = V3, works reliably)
-    const omniActualModel = "deepseek-chat";
+    const omniActualModel = "openai/gpt-oss-120b:free";
 
-    const deepseekKey = process.env.DEEPSEEK_API_KEY;
-    if (!deepseekKey) throw new Error("DEEPSEEK_API_KEY is not configured.");
-    const omniClient = new OpenAI({ apiKey: deepseekKey, baseURL: "https://api.deepseek.com/v1" });
+    const deepseekKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
+    if (!deepseekKey) throw new Error("OPENROUTER_API_KEY is not configured.");
+    const omniClient = new OpenAI({
+      apiKey: deepseekKey,
+      baseURL: "https://openrouter.ai/api/v1",
+      defaultHeaders: {
+        "HTTP-Referer": "https://apex-chat.vercel.app",
+        "X-Title": "Apex Chat",
+      }
+    });
 
     // Evaluate Prompt Complexity
     const evaluatePromptComplexity = (msg: string, hist: Array<{ role: string; content: string }> = []): number => {
@@ -1702,7 +1723,7 @@ export async function processMessage(
       let content = "";
       if (onChunk) {
         const stream = await omniClient.chat.completions.create({
-          model: omniActualModel,
+          model: "poolside/laguna-xs-2.1:free",
           messages,
           max_tokens: 4096,
           temperature: 0.5,
@@ -1717,7 +1738,7 @@ export async function processMessage(
         }
       } else {
         const response = await omniClient.chat.completions.create({
-          model: omniActualModel,
+          model: "poolside/laguna-xs-2.1:free",
           messages,
           max_tokens: 4096,
           temperature: 0.5,
@@ -1749,7 +1770,7 @@ export async function processMessage(
       let content = "";
       if (onChunk) {
         const stream = await omniClient.chat.completions.create({
-          model: omniActualModel,
+          model: "poolside/laguna-m.1:free",
           messages,
           max_tokens: 6144,
           temperature: 0.6,
@@ -1764,7 +1785,7 @@ export async function processMessage(
         }
       } else {
         const response = await omniClient.chat.completions.create({
-          model: omniActualModel,
+          model: "poolside/laguna-m.1:free",
           messages,
           max_tokens: 6144,
           temperature: 0.6,
@@ -1853,20 +1874,19 @@ export async function processMessage(
     }
   }
 
-  // Check for DeepSeek API key.
-  // NOTE: Never log the key value or any prefix — doing so leaks credentials to stdout/log files.
-  if (!process.env.DEEPSEEK_API_KEY) {
-    console.error("❌ DEEPSEEK_API_KEY is not configured!");
-    console.error("   Please ensure .env.local file exists with DEEPSEEK_API_KEY");
-    throw new Error("DEEPSEEK_API_KEY is not configured. Please add it to .env.local");
+  // Check for OpenRouter API key.
+  if (!process.env.OPENROUTER_API_KEY) {
+    console.error("❌ OPENROUTER_API_KEY is not configured!");
+    console.error("   Please ensure .env.local file exists with OPENROUTER_API_KEY");
+    throw new Error("OPENROUTER_API_KEY is not configured. Please add it to .env.local");
   }
 
-  console.log("✅ DEEPSEEK_API_KEY present, calling DeepSeek...");
+  console.log("✅ OPENROUTER_API_KEY present, calling OpenRouter...");
 
   try {
     return await callCerebras(request, onChunk);
   } catch (error: unknown) {
-    console.error(`❌ Error calling DeepSeek with model ${model}:`, error);
+    console.error(`❌ Error calling OpenRouter with model ${model}:`, error);
     
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorType = error instanceof Error ? error.constructor.name : 'Unknown';
@@ -1874,7 +1894,7 @@ export async function processMessage(
     console.error(`   Error type:`, errorType);
     console.error(`   Error message:`, errorMessage);
     
-    throw new Error(`DeepSeek API error: ${errorMessage}`);
+    throw new Error(`OpenRouter API error: ${errorMessage}`);
   }
 }
 
@@ -1884,14 +1904,18 @@ async function callCerebras(
 ): Promise<OrchestratorResponse> {
   const OpenAI = (await import("openai")).default;
   
-  const deepseekKey = process.env.DEEPSEEK_API_KEY;
+  const deepseekKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
   if (!deepseekKey) {
-    throw new Error("DEEPSEEK_API_KEY is not configured. Please add it to .env.local");
+    throw new Error("OPENROUTER_API_KEY is not configured. Please add it to .env.local");
   }
 
   const client = new OpenAI({
     apiKey: deepseekKey,
-    baseURL: "https://api.deepseek.com/v1",
+    baseURL: "https://openrouter.ai/api/v1",
+    defaultHeaders: {
+      "HTTP-Referer": "https://apex-chat.vercel.app",
+      "X-Title": "Apex Chat",
+    }
   });
 
   // Force thinking to false to temporarily disable Thinking Mode
@@ -2213,10 +2237,14 @@ export async function refinePdfDocumentWithAI(
   prompt: string
 ): Promise<any> {
   const OpenAI = (await import("openai")).default;
-  const apiKey = process.env.DEEPSEEK_API_KEY || "";
+  const apiKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY || "";
   const client = new OpenAI({
     apiKey,
-    baseURL: "https://api.deepseek.com/v1",
+    baseURL: "https://openrouter.ai/api/v1",
+    defaultHeaders: {
+      "HTTP-Referer": "https://apex-chat.vercel.app",
+      "X-Title": "Apex Chat",
+    }
   });
 
   const systemPrompt = `You are a professional PDF document structure refinement engine.
@@ -2237,7 +2265,7 @@ ${prompt}`;
 
   try {
     const response = await client.chat.completions.create({
-      model: "deepseek-chat",
+      model: "openai/gpt-oss-120b:free",
       max_tokens: 8192,
       messages: [
         { role: "system", content: systemPrompt },
@@ -2263,10 +2291,14 @@ export async function generateStructuredPdfFromText(
   text: string
 ): Promise<any> {
   const OpenAI = (await import("openai")).default;
-  const apiKey = process.env.DEEPSEEK_API_KEY || "";
+  const apiKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY || "";
   const client = new OpenAI({
     apiKey,
-    baseURL: "https://api.deepseek.com/v1",
+    baseURL: "https://openrouter.ai/api/v1",
+    defaultHeaders: {
+      "HTTP-Referer": "https://apex-chat.vercel.app",
+      "X-Title": "Apex Chat",
+    }
   });
 
   const systemPrompt = `You are an expert content-to-PDF compiler.
@@ -2313,7 +2345,7 @@ Generate a cohesive title and cover page config. Respond ONLY with the \`\`\`pdf
 
   try {
     const response = await client.chat.completions.create({
-      model: "deepseek-chat",
+      model: "openai/gpt-oss-120b:free",
       max_tokens: 8192,
       messages: [
         { role: "system", content: systemPrompt },
@@ -2345,20 +2377,24 @@ export async function generateMcqResponse(
   onChunk?: (chunk: { content?: string; reasoningContent?: string }) => void
 ): Promise<OrchestratorResponse> {
   const OpenAI = (await import("openai")).default;
-  const apiKey = process.env.DEEPSEEK_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
-    throw new Error("DEEPSEEK_API_KEY is not configured. Please add it to .env.local");
+    throw new Error("OPENROUTER_API_KEY is not configured. Please add it to .env.local");
   }
 
   const client = new OpenAI({
     apiKey,
-    baseURL: "https://api.deepseek.com/v1",
+    baseURL: "https://openrouter.ai/api/v1",
+    defaultHeaders: {
+      "HTTP-Referer": "https://apex-chat.vercel.app",
+      "X-Title": "Apex Chat",
+    }
   });
 
   // Always use flash model for quiz generation via the dedicated endpoint.
   // Thinking disabled ensures all 8K output tokens go to the JSON quiz body,
   // preventing incomplete/truncated mcq-quiz blocks.
-  const actualModel = "deepseek-chat";
+  const actualModel = "poolside/laguna-xs-2.1:free";
 
   return generateDedicatedQuizResponse(client, actualModel, request, onChunk);
 }
