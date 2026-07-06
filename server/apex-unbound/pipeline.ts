@@ -529,8 +529,9 @@ export async function runUnboundPipeline(
 ): Promise<UnboundPipelineResult> {
   const pipelineStart = Date.now();
 
-  const architectModel = "meta-llama/llama-3.3-70b-instruct:free";
-  const specialistModel = "qwen/qwen-2.5-coder-32b-instruct:free";
+  const isOpenRouter = client.baseURL.includes("openrouter.ai");
+  const architectModel = isOpenRouter ? "meta-llama/llama-3.3-70b-instruct:free" : "deepseek-chat";
+  const specialistModel = isOpenRouter ? "qwen/qwen-2.5-coder-32b-instruct:free" : "deepseek-chat";
 
   const isResumed = !!request.spec;
   const isFollowUp = !!request.isFollowUp;

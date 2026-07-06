@@ -729,9 +729,10 @@ export async function registerRoutes(
     };
 
     try {
+      const isOpenRouter = openrouterKey.startsWith("sk-or-");
       const client = new OpenAI({
         apiKey: openrouterKey,
-        baseURL: "https://openrouter.ai/api/v1",
+        baseURL: isOpenRouter ? "https://openrouter.ai/api/v1" : "https://api.deepseek.com",
         defaultHeaders: {
           "HTTP-Referer": "https://apex-chat.vercel.app",
           "X-Title": "Apex Chat",

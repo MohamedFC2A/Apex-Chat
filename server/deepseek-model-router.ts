@@ -26,8 +26,13 @@ export function isOfficialDeepSeekEndpoint(baseURL?: string): boolean {
 export function mapDeepSeekModelForTask(
   requestedModel: string,
   _task: DeepSeekTask,
-  _baseURL?: string
+  baseURL?: string
 ): string {
+  const isOR = !baseURL || baseURL.includes("openrouter.ai");
+  if (!isOR) {
+    if (requestedModel === "apex-flash") return "deepseek-chat";
+    return "deepseek-reasoner";
+  }
   return APEX_MODEL_ALIASES[requestedModel] || requestedModel;
 }
 

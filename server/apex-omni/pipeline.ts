@@ -187,29 +187,13 @@ export async function runApexOmniPipeline(
   const pipelineStart = Date.now();
   const techniquesUsed: string[] = [];
 
-  console.log("\n╔═══════════════════════════════════════════════╗");
-  console.log("║   APEX OMNI 10-AGENT INTELLIGENT PIPELINE    ║");
-  console.log("╚═══════════════════════════════════════════════╝");
-
-  // ── Model setup ──────────────────────────────────────────────────────────────
-  const key = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
-  if (!key || key.trim() === "") {
-    if (onChunk) onChunk({ content: "⚠️ **خطأ في النظام:** مفتاح OpenRouter API Key غير متاح." });
-    throw new Error("OpenRouter API key configuration is missing.");
-  }
-
-  const activeClient = wrapOpenAIClient(new OpenAI({
-    apiKey: key,
-    baseURL: "https://openrouter.ai/api/v1",
-    defaultHeaders: {
-      "HTTP-Referer": "https://apex-chat.vercel.app",
-      "X-Title": "Apex Chat",
-    },
-  }));
-
-  const completionsModel: string = "meta-llama/llama-3.3-70b-instruct:free";
+  const isOpenRouter = client.baseURL.includes("openrouter.ai");
+  const completionsModel: string = actualModel;
 
   const getAgentModel = (agentName: string): string => {
+    if (!isOpenRouter) {
+      return "deepseek-chat";
+    }
     const agentModelMap: Record<string, string> = {
       "1-Analyst": "poolside/laguna-xs-2.1:free",
       "2-Researcher": "poolside/laguna-xs-2.1:free",
