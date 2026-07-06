@@ -585,7 +585,11 @@ async function performSerperImageSearch(query: string): Promise<SerperImageResul
   }
 }
 
-async function optimizeSearchQueries(message: string): Promise<{ textQuery: string; imageQuery: string }> {
+async function optimizeSearchQueries(
+  message: string,
+  conversationHistory?: Array<{ role: string; content: string }>,
+  clientLocalTime?: string
+): Promise<{ textQuery: string; imageQuery: string }> {
   const deepseekKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
   if (!deepseekKey) {
     return cleanQueryFallback(message);
@@ -602,32 +606,36 @@ async function optimizeSearchQueries(message: string): Promise<{ textQuery: stri
       }
     }));
 
-    const response = await client.chat.completions.create({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        {
-          role: "system",
-          content: `You are a search query optimizer. Given a user's conversational prompt, extract:
-1. The best, most effective 3-6 word Google Search query to find real-time information for this prompt. You must adapt and target the query to fetch results from the most famous, trusted, and fast-publishing platforms based on the category:
-   - Football & Sports: Kooora, Yallakora, Filgoal, Goal, Sky Sports, Bein Sports, Btolat.
-   - Technology, Coding & AI: TechCrunch, The Verge, Wired, Medium, StackOverflow, GitHub, Dev.to, MDN Docs.
-   - News, Politics & Current Events: Reuters, BBC News, CNN, Al Jazeera, Bloomberg, Associated Press.
-   - Health, Science & Medicine: PubMed, Nature, WebMD, Mayo Clinic, WHO, Healthline, ScienceDaily.
-   - Finance, Business & Economy: Bloomberg, CNBC, Yahoo Finance, Forbes, Financial Times, Investopedia.
-   - General/Academic: Wikipedia, Britannica, National Geographic.
-2. The best, most specific 2-4 word Google Image Search query to find a high-quality, relevant image representing the main subject/entity of the prompt.
+    const timeBlock = buildSystemTimeBlock(clientLocalTime);
+
+    const messages = [
+      {
+        role: "system" as const,
+        content: `You are a search query optimizer. Given a user's conversational prompt, the conversation history, and the current date/time, extract:
+1. The best, most effective 3-6 word search query to find real-time information for this prompt. If the prompt is a follow-up or shorthand (e.g. "what about Messi?" or "and Portugal?"), resolve it using the conversation history to make the query fully self-contained. Target sports queries to: Kooora, Yallakora, Goal, Bein Sports.
+2. The best, most specific 2-4 word Image Search query to find a high-quality, relevant image representing the main subject/entity of the prompt.
+
+${timeBlock}
 
 Output ONLY a raw JSON object in this format (no markdown, no backticks, no wrapping):
 {
   "textQuery": "clean search query",
   "imageQuery": "clean image query"
 }`
-        },
-        {
-          role: "user",
-          content: message
-        }
-      ],
+      },
+      ...(conversationHistory || []).slice(-4).map(m => ({
+        role: m.role === "assistant" ? "assistant" as const : "user" as const,
+        content: m.content
+      })),
+      {
+        role: "user" as const,
+        content: message
+      }
+    ];
+
+    const response = await client.chat.completions.create({
+      model: "google/gemini-2.5-flash",
+      messages,
       max_tokens: 150,
       temperature: 0.1,
       stream: false
@@ -677,12 +685,12 @@ function getDomainName(urlStr: string): string {
   }
 }
 
-async function performSerperSearch(query: string): Promise<{
+async function performSerperSearch(query: string, isOmni = false): Promise<{
   organic: SerperSearchResult[];
   image?: SerperImageResult;
 }> {
   try {
-    const apexResults = await runApexSearch(query, { intent: "answer" });
+    const apexResults = await runApexSearch(query, { intent: "answer", isOmni });
     const organic = apexResults.organic.slice(0, 12).map((item) => ({
       title: item.title,
       link: item.link,
@@ -1798,7 +1806,9 @@ export async function processMessage(
       const shouldUseSearch = !!features.deepResearch;
       let systemPrompt = buildCerebrasSystemPrompt("apex-omni", mode, features, request.clientLocalTime);
       if (shouldUseSearch) {
-        const searchResponse = await runApexSearch(request.message, { intent: "answer" });
+        const optimizedQuery = await optimizeSearchQueries(request.message, request.conversationHistory, request.clientLocalTime);
+        console.log(`[Orchestrator Level 2] Context-aware optimized query: "${optimizedQuery.textQuery}"`);
+        const searchResponse = await runApexSearch(optimizedQuery.textQuery, { intent: "answer", isOmni: true });
         const searchContext = buildApexSearchContext(searchResponse);
         systemPrompt += `\n\n=== VERIFIED SEARCH CONTEXT ===\nUse this context only when it directly supports the answer. Do not invent links or sources.\n${searchContext}`;
       }
@@ -1991,7 +2001,10 @@ async function callCerebras(
               return { content: footballData.answer };
             }
           } else {
-            const searchData = await performSerperSearch(request.message);
+            const optimizedQuery = await optimizeSearchQueries(request.message, request.conversationHistory, request.clientLocalTime);
+            console.log(`[Apex Search] Context-aware optimized query: "${optimizedQuery.textQuery}"`);
+            const isOmniSearch = request.model === "apex-omni" || !!request.features.deepResearch;
+            const searchData = await performSerperSearch(optimizedQuery.textQuery, isOmniSearch);
             if (searchData.organic && searchData.organic.length > 0) {
               searchContext = `\n\n=== GOOGLE SEARCH RESULTS ===\n`;
               searchData.organic.forEach((item, index) => {
