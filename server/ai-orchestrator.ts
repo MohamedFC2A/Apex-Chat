@@ -22,6 +22,7 @@ import { getDeepSeekRequestParams, getDeepSeekStructuredParams, mapDeepSeekModel
 import { runApexSearch, buildApexSearchContext, extractBase64Images } from "./apex-search-engine.js";
 import { buildApexFootballContext } from "./apex-football-engine.js";
 import { sanitizeContextPayload } from "./context-sanitizer.js";
+import { robustJsonParse } from "./json-repair.js";
 
 // AI Orchestrator Service - Cerebras Integration
 // Routes requests to Cerebras Cloud API with tier-based validation
@@ -633,8 +634,7 @@ Output ONLY a raw JSON object in this format (no markdown, no backticks, no wrap
     });
 
     const content = response.choices[0]?.message?.content || "";
-    const cleanJson = content.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(cleanJson);
+    const parsed = robustJsonParse(content);
     if (parsed.textQuery && parsed.imageQuery) {
       console.log(`[Query Optimizer] Optimized queries: text="${parsed.textQuery}", image="${parsed.imageQuery}"`);
       return {
@@ -2322,9 +2322,7 @@ ${prompt}`;
     });
 
     const content = response.choices[0]?.message?.content || "";
-    const pdfBlock = content.match(/```pdf-document\s*([\s\S]*?)```/i);
-    const jsonText = pdfBlock ? pdfBlock[1].trim() : content.trim();
-    const parsed = JSON.parse(jsonText);
+    const parsed = robustJsonParse(content);
     const normalized = normalizePdfObject(parsed);
     if (normalized) return normalized;
     return document;
@@ -2402,9 +2400,7 @@ Generate a cohesive title and cover page config. Respond ONLY with the \`\`\`pdf
     });
 
     const content = response.choices[0]?.message?.content || "";
-    const pdfBlock = content.match(/```pdf-document\s*([\s\S]*?)```/i);
-    const jsonText = pdfBlock ? pdfBlock[1].trim() : content.trim();
-    const parsed = JSON.parse(jsonText);
+    const parsed = robustJsonParse(content);
     const normalized = normalizePdfObject(parsed);
     if (normalized) return normalized;
     throw new Error("Failed to parse AI-generated PDF document");

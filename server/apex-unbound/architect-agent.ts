@@ -20,6 +20,7 @@
 
 import OpenAI from "openai";
 import { getDeepSeekRequestParams } from "../deepseek-model-router.js";
+import { robustJsonParse } from "../json-repair.js";
 
 export interface ComponentSpec {
   id: string;          // e.g. "hero-section"
@@ -201,11 +202,9 @@ Rules:
 
   const rawContent = response.choices[0]?.message?.content || "{}";
 
-  // Parse and validate the JSON
   let spec: SystemSpec;
   try {
-    const cleaned = cleanJsonString(rawContent);
-    spec = JSON.parse(cleaned);
+    spec = robustJsonParse(rawContent);
 
     // Safeguard structural validation
     const userRequestOnly = stripInjectedContext(userMessage);

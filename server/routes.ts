@@ -9,6 +9,7 @@ import OpenAI from "openai";
 import DOMPurify from "isomorphic-dompurify";
 import { cleanJsonString } from "./apex-unbound/architect-agent.js";
 import { runApexSearch } from "./apex-search-engine.js";
+import { robustJsonParse } from "./json-repair.js";
 // PDF modules are loaded lazily (dynamic import) to avoid Vercel
 // bundle-size / initialization crashes from puppeteer + katex + prismjs.
 // Each route handler imports what it needs at call time.
@@ -858,8 +859,7 @@ JSON structure:
       const content = response.choices[0]?.message?.content || "";
       let concepts;
       try {
-        const cleanContent = cleanJsonString(content);
-        const parsed = JSON.parse(cleanContent);
+        const parsed = robustJsonParse(content);
         if (parsed.question && Array.isArray(parsed.choices)) {
           concepts = parsed;
         } else {

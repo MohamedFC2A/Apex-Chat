@@ -29,6 +29,7 @@ import { runBundlerEngine, type BundleResult } from "./bundler-engine.js";
 import { getDeepSeekRequestParams, mapDeepSeekModelForTask, isOfficialDeepSeekEndpoint } from "../deepseek-model-router.js";
 import { buildCssQualitySummary, buildHtmlQualitySummary, buildRuntimeQualitySummary, ensureProductionCss, ensureProductionHtml, ensureProductionJavaScript } from "./runtime-guard.js";
 import { buildApexSearchContext, runApexSearch } from "../apex-search-engine.js";
+import { robustJsonParse } from "../json-repair.js";
 
 // ──────────────────────────────────────────────────────────────
 // Types
@@ -138,8 +139,7 @@ JSON structure:
     });
 
     const content = response.choices[0]?.message?.content || "";
-    const cleanContent = cleanJsonString(content);
-    const parsed = JSON.parse(cleanContent);
+    const parsed = robustJsonParse(content);
     if (Array.isArray(parsed.questions) && parsed.questions.length >= 3 && parsed.questions.length <= 5) {
       return parsed;
     }
@@ -287,7 +287,7 @@ ${jsCode}`,
   const rawContent = response.choices[0]?.message?.content || "{}";
 
   try {
-    const parsed = JSON.parse(cleanJsonString(rawContent));
+    const parsed = robustJsonParse(rawContent);
     return {
       htmlCode: typeof parsed.htmlCode === "string" && parsed.htmlCode.trim() ? parsed.htmlCode.trim() : htmlCode,
       cssCode: typeof parsed.cssCode === "string" && parsed.cssCode.trim() ? parsed.cssCode.trim() : cssCode,
