@@ -49,6 +49,7 @@ interface SerperSearchResult {
   title: string;
   link: string;
   snippet: string;
+  page_content?: string;
 }
 
 interface SerperImageResult {
@@ -695,6 +696,7 @@ async function performSerperSearch(query: string, isOmni = false): Promise<{
       title: item.title,
       link: item.link,
       snippet: item.snippet,
+      page_content: item.page_content,
     }));
     const primaryImage = apexResults.imageAssets.find((asset) => asset.role === "hero") || apexResults.imageAssets[0];
     const selectedImage = primaryImage
@@ -2004,7 +2006,11 @@ async function callCerebras(
             if (searchData.organic && searchData.organic.length > 0) {
               searchContext = `\n\n=== GOOGLE SEARCH RESULTS ===\n`;
               searchData.organic.forEach((item, index) => {
-                searchContext += `[${index + 1}] Title: ${item.title}\nURL: ${item.link}\nSnippet: ${item.snippet}\n\n`;
+                searchContext += `[${index + 1}] Title: ${item.title}\nURL: ${item.link}\nSnippet: ${item.snippet}\n`;
+                if (item.page_content && item.page_content.trim().length > 0) {
+                  searchContext += `Scraped Content (Full Text):\n${item.page_content}\n`;
+                }
+                searchContext += `\n`;
               });
             }
             if (searchData.image) {
