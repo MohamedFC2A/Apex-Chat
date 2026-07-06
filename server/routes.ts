@@ -165,64 +165,13 @@ export async function registerRoutes(
           listeners: []
         };
         activeGenerations.set(activeMsgId, activeGen);
-
-        // Run message processing in the background (survives client refresh/disconnect)
-        (async () => {
-          try {
-            const processResponse = await processMessage({
-              message,
-              model: targetModel,
-              mode,
-              reasoningLevel,
-              subscriptionTier,
-              features,
-              conversationHistory,
-              userMemoryContext,
-              clientLocalTime,
-            }, (chunk) => {
-              if (activeGen!.isComplete) return; // ignore chunks if stopped/cancelled
-              const chunkData = {
-                id: randomUUID(),
-                content: chunk.content || "",
-                reasoningContent: chunk.reasoningContent || "",
-                model,
-                conversationId: activeConvId
-              };
-              activeGen!.content += chunkData.content;
-              activeGen!.reasoningContent += chunkData.reasoningContent;
-              activeGen!.chunks.push(chunkData);
-              activeGen!.listeners.forEach(listener => listener({ type: "chunk", data: chunkData }));
-            });
-
-            if (activeGen!.isComplete) return;
-
-            if (processResponse && processResponse.totalDuration) {
-              const durationData = {
-                id: randomUUID(),
-                totalDuration: processResponse.totalDuration,
-                model,
-                conversationId: activeConvId
-              };
-              activeGen!.chunks.push(durationData);
-              activeGen!.listeners.forEach(listener => listener({ type: "chunk", data: durationData }));
-            }
-            activeGen!.isComplete = true;
-            activeGen!.listeners.forEach(listener => listener({ type: "done" }));
-          } catch (err: any) {
-            console.error("Background message processing failed:", err);
-            if (!activeGen!.isComplete) {
-              activeGen!.error = err.message || "Failed to process message";
-              activeGen!.listeners.forEach(listener => listener({ type: "error", data: activeGen!.error }));
-              activeGen!.isComplete = true;
-            }
-          }
-        })();
       }
 
       if (stream) {
         res.setHeader("Content-Type", "text/event-stream");
-        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Cache-Control", "no-cache, no-transform");
         res.setHeader("Connection", "keep-alive");
+        res.setHeader("X-Accel-Buffering", "no");
 
         // Catch up with accumulated chunks
         activeGen.chunks.forEach(chunk => {
@@ -253,44 +202,99 @@ export async function registerRoutes(
 
         activeGen.listeners.push(listener);
 
-        req.on("close", () => {
+        try {
+          const processResponse = await processMessage({
+            message,
+            model: targetModel,
+            mode,
+            reasoningLevel,
+            subscriptionTier,
+            features,
+            conversationHistory,
+            userMemoryContext,
+            clientLocalTime,
+          }, (chunk) => {
+            if (activeGen!.isComplete) return; // ignore chunks if stopped/cancelled
+            const chunkData = {
+              id: randomUUID(),
+              content: chunk.content || "",
+              reasoningContent: chunk.reasoningContent || "",
+              model,
+              conversationId: activeConvId
+            };
+            activeGen!.content += chunkData.content;
+            activeGen!.reasoningContent += chunkData.reasoningContent;
+            activeGen!.chunks.push(chunkData);
+            activeGen!.listeners.forEach(l => l({ type: "chunk", data: chunkData }));
+          });
+
+          if (!activeGen!.isComplete) {
+            if (processResponse && processResponse.totalDuration) {
+              const durationData = {
+                id: randomUUID(),
+                totalDuration: processResponse.totalDuration,
+                model,
+                conversationId: activeConvId
+              };
+              activeGen!.chunks.push(durationData);
+              activeGen!.listeners.forEach(l => l({ type: "chunk", data: durationData }));
+            }
+            activeGen!.isComplete = true;
+            activeGen!.listeners.forEach(l => l({ type: "done" }));
+          }
+        } catch (err: any) {
+          console.error("Message processing failed:", err);
+          if (!activeGen!.isComplete) {
+            activeGen!.error = err.message || "Failed to process message";
+            activeGen!.listeners.forEach(l => l({ type: "error", data: activeGen!.error }));
+            activeGen!.isComplete = true;
+          }
+        } finally {
           const idx = activeGen!.listeners.indexOf(listener);
           if (idx !== -1) {
             activeGen!.listeners.splice(idx, 1);
           }
-        });
+        }
         return;
       }
 
-      // Non-stream block: wait for active generation to finish
-      const checkCompletion = (): Promise<any> => {
-        return new Promise((resolve, reject) => {
-          if (activeGen!.isComplete) {
-            if (activeGen!.error) reject(new Error(activeGen!.error));
-            else resolve(activeGen);
-            return;
-          }
-          const listener = (event: any) => {
-            if (event.type === "done") {
-              resolve(activeGen);
-            } else if (event.type === "error") {
-              reject(new Error(event.data));
-            }
-          };
-          activeGen!.listeners.push(listener);
-        });
-      };
-
+      // Non-stream block: await generation directly
       try {
-        await checkCompletion();
+        const processResponse = await processMessage({
+          message,
+          model: targetModel,
+          mode,
+          reasoningLevel,
+          subscriptionTier,
+          features,
+          conversationHistory,
+          userMemoryContext,
+          clientLocalTime,
+        }, (chunk) => {
+          const chunkData = {
+            id: randomUUID(),
+            content: chunk.content || "",
+            reasoningContent: chunk.reasoningContent || "",
+            model,
+            conversationId: activeConvId
+          };
+          activeGen!.content += chunkData.content;
+          activeGen!.reasoningContent += chunkData.reasoningContent;
+          activeGen!.chunks.push(chunkData);
+        });
+
+        activeGen.isComplete = true;
+
         return res.json({
           id: activeMsgId,
-          content: activeGen.content,
-          reasoningContent: activeGen.reasoningContent,
+          content: activeGen.content || processResponse.content,
+          reasoningContent: activeGen.reasoningContent || processResponse.reasoningContent,
           conversationId: activeConvId,
           model,
         });
       } catch (err: any) {
+        activeGen.isComplete = true;
+        activeGen.error = err.message;
         return res.status(500).json({ error: "Failed to process message", message: err.message });
       }
     } catch (error) {
