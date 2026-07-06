@@ -84,6 +84,8 @@ export default function ChatPage() {
   const [, setLocation] = useLocation();
   const abortControllerRef = useRef<AbortController | null>(null);
   const activeEventSourceRef = useRef<EventSource | null>(null);
+  // Tracks whether the user manually stopped generation to prevent auto-restart
+  const wasStoppedByUserRef = useRef<boolean>(false);
 
   const {
     streamingContentMap,
@@ -503,7 +505,14 @@ removeGodModeTheme();
         setStreamingContentForConv(thisConvId, "");
         setStreamingReasoningForConv(thisConvId, "");
       } catch (error: any) {
-        if (error.message === "Aborted") {
+        // Detect all AbortError variants (user-initiated stop)
+        const isAbort =
+          error.name === "AbortError" ||
+          error.message === "Aborted" ||
+          error.message === "signal is aborted without reason" ||
+          error.message === "The user aborted a request." ||
+          error.message?.includes("aborted");
+        if (isAbort) {
           setIsGenerating(false);
           store.setActiveGenerationId(null);
           setStreamingContentForConv(thisConvId, "");
@@ -560,13 +569,16 @@ removeGodModeTheme();
   );
 
   useEffect(() => {
-    if (!activeConversationId || isGenerating) return;
+    // Don't auto-retry if the user manually stopped generation
+    if (!activeConversationId || isGenerating || wasStoppedByUserRef.current) return;
     const activeConv = conversations.find(c => c.id === activeConversationId);
     if (!activeConv || activeConv.messages.length === 0) return;
     
     const lastMsg = activeConv.messages[activeConv.messages.length - 1];
     if (lastMsg.role === "user") {
       const timer = setTimeout(() => {
+        // Re-check stop flag inside timer to avoid race conditions
+        if (wasStoppedByUserRef.current) return;
         const currentConv = useChatStore.getState().conversations.find(c => c.id === activeConversationId);
         const currentLast = currentConv?.messages[currentConv.messages.length - 1];
         if (currentLast && currentLast.role === "user" && !useChatStore.getState().isGenerating) {
@@ -736,6 +748,8 @@ removeGodModeTheme();
   }, [activeConversationId, isGenerating, selectedModel]);
 
   const handleStopGenerating = useCallback(async () => {
+    // Mark as user-stopped to prevent auto-restart loop
+    wasStoppedByUserRef.current = true;
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
@@ -755,6 +769,8 @@ removeGodModeTheme();
         await fetch(`/api/chat/stop/${activeId}`, { method: "POST" }).catch(err => console.error(err));
       }
     }
+    // Reset stop flag after a short delay so future messages can be sent normally
+    setTimeout(() => { wasStoppedByUserRef.current = false; }, 500);
   }, [activeConversationId, setStreamingContentForConv, setStreamingReasoningForConv, setIsGenerating]);
 
   const handleSelectUnboundChoices = useCallback(async (choices: Array<{ questionId: string; title: string; description: string; theme: string }>) => {

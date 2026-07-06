@@ -602,7 +602,7 @@ async function optimizeSearchQueries(message: string): Promise<{ textQuery: stri
     }));
 
     const response = await client.chat.completions.create({
-      model: "poolside/laguna-xs-2.1:free",
+      model: "meta-llama/llama-3.1-8b-instruct:free",
       messages: [
         {
           role: "system",
@@ -1692,41 +1692,38 @@ export async function processMessage(
 
   if (componentIntent.triggerPDF && detectStructuredPdfIntent(request.message)) {
     const OpenAI = (await import("openai")).default;
-    const deepseekKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
+    const deepseekKey = process.env.OPENROUTER_API_KEY;
     if (!deepseekKey) {
       throw new Error("OPENROUTER_API_KEY is not configured. Please add it to .env.local");
     }
 
     const pdfClient = wrapOpenAIClient(new OpenAI(getOpenAIClientConfig(deepseekKey)));
 
-    const isOpenRouter = deepseekKey.startsWith("sk-or-");
-    const pdfModel = isOpenRouter ? "poolside/laguna-xs-2.1:free" : "deepseek-chat";
+    const pdfModel = "meta-llama/llama-3.3-70b-instruct:free";
     return await generateDedicatedPdfResponse(pdfClient, pdfModel, request, onChunk);
   }
 
   if (componentIntent.triggerQuiz && detectStructuredQuizIntent(request.message)) {
     const OpenAI = (await import("openai")).default;
-    const deepseekKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
+    const deepseekKey = process.env.OPENROUTER_API_KEY;
     if (!deepseekKey) {
       throw new Error("OPENROUTER_API_KEY is not configured. Please add it to .env.local");
     }
 
     const quizClient = wrapOpenAIClient(new OpenAI(getOpenAIClientConfig(deepseekKey)));
 
-    const isOpenRouter = deepseekKey.startsWith("sk-or-");
-    const quizModel = isOpenRouter ? "poolside/laguna-xs-2.1:free" : "deepseek-chat";
+    const quizModel = "meta-llama/llama-3.3-70b-instruct:free";
     return await generateDedicatedQuizResponse(quizClient, quizModel, request, onChunk);
   }
 
   // ── APEX OMNI: Route through full AI pipeline ──────────────────────────────
   if (model === "apex-omni") {
     const OpenAI = (await import("openai")).default;
-    const deepseekKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
+    const deepseekKey = process.env.OPENROUTER_API_KEY;
     if (!deepseekKey) throw new Error("OPENROUTER_API_KEY is not configured.");
 
     const omniClient = wrapOpenAIClient(new OpenAI(getOpenAIClientConfig(deepseekKey)));
-    const isOpenRouter = deepseekKey.startsWith("sk-or-");
-    const omniActualModel = isOpenRouter ? "meta-llama/llama-3.3-70b-instruct:free" : "deepseek-chat";
+    const omniActualModel = "meta-llama/llama-3.3-70b-instruct:free";
 
     // Evaluate Prompt Complexity
     const evaluatePromptComplexity = (msg: string, hist: Array<{ role: string; content: string }> = []): number => {
@@ -1761,7 +1758,7 @@ export async function processMessage(
       let content = "";
       if (onChunk) {
         const stream = await omniClient.chat.completions.create({
-          model: "poolside/laguna-xs-2.1:free",
+          model: "meta-llama/llama-3.1-8b-instruct:free",
           messages,
           max_tokens: 4096,
           temperature: 0.5,
@@ -1776,7 +1773,7 @@ export async function processMessage(
         }
       } else {
         const response = await omniClient.chat.completions.create({
-          model: "poolside/laguna-xs-2.1:free",
+          model: "meta-llama/llama-3.1-8b-instruct:free",
           messages,
           max_tokens: 4096,
           temperature: 0.5,
@@ -1808,7 +1805,7 @@ export async function processMessage(
       let content = "";
       if (onChunk) {
         const stream = await omniClient.chat.completions.create({
-          model: "poolside/laguna-xs-2.1:free",
+          model: "meta-llama/llama-3.1-8b-instruct:free",
           messages,
           max_tokens: 6144,
           temperature: 0.6,
@@ -1823,7 +1820,7 @@ export async function processMessage(
         }
       } else {
         const response = await omniClient.chat.completions.create({
-          model: "poolside/laguna-xs-2.1:free",
+          model: "meta-llama/llama-3.1-8b-instruct:free",
           messages,
           max_tokens: 6144,
           temperature: 0.6,
@@ -1943,15 +1940,14 @@ async function callCerebras(
   const OpenAI = (await import("openai")).default;
   
   const openrouterKey = process.env.OPENROUTER_API_KEY || "";
-  const deepseekKey = process.env.DEEPSEEK_API_KEY || "";
 
-  if (!openrouterKey && !deepseekKey) {
-    throw new Error("No API keys (OPENROUTER_API_KEY or DEEPSEEK_API_KEY) are configured. Please add them to .env.local");
+  if (!openrouterKey) {
+    throw new Error("OPENROUTER_API_KEY is not configured. Please add it to .env.local");
   }
 
-  const keysToTry: Array<{ key: string; name: string }> = [];
-  if (openrouterKey) keysToTry.push({ key: openrouterKey, name: "OpenRouter" });
-  if (deepseekKey) keysToTry.push({ key: deepseekKey, name: "DeepSeek Official" });
+  const keysToTry: Array<{ key: string; name: string }> = [
+    { key: openrouterKey, name: "OpenRouter" }
+  ];
 
   let lastError: any = null;
 
@@ -2435,10 +2431,8 @@ export async function generateMcqResponse(
     }
   }));
 
-  // Always use flash model for quiz generation via the dedicated endpoint.
-  // Thinking disabled ensures all 8K output tokens go to the JSON quiz body,
-  // preventing incomplete/truncated mcq-quiz blocks.
-  const actualModel = "poolside/laguna-xs-2.1:free";
+  // Always use a strong model for quiz generation via the dedicated endpoint.
+  const actualModel = "meta-llama/llama-3.3-70b-instruct:free";
 
   return generateDedicatedQuizResponse(client, actualModel, request, onChunk);
 }

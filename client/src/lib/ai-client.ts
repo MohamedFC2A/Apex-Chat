@@ -1,6 +1,6 @@
 /**
- * DEEPSEEK AI CLIENT
- * Routes AI messages to DeepSeek Cloud API.
+ * APEX AI CLIENT
+ * Routes AI messages to OpenRouter API (free tier models).
  */
 
 import type { ChatResponse, AIModel, Message } from "@shared/schema";
@@ -29,29 +29,27 @@ const cleanEnvValue = (val: string | undefined): string => {
   return val.replace(/[^\x00-\xFF]/g, "").trim();
 };
 
-const CLIENT_API_KEY = cleanEnvValue(import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_DEEPSEEK_API_KEY || "");
+// OpenRouter is the primary (and only) AI provider
+const OPENROUTER_API_KEY = cleanEnvValue(import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_DEEPSEEK_API_KEY || "");
+const CLIENT_API_KEY = OPENROUTER_API_KEY;
+const isClientOpenRouter = true; // Always OpenRouter
 
-// Dynamically check if the client key is for OpenRouter or DeepSeek Cloud
-const isClientOpenRouter = CLIENT_API_KEY.startsWith("sk-or-v1-");
-
+// Keep legacy aliases for backwards compatibility
 const DEEPSEEK_API_KEY = CLIENT_API_KEY;
-const DEEPSEEK_URL = isClientOpenRouter
-  ? "https://openrouter.ai/api/v1/chat/completions"
-  : "https://api.deepseek.com/v1/chat/completions";
+const DEEPSEEK_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-// Model mapping: ApexChat model → Target ID based on detected provider
-const MODEL_MAP: Record<string, string> = isClientOpenRouter ? {
-  "apex-flash": "poolside/laguna-xs-2.1:free",
+// Best free OpenRouter models (July 2026)
+const MODEL_MAP: Record<string, string> = {
+  // Flash: fastest lightweight model for quick responses
+  "apex-flash": "meta-llama/llama-3.1-8b-instruct:free",
+  // Pro: strong 70B model for reasoning and coding
   "apex-pro": "meta-llama/llama-3.3-70b-instruct:free",
+  // Elite: web search specialist – best large free model
   "apex-elite": "meta-llama/llama-3.3-70b-instruct:free",
+  // Omni: multi-agent reasoning powerhouse
   "apex-omni": "meta-llama/llama-3.3-70b-instruct:free",
+  // Unbound: full-stack code architect
   "apex-unbound": "meta-llama/llama-3.3-70b-instruct:free",
-} : {
-  "apex-flash": "deepseek-chat",
-  "apex-pro": "deepseek-reasoner",
-  "apex-elite": "deepseek-reasoner",
-  "apex-omni": "deepseek-reasoner",
-  "apex-unbound": "deepseek-reasoner",
 };
 
 type DeepSeekTask = "reasoning" | "generation";
@@ -70,44 +68,12 @@ function getClientHeaders(apiKey: string): Record<string, string> {
 }
 
 function mapDeepSeekModelForClient(model: AIModel, _task: DeepSeekTask): string {
-  const fallback = isClientOpenRouter ? "poolside/laguna-xs-2.1:free" : "deepseek-chat";
+  const fallback = "meta-llama/llama-3.3-70b-instruct:free";
   return MODEL_MAP[model] || fallback;
 }
 
 function getDeepSeekRequestParams(model: string, enableThinking = false): Record<string, any> {
-  if (isClientOpenRouter) {
-    return {
-      temperature: 0.7,
-    };
-  }
-
-  // Official DeepSeek parameters
-  if (model === "deepseek-reasoner") {
-    return {};
-  }
-
-  if (model === "deepseek-chat") {
-    if (enableThinking) {
-      return {
-        temperature: 0.7,
-        extra_body: {
-          thinking: {
-            type: "enabled",
-          },
-        },
-      };
-    } else {
-      return {
-        temperature: 0.7,
-        extra_body: {
-          thinking: {
-            type: "disabled",
-          },
-        },
-      };
-    }
-  }
-
+  // OpenRouter free models: standard parameters only
   return {
     temperature: 0.7,
   };
@@ -627,7 +593,7 @@ async function clientOptimizeSearchQueries(message: string, apiKey: string): Pro
       method: "POST",
       headers: getClientHeaders(apiKey),
       body: JSON.stringify({
-        model: isClientOpenRouter ? "poolside/laguna-xs-2.1:free" : "deepseek-chat",
+        model: "meta-llama/llama-3.1-8b-instruct:free",
         messages: [
           {
             role: "system",
@@ -838,7 +804,7 @@ export async function callDeepSeekDirect(
   clientLocalTime?: string
 ): Promise<ChatResponse> {
   if (!DEEPSEEK_API_KEY) {
-    throw new Error("DEEPSEEK API KEY is missing. Please add VITE_DEEPSEEK_API_KEY to environment variables.");
+    throw new Error("OPENROUTER_API_KEY is missing. Please add VITE_OPENROUTER_API_KEY to environment variables.");
   }
 
   const task: DeepSeekTask = model === "apex-flash" ? "generation" : "reasoning";

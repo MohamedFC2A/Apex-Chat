@@ -1,26 +1,27 @@
 export type DeepSeekTask = "reasoning" | "generation";
 
-// OpenRouter Free Models mapping:
-// - poolside/laguna-xs-2.1:free          → Fastest model (Flash)
-// - nvidia/nemotron-3-super-120b-a12b:free → Strong, intelligent model (Pro/Elite)
-// - nvidia/nemotron-3-ultra-550b-a55b:free → Most powerful 550B model (Omni/Unbound)
+// OpenRouter Free Models mapping (July 2026):
+// - meta-llama/llama-3.1-8b-instruct:free   → Fast lightweight model (Flash)
+// - meta-llama/llama-3.3-70b-instruct:free   → Strong 70B model (Pro/Elite/Omni/Unbound)
 //
-// All apex-* model aliases map to OpenRouter free models.
+// All apex-* model aliases map to OpenRouter free models exclusively.
+// DeepSeek API is no longer used.
 const APEX_MODEL_ALIASES: Record<string, string> = {
-  "apex-flash":   "poolside/laguna-xs-2.1:free",
+  "apex-flash":   "meta-llama/llama-3.1-8b-instruct:free",
   "apex-pro":     "meta-llama/llama-3.3-70b-instruct:free",
   "apex-elite":   "meta-llama/llama-3.3-70b-instruct:free",
   "apex-omni":    "meta-llama/llama-3.3-70b-instruct:free",
   "apex-unbound": "meta-llama/llama-3.3-70b-instruct:free",
   // Legacy fallbacks mapped to free OpenRouter models
-  "deepseek-v4-flash": "poolside/laguna-xs-2.1:free",
+  "deepseek-v4-flash": "meta-llama/llama-3.1-8b-instruct:free",
   "deepseek-v4-pro":   "meta-llama/llama-3.3-70b-instruct:free",
   "deepseek-chat":     "meta-llama/llama-3.3-70b-instruct:free",
+  "poolside/laguna-xs-2.1:free": "meta-llama/llama-3.1-8b-instruct:free",
 };
 
 export function isOfficialDeepSeekEndpoint(baseURL?: string): boolean {
-  const url = baseURL || process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com";
-  return url.includes("api.deepseek.com") || url.includes("openrouter.ai");
+  // Always using OpenRouter now
+  return true;
 }
 
 export function mapDeepSeekModelForTask(
@@ -28,23 +29,18 @@ export function mapDeepSeekModelForTask(
   _task: DeepSeekTask,
   baseURL?: string
 ): string {
-  const isOR = !baseURL || baseURL.includes("openrouter.ai");
-  if (!isOR) {
-    if (requestedModel === "apex-flash") return "deepseek-chat";
-    return "deepseek-reasoner";
-  }
   return APEX_MODEL_ALIASES[requestedModel] || requestedModel;
 }
 
 /**
- * Returns clean API parameters for OpenRouter/DeepSeek models.
+ * Returns clean API parameters for OpenRouter models.
  */
 export function getDeepSeekRequestParams(
   model: string,
   temperature = 0.7,
   _enableThinking = false
 ): Record<string, any> {
-  // OpenRouter free models: standard parameters
+  // OpenRouter free models: standard parameters only
   return { temperature };
 }
 
@@ -55,4 +51,3 @@ export function getDeepSeekRequestParams(
 export function getDeepSeekStructuredParams(temperature = 0.3): Record<string, any> {
   return { temperature };
 }
-

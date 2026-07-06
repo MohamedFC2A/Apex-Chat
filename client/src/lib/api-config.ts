@@ -30,7 +30,7 @@ export function getAPIProviders(): APIProvider[] {
       baseURL: "https://openrouter.ai/api/v1",
       apiKey: openrouterKey,
       models: {
-        "apex-flash": "poolside/laguna-xs-2.1:free",
+        "apex-flash": "meta-llama/llama-3.1-8b-instruct:free",
         "apex-pro": "meta-llama/llama-3.3-70b-instruct:free",
         "apex-elite": "meta-llama/llama-3.3-70b-instruct:free",
         "apex-omni": "meta-llama/llama-3.3-70b-instruct:free",
