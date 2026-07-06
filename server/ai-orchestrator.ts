@@ -56,6 +56,41 @@ interface SerperImageResult {
   source: string;
 }
 
+function wrapOpenAIClient(client: any): any {
+  const originalCreate = client.chat.completions.create.bind(client.chat.completions);
+  client.chat.completions.create = async function(params: any, options: any) {
+    const result = await originalCreate(params, options);
+    if (params.stream) {
+      const originalStream = result;
+      return (async function* () {
+        for await (const chunk of originalStream as any) {
+          if (chunk.error) {
+            const msg = chunk.error.message || JSON.stringify(chunk.error);
+            throw new Error(`OpenRouter API error: ${msg}`);
+          }
+          if (!chunk.choices || chunk.choices.length === 0) {
+            const rawChunk = chunk as any;
+            if (rawChunk.error) {
+              throw new Error(`OpenRouter API error: ${rawChunk.error.message}`);
+            }
+          }
+          yield chunk;
+        }
+      })();
+    } else {
+      if ((result as any).error) {
+        const msg = (result as any).error.message || JSON.stringify((result as any).error);
+        throw new Error(`OpenRouter API error: ${msg}`);
+      }
+      if (!result.choices || result.choices.length === 0) {
+        throw new Error("OpenRouter API returned an empty choices response.");
+      }
+      return result;
+    }
+  } as any;
+  return client;
+}
+
 function isQuizIntent(message: string): boolean {
   return /(?:^|\s)(mcq|msq|quiz|exam|test)(?:\s|$)|اختبار|امتحان|اسئلة اختيار|اختيار من متعدد|سؤال(?:ات)?/i.test(message);
 }
@@ -539,14 +574,14 @@ async function optimizeSearchQueries(message: string): Promise<{ textQuery: stri
 
   try {
     const OpenAI = (await import("openai")).default;
-    const client = new OpenAI({
+    const client = wrapOpenAIClient(new OpenAI({
       apiKey: deepseekKey,
       baseURL: "https://openrouter.ai/api/v1",
       defaultHeaders: {
         "HTTP-Referer": "https://apex-chat.vercel.app",
         "X-Title": "Apex Chat",
       }
-    });
+    }));
 
     const response = await client.chat.completions.create({
       model: "poolside/laguna-xs-2.1:free",
@@ -1193,14 +1228,14 @@ async function runMultiAgentWebGen(
     throw new Error("OPENROUTER_API_KEY is not configured.");
   }
 
-  const client = new OpenAI({
+  const client = wrapOpenAIClient(new OpenAI({
     apiKey: deepseekKey,
     baseURL: "https://openrouter.ai/api/v1",
     defaultHeaders: {
       "HTTP-Referer": "https://apex-chat.vercel.app",
       "X-Title": "Apex Chat",
     }
-  });
+  }));
 
   const actualModel = mapDeepSeekModelForTask(request.model, "reasoning");
   const extraParams = getDeepSeekRequestParams(actualModel, 0.5);
@@ -1639,14 +1674,14 @@ export async function processMessage(
       throw new Error("OPENROUTER_API_KEY is not configured. Please add it to .env.local");
     }
 
-    const pdfClient = new OpenAI({
+    const pdfClient = wrapOpenAIClient(new OpenAI({
       apiKey: deepseekKey,
       baseURL: "https://openrouter.ai/api/v1",
       defaultHeaders: {
         "HTTP-Referer": "https://apex-chat.vercel.app",
         "X-Title": "Apex Chat",
       }
-    });
+    }));
 
     // Use fast model for PDF generation
     const pdfModel = "poolside/laguna-xs-2.1:free";
@@ -1660,14 +1695,14 @@ export async function processMessage(
       throw new Error("OPENROUTER_API_KEY is not configured. Please add it to .env.local");
     }
 
-    const quizClient = new OpenAI({
+    const quizClient = wrapOpenAIClient(new OpenAI({
       apiKey: deepseekKey,
       baseURL: "https://openrouter.ai/api/v1",
       defaultHeaders: {
         "HTTP-Referer": "https://apex-chat.vercel.app",
         "X-Title": "Apex Chat",
       }
-    });
+    }));
 
     // Always use flash model for MCQ
     const quizModel = "poolside/laguna-xs-2.1:free";
@@ -1681,14 +1716,14 @@ export async function processMessage(
 
     const deepseekKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
     if (!deepseekKey) throw new Error("OPENROUTER_API_KEY is not configured.");
-    const omniClient = new OpenAI({
+    const omniClient = wrapOpenAIClient(new OpenAI({
       apiKey: deepseekKey,
       baseURL: "https://openrouter.ai/api/v1",
       defaultHeaders: {
         "HTTP-Referer": "https://apex-chat.vercel.app",
         "X-Title": "Apex Chat",
       }
-    });
+    }));
 
     // Evaluate Prompt Complexity
     const evaluatePromptComplexity = (msg: string, hist: Array<{ role: string; content: string }> = []): number => {
@@ -1909,14 +1944,14 @@ async function callCerebras(
     throw new Error("OPENROUTER_API_KEY is not configured. Please add it to .env.local");
   }
 
-  const client = new OpenAI({
+  const client = wrapOpenAIClient(new OpenAI({
     apiKey: deepseekKey,
     baseURL: "https://openrouter.ai/api/v1",
     defaultHeaders: {
       "HTTP-Referer": "https://apex-chat.vercel.app",
       "X-Title": "Apex Chat",
     }
-  });
+  }));
 
   // Force thinking to false to temporarily disable Thinking Mode
   request.features.thinking = false;
@@ -2238,14 +2273,14 @@ export async function refinePdfDocumentWithAI(
 ): Promise<any> {
   const OpenAI = (await import("openai")).default;
   const apiKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY || "";
-  const client = new OpenAI({
+  const client = wrapOpenAIClient(new OpenAI({
     apiKey,
     baseURL: "https://openrouter.ai/api/v1",
     defaultHeaders: {
       "HTTP-Referer": "https://apex-chat.vercel.app",
       "X-Title": "Apex Chat",
     }
-  });
+  }));
 
   const systemPrompt = `You are a professional PDF document structure refinement engine.
 Your input is a complete PDFDocument JSON object and a refinement instruction.
@@ -2292,14 +2327,14 @@ export async function generateStructuredPdfFromText(
 ): Promise<any> {
   const OpenAI = (await import("openai")).default;
   const apiKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY || "";
-  const client = new OpenAI({
+  const client = wrapOpenAIClient(new OpenAI({
     apiKey,
     baseURL: "https://openrouter.ai/api/v1",
     defaultHeaders: {
       "HTTP-Referer": "https://apex-chat.vercel.app",
       "X-Title": "Apex Chat",
     }
-  });
+  }));
 
   const systemPrompt = `You are an expert content-to-PDF compiler.
 Your job is to read the provided text and compile it into a highly detailed, comprehensive, beautifully structured PDFDocument JSON representing a professional document that can easily span up to 20 pages when printed.
@@ -2382,14 +2417,14 @@ export async function generateMcqResponse(
     throw new Error("OPENROUTER_API_KEY is not configured. Please add it to .env.local");
   }
 
-  const client = new OpenAI({
+  const client = wrapOpenAIClient(new OpenAI({
     apiKey,
     baseURL: "https://openrouter.ai/api/v1",
     defaultHeaders: {
       "HTTP-Referer": "https://apex-chat.vercel.app",
       "X-Title": "Apex Chat",
     }
-  });
+  }));
 
   // Always use flash model for quiz generation via the dedicated endpoint.
   // Thinking disabled ensures all 8K output tokens go to the JSON quiz body,

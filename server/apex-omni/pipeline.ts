@@ -28,6 +28,41 @@
 
 import OpenAI from "openai";
 import { analyzeQuery, buildSFTPrompt, type SFTPromptConfig } from "./sft-prompt-builder.js";
+
+function wrapOpenAIClient(client: OpenAI): OpenAI {
+  const originalCreate = client.chat.completions.create.bind(client.chat.completions);
+  client.chat.completions.create = async function(params: any, options: any) {
+    const result = await originalCreate(params, options);
+    if (params.stream) {
+      const originalStream = result;
+      return (async function* () {
+        for await (const chunk of originalStream as any) {
+          if (chunk.error) {
+            const msg = chunk.error.message || JSON.stringify(chunk.error);
+            throw new Error(`OpenRouter API error: ${msg}`);
+          }
+          if (!chunk.choices || chunk.choices.length === 0) {
+            const rawChunk = chunk as any;
+            if (rawChunk.error) {
+              throw new Error(`OpenRouter API error: ${rawChunk.error.message}`);
+            }
+          }
+          yield chunk;
+        }
+      })();
+    } else {
+      if ((result as any).error) {
+        const msg = (result as any).error.message || JSON.stringify((result as any).error);
+        throw new Error(`OpenRouter API error: ${msg}`);
+      }
+      if (!result.choices || result.choices.length === 0) {
+        throw new Error("OpenRouter API returned an empty choices response.");
+      }
+      return result;
+    }
+  } as any;
+  return client;
+}
 import { extractBase64Images } from "../apex-search-engine.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -163,14 +198,14 @@ export async function runApexOmniPipeline(
     throw new Error("OpenRouter API key configuration is missing.");
   }
 
-  const activeClient = new OpenAI({
+  const activeClient = wrapOpenAIClient(new OpenAI({
     apiKey: key,
     baseURL: "https://openrouter.ai/api/v1",
     defaultHeaders: {
       "HTTP-Referer": "https://apex-chat.vercel.app",
       "X-Title": "Apex Chat",
     },
-  });
+  }));
 
   const completionsModel: string = "nvidia/nemotron-3-super-120b-a12b:free";
 
@@ -183,9 +218,9 @@ export async function runApexOmniPipeline(
       "5-CodeSpecialist": "nvidia/nemotron-3-super-120b-a12b:free",
       "6-MathSpecialist": "nvidia/nemotron-3-super-120b-a12b:free",
       "7-FactChecker": "poolside/laguna-xs-2.1:free",
-      "8-Formatter": "poolside/laguna-xs-2.1:free",
-      "9-LanguageAgent": "poolside/laguna-xs-2.1:free",
-      "10-QA": "nvidia/nemotron-3-super-120b-a12b:free",
+      "8-Formatter": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "9-LanguageAgent": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "10-QA": "nvidia/nemotron-3-ultra-550b-a55b:free",
     };
     return agentModelMap[agentName] || completionsModel;
   };
