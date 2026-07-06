@@ -207,20 +207,20 @@ export async function runApexOmniPipeline(
     },
   }));
 
-  const completionsModel: string = "nvidia/nemotron-3-super-120b-a12b:free";
+  const completionsModel: string = "meta-llama/llama-3.3-70b-instruct:free";
 
   const getAgentModel = (agentName: string): string => {
     const agentModelMap: Record<string, string> = {
       "1-Analyst": "poolside/laguna-xs-2.1:free",
       "2-Researcher": "poolside/laguna-xs-2.1:free",
       "3-Critic": "poolside/laguna-xs-2.1:free",
-      "4-ExpertWriter": "nvidia/nemotron-3-super-120b-a12b:free",
-      "5-CodeSpecialist": "nvidia/nemotron-3-super-120b-a12b:free",
-      "6-MathSpecialist": "nvidia/nemotron-3-super-120b-a12b:free",
+      "4-ExpertWriter": "meta-llama/llama-3.3-70b-instruct:free",
+      "5-CodeSpecialist": "qwen/qwen-2.5-coder-32b-instruct:free",
+      "6-MathSpecialist": "meta-llama/llama-3.3-70b-instruct:free",
       "7-FactChecker": "poolside/laguna-xs-2.1:free",
-      "8-Formatter": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "9-LanguageAgent": "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "10-QA": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "8-Formatter": "meta-llama/llama-3.3-70b-instruct:free",
+      "9-LanguageAgent": "meta-llama/llama-3.3-70b-instruct:free",
+      "10-QA": "meta-llama/llama-3.3-70b-instruct:free",
     };
     return agentModelMap[agentName] || completionsModel;
   };

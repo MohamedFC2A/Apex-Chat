@@ -17,9 +17,7 @@ async def run_test():
             headless=True,
             args=[
                 "--window-size=1280,720",
-                "--disable-dev-shm-usage",
-                "--ipc=host",
-                "--single-process"
+                "--disable-dev-shm-usage"
             ],
         )
 
@@ -40,6 +38,18 @@ async def run_test():
         except Exception:
             pass
         
+        # Seed localStorage with the test account
+        await page.evaluate("""() => {
+            const accounts = [{
+                id: "usr_test",
+                email: "example@gmail.com",
+                password: "password123",
+                displayName: "Test User",
+                createdAt: new Date().toISOString()
+            }];
+            localStorage.setItem("apex_accounts", JSON.stringify(accounts));
+        }""")
+        
         # -> Navigate to the login page at /login to load the sign-in form
         await page.goto("http://localhost:5000/login")
         try:
@@ -59,19 +69,16 @@ async def run_test():
         await elem.wait_for(state="visible", timeout=10000)
         await elem.fill("password123")
         
-        # -> Fill the Email field with example@gmail.com and the Password field with password123, then click the 'Sign In' button.
         # Sign In button
-        elem = page.get_by_role('button', name='Sign In', exact=True)
+        elem = page.locator('button[type="submit"]')
         await elem.click(timeout=10000)
         
-        # -> Open the model selector dropdown labeled 'APEX Flash' so available models become visible.
-        # APEX Flash button
-        elem = page.get_by_role('button', name='APEX Flash', exact=True)
+        # APEX model selector button
+        elem = page.get_by_role('button', name=re.compile(r'APEX (Flash|Pro|Elite|Omni|Unbound)', re.IGNORECASE))
         await elem.click(timeout=10000)
         
-        # -> Select the 'Apex Omni' model from the model dropdown menu.
-        # Apex Omni [DECA-CORE] Cognitive Engine menu item
-        elem = page.get_by_role('menuitem', name='Apex Omni [DECA-CORE] Cognitive Engine', exact=True)
+        # Select the 'Apex Omni' model
+        elem = page.locator('button:has-text("Apex Omni")')
         await elem.click(timeout=10000)
         
         # -> Type 'Hello, summarize the app' into the message box (placeholder 'Message ApexChat...') and click the Send button to submit the prompt.

@@ -1723,7 +1723,7 @@ export async function processMessage(
   // ── APEX OMNI: Route through full AI pipeline ──────────────────────────────
   if (model === "apex-omni") {
     const OpenAI = (await import("openai")).default;
-    const omniActualModel = "nvidia/nemotron-3-ultra-550b-a55b:free";
+    const omniActualModel = "meta-llama/llama-3.3-70b-instruct:free";
 
     const deepseekKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
     if (!deepseekKey) throw new Error("OPENROUTER_API_KEY is not configured.");
@@ -2311,7 +2311,7 @@ ${prompt}`;
 
   try {
     const response = await client.chat.completions.create({
-      model: "nvidia/nemotron-3-super-120b-a12b:free",
+      model: "meta-llama/llama-3.3-70b-instruct:free",
       max_tokens: 8192,
       messages: [
         { role: "system", content: systemPrompt },
@@ -2391,7 +2391,7 @@ Generate a cohesive title and cover page config. Respond ONLY with the \`\`\`pdf
 
   try {
     const response = await client.chat.completions.create({
-      model: "nvidia/nemotron-3-super-120b-a12b:free",
+      model: "meta-llama/llama-3.3-70b-instruct:free",
       max_tokens: 8192,
       messages: [
         { role: "system", content: systemPrompt },

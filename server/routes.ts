@@ -841,7 +841,7 @@ JSON structure:
 }`;
 
       const response = await client.chat.completions.create({
-        model: "nvidia/nemotron-3-super-120b-a12b:free",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Generate a question and 3 choices for: "${prompt}"` },

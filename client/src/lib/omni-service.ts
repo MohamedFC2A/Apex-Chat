@@ -109,7 +109,8 @@ async function callAgent(
   agentType: keyof typeof AGENT_CONFIGS,
   message: string,
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>,
-  searchContext?: string
+  searchContext?: string,
+  signal?: AbortSignal
 ): Promise<{ content: string; reasoning?: string }> {
   const config = AGENT_CONFIGS[agentType];
   
@@ -140,7 +141,11 @@ async function callAgent(
         deepResearch: false,
         godMode: false
       },
-      isProModel ? "thinking" : "none"
+      isProModel ? "thinking" : "none",
+      undefined,
+      undefined,
+      undefined,
+      signal
     );
     
     return {
@@ -157,8 +162,13 @@ export async function processOmniRequest(
   message: string,
   onStateUpdate: (state: OmniState) => void,
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>,
-  existingState?: OmniState | null
+  existingState?: OmniState | null,
+  abortSignal?: AbortSignal
 ): Promise<ChatResponse> {
+  if (abortSignal?.aborted) {
+    throw new Error("Aborted");
+  }
+
   // Perform search once for the original user message at the very beginning of the pipeline
   let searchContext = "";
   let searchSources: Array<{ title: string; url: string; domain: string }> = [];
@@ -194,6 +204,10 @@ export async function processOmniRequest(
     console.error("Search failed in processOmniRequest:", err);
   }
 
+  if (abortSignal?.aborted) {
+    throw new Error("Aborted");
+  }
+
   // Initialize state, merging any existing state if we are resuming
   const initialState: OmniState = existingState ? {
     ...existingState,
@@ -222,6 +236,10 @@ export async function processOmniRequest(
   if (!existingState) {
     await delay(300);
   }
+
+  if (abortSignal?.aborted) {
+    throw new Error("Aborted");
+  }
   
   // Stage 2: TERRIFYING BACKEND - 10-Agent Cognitive Architecture
   let currentState: OmniState = { ...initialState, step: "drafting" };
@@ -233,6 +251,10 @@ export async function processOmniRequest(
   
   // Execute sequentially (one by one) to show a clean step-by-step progress
   for (const agentType of agentTypes) {
+    if (abortSignal?.aborted) {
+      throw new Error("Aborted");
+    }
+
     // If we are resuming, and this agent was already completed, restore it and skip API call!
     if (existingState?.agents?.[agentType]?.status === "complete" && existingState.agents[agentType].response) {
       currentState = {
@@ -268,11 +290,15 @@ export async function processOmniRequest(
       // Increased timeout from 15s to 45s to resolve API / connection latency timeouts
       const timeout = delay(45000).then(() => "__TIMEOUT__");
       const responseOrTimeout = await Promise.race([
-        callAgent(agentType, message, conversationHistory, searchContext),
+        callAgent(agentType, message, conversationHistory, searchContext, abortSignal),
         timeout,
       ]);
       
       await minDisplayTime;
+
+      if (abortSignal?.aborted) {
+        throw new Error("Aborted");
+      }
       
       const resultObj = responseOrTimeout === "__TIMEOUT__" 
         ? { content: "", reasoning: "" } 
@@ -302,6 +328,9 @@ export async function processOmniRequest(
       agentResults.push({ agentType, response });
     } catch (error) {
       await minDisplayTime;
+      if (abortSignal?.aborted) {
+        throw new Error("Aborted");
+      }
       currentState = {
         ...currentState,
         agents: {
@@ -318,6 +347,10 @@ export async function processOmniRequest(
       onStateUpdate(currentState);
       agentResults.push({ agentType, response: "" });
     }
+  }
+
+  if (abortSignal?.aborted) {
+    throw new Error("Aborted");
   }
   
   // Stage 3: TERRIFYING LOGIC - Judge Model Scoring + Synthesis
@@ -340,6 +373,10 @@ export async function processOmniRequest(
     timestamp: Date.now()
   }));
 
+  if (abortSignal?.aborted) {
+    throw new Error("Aborted");
+  }
+
   // Final synthesis using sendAIMessage for real-time streaming
   try {
     const finalResponse = await sendAIMessage(
@@ -355,17 +392,25 @@ export async function processOmniRequest(
       },
       "thinking",
       (contentChunk, reasoningChunk) => {
+        if (abortSignal?.aborted) return;
         currentState = {
           ...currentState,
           step: "synthesizing",
           finalResponse: contentChunk,
         };
         onStateUpdate(currentState);
-      }
+      },
+      undefined,
+      undefined,
+      abortSignal
     );
     
     if ((finalResponse as any).error) {
       throw new Error((finalResponse as any).message || (finalResponse as any).error);
+    }
+
+    if (abortSignal?.aborted) {
+      throw new Error("Aborted");
     }
     
     onStateUpdate({
@@ -376,6 +421,9 @@ export async function processOmniRequest(
     
     return finalResponse;
   } catch (error) {
+    if (abortSignal?.aborted) {
+      throw new Error("Aborted");
+    }
     console.error("Synthesis failed:", error);
     
     // Fallback: combine all agent responses directly

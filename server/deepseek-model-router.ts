@@ -8,14 +8,14 @@ export type DeepSeekTask = "reasoning" | "generation";
 // All apex-* model aliases map to OpenRouter free models.
 const APEX_MODEL_ALIASES: Record<string, string> = {
   "apex-flash":   "poolside/laguna-xs-2.1:free",
-  "apex-pro":     "nvidia/nemotron-3-super-120b-a12b:free",
-  "apex-elite":   "nvidia/nemotron-3-super-120b-a12b:free",
-  "apex-omni":    "nvidia/nemotron-3-ultra-550b-a55b:free",
-  "apex-unbound": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "apex-pro":     "meta-llama/llama-3.3-70b-instruct:free",
+  "apex-elite":   "meta-llama/llama-3.3-70b-instruct:free",
+  "apex-omni":    "meta-llama/llama-3.3-70b-instruct:free",
+  "apex-unbound": "meta-llama/llama-3.3-70b-instruct:free",
   // Legacy fallbacks mapped to free OpenRouter models
   "deepseek-v4-flash": "poolside/laguna-xs-2.1:free",
-  "deepseek-v4-pro":   "nvidia/nemotron-3-super-120b-a12b:free",
-  "deepseek-chat":     "nvidia/nemotron-3-super-120b-a12b:free",
+  "deepseek-v4-pro":   "meta-llama/llama-3.3-70b-instruct:free",
+  "deepseek-chat":     "meta-llama/llama-3.3-70b-instruct:free",
 };
 
 export function isOfficialDeepSeekEndpoint(baseURL?: string): boolean {

@@ -82,6 +82,7 @@ export default function ChatPage() {
   const features = useFeatureToggleStore();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const omniAbortControllerRef = useRef<AbortController | null>(null);
 
   const {
     streamingContentMap,
@@ -307,34 +308,48 @@ removeGodModeTheme();
         const isGodModeModel = selectedModel === "apex-unbound";
 
         if (selectedModel === "apex-omni") {
+          if (omniAbortControllerRef.current) {
+            omniAbortControllerRef.current.abort();
+          }
+          const controller = new AbortController();
+          omniAbortControllerRef.current = controller;
+
           let lastReportedState: OmniState | null = null;
           const existingOmniState = omniStates[thisConvId] || null;
-          response = await processOmniRequest(
-            content,
-            (state) => {
-              lastReportedState = state;
-              setOmniStateForConv(thisConvId, state);
-              if (state.finalResponse) {
-                setStreamingContentForConv(thisConvId, state.finalResponse);
-              }
-            },
-            compactHistory,
-            existingOmniState
-          );
+          try {
+            response = await processOmniRequest(
+              content,
+              (state) => {
+                if (controller.signal.aborted) return;
+                lastReportedState = state;
+                setOmniStateForConv(thisConvId, state);
+                if (state.finalResponse) {
+                  setStreamingContentForConv(thisConvId, state.finalResponse);
+                }
+              },
+              compactHistory,
+              existingOmniState,
+              controller.signal
+            );
 
-          if ((response as any).error) {
-            throw new Error((response as any).message || (response as any).error);
-          }
+            if ((response as any).error) {
+              throw new Error((response as any).message || (response as any).error);
+            }
 
-          // Force full-state complete update inside DB and store
-          const resolvedState = lastReportedState;
-          if (resolvedState) {
-            setOmniStateForConv(thisConvId, {
-              ...(resolvedState as OmniState),
-              step: "complete",
-              finalResponse: response.content,
-              totalDuration: (response as any).totalDuration || undefined,
-            });
+            // Force full-state complete update inside DB and store
+            const resolvedState = lastReportedState;
+            if (resolvedState && !controller.signal.aborted) {
+              setOmniStateForConv(thisConvId, {
+                ...(resolvedState as OmniState),
+                step: "complete",
+                finalResponse: response.content,
+                totalDuration: (response as any).totalDuration || undefined,
+              });
+            }
+          } finally {
+            if (omniAbortControllerRef.current === controller) {
+              omniAbortControllerRef.current = null;
+            }
           }
         } else if (selectedModel === "apex-unbound") {
           // ── APEX Unbound: route through the new multi-agent pipeline ──
@@ -489,6 +504,13 @@ removeGodModeTheme();
         setStreamingContentForConv(thisConvId, "");
         setStreamingReasoningForConv(thisConvId, "");
       } catch (error: any) {
+        if (error.message === "Aborted") {
+          setIsGenerating(false);
+          store.setActiveGenerationId(null);
+          setStreamingContentForConv(thisConvId, "");
+          setStreamingReasoningForConv(thisConvId, "");
+          return;
+        }
         setLastError(error.message || "Failed to process message");
         setOmniStateForConv(thisConvId, null);
         setIsGenerating(false);
@@ -586,12 +608,19 @@ removeGodModeTheme();
           const existingOmniState = omniStates[activeConvId] || null;
           console.log("[Resume System] Resuming Omni agent sequence...", existingOmniState);
           
+          if (omniAbortControllerRef.current) {
+            omniAbortControllerRef.current.abort();
+          }
+          const controller = new AbortController();
+          omniAbortControllerRef.current = controller;
+
           (async () => {
             try {
               const compactHistory = buildCompactConversationHistory(conversation.messages.slice(0, userMsgIdx));
               const response = await processOmniRequest(
                 queryText,
                 (state) => {
+                  if (controller.signal.aborted) return;
                   setOmniStateForConv(activeConvId, state);
                   const currentMsg = useChatStore.getState().conversations
                     .find(c => c.id === activeConvId)?.messages
@@ -608,26 +637,34 @@ removeGodModeTheme();
                   addMessage(activeConvId, updatedMsg);
                 },
                 compactHistory,
-                existingOmniState
+                existingOmniState,
+                controller.signal
               );
               
-              setOmniStateForConv(activeConvId, {
-                ...existingOmniState,
-                step: "complete",
-                finalResponse: response.content,
-              });
-              
-              const finalMsg: Message = {
-                id: activeGenId,
-                role: "assistant",
-                content: response.content,
-                model: "apex-omni",
-                timestamp: Date.now()
-              };
-              addMessage(activeConvId, finalMsg);
-            } catch (err) {
-              console.error("[Resume System] Omni resume failed:", err);
+              if (!controller.signal.aborted) {
+                setOmniStateForConv(activeConvId, {
+                  ...existingOmniState,
+                  step: "complete",
+                  finalResponse: response.content,
+                });
+                
+                const finalMsg: Message = {
+                  id: activeGenId,
+                  role: "assistant",
+                  content: response.content,
+                  model: "apex-omni",
+                  timestamp: Date.now()
+                };
+                addMessage(activeConvId, finalMsg);
+              }
+            } catch (err: any) {
+              if (err.message !== "Aborted") {
+                console.error("[Resume System] Omni resume failed:", err);
+              }
             } finally {
+              if (omniAbortControllerRef.current === controller) {
+                omniAbortControllerRef.current = null;
+              }
               setIsGenerating(false);
               store.setActiveGenerationId(null);
             }
@@ -685,6 +722,10 @@ removeGodModeTheme();
   }, [activeConversationId, isGenerating, selectedModel]);
 
   const handleStopGenerating = useCallback(async () => {
+    if (omniAbortControllerRef.current) {
+      omniAbortControllerRef.current.abort();
+      omniAbortControllerRef.current = null;
+    }
     const store = useChatStore.getState();
     const activeId = store.activeGenerationId;
     setIsGenerating(false);

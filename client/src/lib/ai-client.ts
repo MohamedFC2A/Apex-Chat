@@ -42,10 +42,10 @@ const DEEPSEEK_URL = isClientOpenRouter
 // Model mapping: ApexChat model → Target ID based on detected provider
 const MODEL_MAP: Record<string, string> = isClientOpenRouter ? {
   "apex-flash": "poolside/laguna-xs-2.1:free",
-  "apex-pro": "nvidia/nemotron-3-super-120b-a12b:free",
-  "apex-elite": "nvidia/nemotron-3-super-120b-a12b:free",
-  "apex-omni": "nvidia/nemotron-3-ultra-550b-a55b:free",
-  "apex-unbound": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "apex-pro": "meta-llama/llama-3.3-70b-instruct:free",
+  "apex-elite": "meta-llama/llama-3.3-70b-instruct:free",
+  "apex-omni": "meta-llama/llama-3.3-70b-instruct:free",
+  "apex-unbound": "meta-llama/llama-3.3-70b-instruct:free",
 } : {
   "apex-flash": "deepseek-chat",
   "apex-pro": "deepseek-reasoner",
@@ -1143,7 +1143,8 @@ export async function sendAIMessage(
   reasoningLevel: string = "none",
   onChunk?: (content: string, reasoning: string) => void,
   userMemoryContext?: Array<{ title: string; lastQuery: string; summary?: string; relevance?: number; updatedAt?: number }>,
-  messageId?: string
+  messageId?: string,
+  signal?: AbortSignal
 ): Promise<ChatResponse> {
   try {
     
@@ -1153,6 +1154,7 @@ export async function sendAIMessage(
         "Content-Type": "application/json",
         "Accept": onChunk ? "text/event-stream" : "application/json"
       },
+      signal,
       body: JSON.stringify({
         message,
         model,

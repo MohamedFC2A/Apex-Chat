@@ -170,6 +170,44 @@ function AgentReasoningToggle({ reasoning, color }: { reasoning: string; color: 
   );
 }
 
+function AgentSummaryToggle({ response, reasoning, name, color }: { response: string; reasoning?: string; name: string; color: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="mt-1.5 mr-2">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-wider transition-colors hover:opacity-80 px-2 py-1 rounded bg-white/5 border border-white/10"
+        style={{ color }}
+      >
+        <span>{isOpen ? `▼ Hide ${name} Details` : `▶ Show ${name} Details`}</span>
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden mt-1.5"
+          >
+            <div className="p-3 border border-white/5 bg-white/[0.01] rounded-lg max-w-full hover:border-white/10 transition-all duration-200">
+              <span className="font-mono text-[8px] uppercase tracking-wider block mb-1" style={{ color }}>
+                {name} Insights Summary
+              </span>
+              <p className="font-sans text-[10.5px] text-white/50 leading-relaxed whitespace-pre-wrap">
+                {response}
+              </p>
+              {reasoning && (
+                <AgentReasoningToggle reasoning={reasoning} color={color} />
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 // ─── Main Component ────────────────────────────────────────────────────────
 export function OmniStatusCard({ state }: OmniStatusCardProps) {
   const [showSources, setShowSources] = useState(false);
@@ -475,21 +513,12 @@ export function OmniStatusCard({ state }: OmniStatusCardProps) {
 
                         {/* Completed step snippet (expanded summary card for maximum context width) */}
                         {isDone && agentData?.response && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="mt-1.5 mr-2 p-3 border border-white/5 bg-white/[0.01] rounded-lg max-w-full hover:border-white/10 transition-all duration-200"
-                          >
-                            <span className="font-mono text-[8px] uppercase tracking-wider block mb-1" style={{ color: meta.color }}>
-                              {meta.name} Insights Summary
-                            </span>
-                            <p className="font-sans text-[10.5px] text-white/50 leading-relaxed line-clamp-3">
-                              {agentData.response}
-                            </p>
-                            {(agentData as any).reasoning && (
-                              <AgentReasoningToggle reasoning={(agentData as any).reasoning} color={meta.color} />
-                            )}
-                          </motion.div>
+                          <AgentSummaryToggle
+                            response={agentData.response}
+                            reasoning={(agentData as any).reasoning}
+                            name={meta.name}
+                            color={meta.color}
+                          />
                         )}
                       </div>
                     </motion.div>

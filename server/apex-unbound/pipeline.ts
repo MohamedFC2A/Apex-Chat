@@ -529,8 +529,8 @@ export async function runUnboundPipeline(
 ): Promise<UnboundPipelineResult> {
   const pipelineStart = Date.now();
 
-  const architectModel = "nvidia/nemotron-3-ultra-550b-a55b:free";
-  const specialistModel = "nvidia/nemotron-3-super-120b-a12b:free";
+  const architectModel = "meta-llama/llama-3.3-70b-instruct:free";
+  const specialistModel = "qwen/qwen-2.5-coder-32b-instruct:free";
 
   const isResumed = !!request.spec;
   const isFollowUp = !!request.isFollowUp;
