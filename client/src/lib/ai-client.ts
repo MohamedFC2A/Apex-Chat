@@ -38,18 +38,18 @@ const isClientOpenRouter = true; // Always OpenRouter
 const DEEPSEEK_API_KEY = CLIENT_API_KEY;
 const DEEPSEEK_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-// Best free OpenRouter models (July 2026)
+// Verified free OpenRouter models (confirmed via /api/v1/models — July 2026)
 const MODEL_MAP: Record<string, string> = {
-  // Flash: fastest lightweight model for quick responses
-  "apex-flash": "meta-llama/llama-3.1-8b-instruct:free",
-  // Pro: strong 70B model for reasoning and coding
-  "apex-pro": "meta-llama/llama-3.3-70b-instruct:free",
-  // Elite: web search specialist – best large free model
-  "apex-elite": "meta-llama/llama-3.3-70b-instruct:free",
-  // Omni: multi-agent reasoning powerhouse
-  "apex-omni": "meta-llama/llama-3.3-70b-instruct:free",
-  // Unbound: full-stack code architect
-  "apex-unbound": "meta-llama/llama-3.3-70b-instruct:free",
+  // Flash: fast lightweight model — poolside laguna xs for speed
+  "apex-flash": "poolside/laguna-xs.2:free",
+  // Pro: powerful 120B for reasoning and coding
+  "apex-pro": "openai/gpt-oss-120b:free",
+  // Elite: largest free model for search synthesis
+  "apex-elite": "nvidia/nemotron-3-super-120b-a12b:free",
+  // Omni: 80B balanced model for multi-agent orchestration
+  "apex-omni": "qwen/qwen3-next-80b-a3b-instruct:free",
+  // Unbound: dedicated code model with 1M context
+  "apex-unbound": "qwen/qwen3-coder:free",
 };
 
 type DeepSeekTask = "reasoning" | "generation";
@@ -68,7 +68,7 @@ function getClientHeaders(apiKey: string): Record<string, string> {
 }
 
 function mapDeepSeekModelForClient(model: AIModel, _task: DeepSeekTask): string {
-  const fallback = "meta-llama/llama-3.3-70b-instruct:free";
+  const fallback = "openai/gpt-oss-120b:free";
   return MODEL_MAP[model] || fallback;
 }
 
@@ -593,7 +593,7 @@ async function clientOptimizeSearchQueries(message: string, apiKey: string): Pro
       method: "POST",
       headers: getClientHeaders(apiKey),
       body: JSON.stringify({
-        model: "meta-llama/llama-3.1-8b-instruct:free",
+        model: "poolside/laguna-xs.2:free",
         messages: [
           {
             role: "system",

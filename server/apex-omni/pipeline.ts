@@ -196,16 +196,16 @@ export async function runApexOmniPipeline(
       return "deepseek-chat";
     }
     const agentModelMap: Record<string, string> = {
-      "1-Analyst": "meta-llama/llama-3.1-8b-instruct:free",
-      "2-Researcher": "meta-llama/llama-3.1-8b-instruct:free",
-      "3-Critic": "meta-llama/llama-3.1-8b-instruct:free",
-      "4-ExpertWriter": "meta-llama/llama-3.3-70b-instruct:free",
-      "5-CodeSpecialist": "qwen/qwen-2.5-coder-32b-instruct:free",
-      "6-MathSpecialist": "meta-llama/llama-3.3-70b-instruct:free",
-      "7-FactChecker": "meta-llama/llama-3.1-8b-instruct:free",
-      "8-Formatter": "meta-llama/llama-3.3-70b-instruct:free",
-      "9-LanguageAgent": "meta-llama/llama-3.3-70b-instruct:free",
-      "10-QA": "meta-llama/llama-3.3-70b-instruct:free",
+      "1-Analyst": "poolside/laguna-xs.2:free",
+      "2-Researcher": "poolside/laguna-xs.2:free",
+      "3-Critic": "poolside/laguna-xs.2:free",
+      "4-ExpertWriter": "openai/gpt-oss-120b:free",
+      "5-CodeSpecialist": "qwen/qwen3-coder:free",
+      "6-MathSpecialist": "openai/gpt-oss-120b:free",
+      "7-FactChecker": "poolside/laguna-xs.2:free",
+      "8-Formatter": "openai/gpt-oss-120b:free",
+      "9-LanguageAgent": "openai/gpt-oss-120b:free",
+      "10-QA": "openai/gpt-oss-120b:free",
     };
     return agentModelMap[agentName] || completionsModel;
   };

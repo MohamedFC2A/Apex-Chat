@@ -530,7 +530,7 @@ export async function runUnboundPipeline(
   const pipelineStart = Date.now();
 
   const isOpenRouter = client.baseURL.includes("openrouter.ai");
-  const architectModel = isOpenRouter ? "meta-llama/llama-3.3-70b-instruct:free" : "deepseek-chat";
+  const architectModel = isOpenRouter ? "qwen/qwen3-coder:free" : "deepseek-chat";
   const specialistModel = isOpenRouter ? "qwen/qwen-2.5-coder-32b-instruct:free" : "deepseek-chat";
 
   const isResumed = !!request.spec;

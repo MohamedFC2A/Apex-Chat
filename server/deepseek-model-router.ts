@@ -7,16 +7,16 @@ export type DeepSeekTask = "reasoning" | "generation";
 // All apex-* model aliases map to OpenRouter free models exclusively.
 // DeepSeek API is no longer used.
 const APEX_MODEL_ALIASES: Record<string, string> = {
-  "apex-flash":   "meta-llama/llama-3.1-8b-instruct:free",
-  "apex-pro":     "meta-llama/llama-3.3-70b-instruct:free",
-  "apex-elite":   "meta-llama/llama-3.3-70b-instruct:free",
-  "apex-omni":    "meta-llama/llama-3.3-70b-instruct:free",
-  "apex-unbound": "meta-llama/llama-3.3-70b-instruct:free",
+  "apex-flash":   "poolside/laguna-xs.2:free",
+  "apex-pro":     "openai/gpt-oss-120b:free",
+  "apex-elite":   "openai/gpt-oss-120b:free",
+  "apex-omni":    "openai/gpt-oss-120b:free",
+  "apex-unbound": "openai/gpt-oss-120b:free",
   // Legacy fallbacks mapped to free OpenRouter models
-  "deepseek-v4-flash": "meta-llama/llama-3.1-8b-instruct:free",
-  "deepseek-v4-pro":   "meta-llama/llama-3.3-70b-instruct:free",
-  "deepseek-chat":     "meta-llama/llama-3.3-70b-instruct:free",
-  "poolside/laguna-xs-2.1:free": "meta-llama/llama-3.1-8b-instruct:free",
+  "deepseek-v4-flash": "poolside/laguna-xs.2:free",
+  "deepseek-v4-pro":   "openai/gpt-oss-120b:free",
+  "deepseek-chat":     "openai/gpt-oss-120b:free",
+  "poolside/laguna-xs-2.1:free": "poolside/laguna-xs.2:free",
 };
 
 export function isOfficialDeepSeekEndpoint(baseURL?: string): boolean {
