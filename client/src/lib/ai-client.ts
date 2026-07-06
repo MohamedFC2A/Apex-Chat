@@ -40,16 +40,16 @@ const DEEPSEEK_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 // Verified free OpenRouter models (confirmed via /api/v1/models — July 2026)
 const MODEL_MAP: Record<string, string> = {
-  // Flash: fast lightweight model — Llama 3.2 3B (free)
-  "apex-flash": "meta-llama/llama-3.2-3b-instruct:free",
-  // Pro: powerful 70B for reasoning and coding (free)
-  "apex-pro": "meta-llama/llama-3.3-70b-instruct:free",
-  // Elite: largest free model for reasoning
-  "apex-elite": "meta-llama/llama-3.3-70b-instruct:free",
-  // Omni: balanced 70B model for multi-agent orchestration (free)
-  "apex-omni": "meta-llama/llama-3.3-70b-instruct:free",
-  // Unbound: dedicated code model (free)
-  "apex-unbound": "qwen/qwen3-coder:free",
+  // Flash: fast lightweight model — inclusionai/ling-2.6-flash
+  "apex-flash": "inclusionai/ling-2.6-flash",
+  // Pro: powerful model for reasoning and coding
+  "apex-pro": "inclusionai/ling-2.6-flash",
+  // Elite: largest model for reasoning
+  "apex-elite": "inclusionai/ling-2.6-flash",
+  // Omni: balanced model for multi-agent orchestration
+  "apex-omni": "inclusionai/ling-2.6-flash",
+  // Unbound: dedicated code model
+  "apex-unbound": "inclusionai/ling-2.6-flash",
 };
 
 type DeepSeekTask = "reasoning" | "generation";
@@ -68,7 +68,7 @@ function getClientHeaders(apiKey: string): Record<string, string> {
 }
 
 function mapDeepSeekModelForClient(model: AIModel, _task: DeepSeekTask): string {
-  const fallback = "meta-llama/llama-3.3-70b-instruct:free";
+  const fallback = "inclusionai/ling-2.6-flash";
   return MODEL_MAP[model] || fallback;
 }
 
@@ -593,7 +593,7 @@ async function clientOptimizeSearchQueries(message: string, apiKey: string): Pro
       method: "POST",
       headers: getClientHeaders(apiKey),
       body: JSON.stringify({
-        model: "meta-llama/llama-3.2-3b-instruct:free",
+        model: "inclusionai/ling-2.6-flash",
         messages: [
           {
             role: "system",

@@ -846,7 +846,7 @@ JSON structure:
 }`;
 
       const response = await client.chat.completions.create({
-        model: "meta-llama/llama-3.3-70b-instruct:free",
+        model: "inclusionai/ling-2.6-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Generate a question and 3 choices for: "${prompt}"` },

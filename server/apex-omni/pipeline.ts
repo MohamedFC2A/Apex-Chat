@@ -196,16 +196,16 @@ export async function runApexOmniPipeline(
       return "deepseek-chat";
     }
     const agentModelMap: Record<string, string> = {
-      "1-Analyst": "meta-llama/llama-3.2-3b-instruct:free",
-      "2-Researcher": "meta-llama/llama-3.2-3b-instruct:free",
-      "3-Critic": "meta-llama/llama-3.2-3b-instruct:free",
-      "4-ExpertWriter": "meta-llama/llama-3.3-70b-instruct:free",
-      "5-CodeSpecialist": "qwen/qwen3-coder:free",
-      "6-MathSpecialist": "meta-llama/llama-3.3-70b-instruct:free",
-      "7-FactChecker": "meta-llama/llama-3.2-3b-instruct:free",
-      "8-Formatter": "meta-llama/llama-3.3-70b-instruct:free",
-      "9-LanguageAgent": "meta-llama/llama-3.3-70b-instruct:free",
-      "10-QA": "meta-llama/llama-3.3-70b-instruct:free",
+      "1-Analyst": "inclusionai/ling-2.6-flash",
+      "2-Researcher": "inclusionai/ling-2.6-flash",
+      "3-Critic": "inclusionai/ling-2.6-flash",
+      "4-ExpertWriter": "inclusionai/ling-2.6-flash",
+      "5-CodeSpecialist": "inclusionai/ling-2.6-flash",
+      "6-MathSpecialist": "inclusionai/ling-2.6-flash",
+      "7-FactChecker": "inclusionai/ling-2.6-flash",
+      "8-Formatter": "inclusionai/ling-2.6-flash",
+      "9-LanguageAgent": "inclusionai/ling-2.6-flash",
+      "10-QA": "inclusionai/ling-2.6-flash",
     };
     return agentModelMap[agentName] || completionsModel;
   };

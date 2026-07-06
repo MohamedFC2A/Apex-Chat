@@ -530,8 +530,8 @@ export async function runUnboundPipeline(
   const pipelineStart = Date.now();
 
   const isOpenRouter = client.baseURL.includes("openrouter.ai");
-  const architectModel = isOpenRouter ? "qwen/qwen3-coder:free" : "deepseek-chat";
-  const specialistModel = isOpenRouter ? "qwen/qwen3-coder:free" : "deepseek-chat";
+  const architectModel = isOpenRouter ? "inclusionai/ling-2.6-flash" : "deepseek-chat";
+  const specialistModel = isOpenRouter ? "inclusionai/ling-2.6-flash" : "deepseek-chat";
 
   const isResumed = !!request.spec;
   const isFollowUp = !!request.isFollowUp;
