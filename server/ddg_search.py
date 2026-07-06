@@ -33,7 +33,6 @@ def clean_text_query(query):
     return cleaned.strip()
 
 def generate_sub_queries(query, is_omni):
-    # Generates multiple queries to fetch a wide range of documents
     queries = [query]
     cleaned = clean_text_query(query)
     
@@ -42,32 +41,35 @@ def generate_sub_queries(query, is_omni):
         
     words = cleaned.split()
     if len(words) > 3:
-        # Shorter search query focusing on main keywords
         queries.append(" ".join(words[:3]))
-        # Search query focusing on ending keywords
         queries.append(" ".join(words[-3:]))
         
-    # Language-aware expansion
     is_arabic = bool(re.search(r'[\u0600-\u06FF]', query))
     
-    if is_omni:
-        # For Omni / ReSearch mode, we want broad coverage (up to 5-6 queries)
-        if is_arabic:
-            queries.append(f"{cleaned} تفاصيل")
-            queries.append(f"{cleaned} مصادر ومراجع")
-            queries.append(f"{cleaned} آخر الأخبار")
-        else:
-            queries.append(f"{cleaned} deep dive")
-            queries.append(f"{cleaned} official documentation")
-            queries.append(f"{cleaned} latest news updates")
-            queries.append(f"{cleaned} analysis research")
+    if is_arabic:
+        queries.append(f"{cleaned} ويكيبيديا")
+        queries.append(f"{cleaned} تفاصيل كاملة مصادر")
+        queries.append(f"{cleaned} آخر التطورات والأخبار")
+        queries.append(f"{cleaned} دراسة وبحث موثق")
+        if is_omni:
+            queries.append(f"{cleaned} ملف pdf معلومات")
+            queries.append(f"{cleaned} الموقف الرسمي والبيانات")
+            queries.append(f"{cleaned} تاريخ الجدول والترتيب")
     else:
-        # Standard mode: 2-3 queries
-        if is_arabic:
-            queries.append(f"{cleaned} أخبار")
-        else:
-            queries.append(f"{cleaned} news")
-            
+        queries.append(f"{cleaned} wikipedia")
+        queries.append(f"{cleaned} full breakdown analysis")
+        queries.append(f"{cleaned} latest news updates info")
+        queries.append(f"{cleaned} research paper documentation")
+        if is_omni:
+            queries.append(f"{cleaned} official report data")
+            queries.append(f"{cleaned} statistics facts timeline")
+            queries.append(f"{cleaned} expert reviews opinions")
+
+    # Add trusted site filters to queries to force deep authority sources
+    trusted_sites = ["wikipedia.org", "reuters.com", "nature.com", "github.com", "arxiv.org"]
+    for site in trusted_sites[:3 if not is_omni else 5]:
+        queries.append(f"{cleaned} site:{site}")
+
     # Deduplicate and limit
     unique_queries = []
     seen = set()
@@ -77,7 +79,7 @@ def generate_sub_queries(query, is_omni):
             seen.add(q_norm)
             unique_queries.append(q)
             
-    max_queries = 6 if is_omni else 3
+    max_queries = 12 if is_omni else 7
     return unique_queries[:max_queries]
 
 def get_domain_name(url):
@@ -270,13 +272,13 @@ def main():
         seen_domains[domain] = count + 1
         deduplicated.append(item)
         
-    # Determine the slice size: Omni wants over 100 sources (e.g. 130), Standard wants over 100 (e.g. 115)
-    final_limit = 130 if is_omni else args.limit
+    # Determine the slice size: Omni wants over 100 sources (e.g. 150), Standard wants over 100 (e.g. 120)
+    final_limit = 150 if is_omni else max(120, args.limit)
     final_organic = deduplicated[:final_limit]
     
     # 4. Crawl HTML page content (deep crawling) for top pages
-    # We scrape the top 12 pages for Omni, and top 6 pages for standard search
-    scrape_count = 15 if is_omni else 6
+    # We scrape the top 20 pages for Omni, and top 12 pages for standard search
+    scrape_count = 20 if is_omni else 12
     scrape_targets = final_organic[:scrape_count]
     
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:

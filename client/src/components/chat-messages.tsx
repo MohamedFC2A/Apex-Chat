@@ -2398,7 +2398,8 @@ function AssistantMessage({
     ? cleanStatusMarkers(pdfState.sanitizedContent)
     : pdfState.sanitizedContent;
 
-  const cleanedMarkdown = cleanProseAroundWidgets(baseMarkdown);
+  const cleanedMarkdown = cleanProseAroundWidgets(baseMarkdown)
+    .replace(/<br\s*\/?>/gi, "\n");
 
   // Detect if this message contains a launchable website (can extract as soon as HTML block closes)
   const detectedHtml = extractHtmlFromContent(cleanContent);
@@ -2709,31 +2710,6 @@ function AssistantMessage({
           {content && !/```(?:mcq-quiz|pdf-document)/i.test(content) && (
             <motion.div whileTap={{ scale: 0.9 }}>
               <div className="flex items-center gap-1 opacity-0 transition-all group-hover:opacity-100">
-                <Button
-                  variant="ghost" size="sm"
-                  onClick={handleGenerateSmartPdf}
-                  disabled={isGeneratingSmartPdf}
-                  className="h-6 px-2 hover:bg-white/6 text-violet-400 hover:text-violet-300 rounded-lg"
-                  title={isRtlMessage ? "إنشاء مستند ذكي بالذكاء الاصطناعي" : "Generate Smart PDF with AI"}
-                >
-                  {isGeneratingSmartPdf ? (
-                    <><RotateCw className="w-3 h-3 mr-1 animate-spin" /><span className="text-xs font-semibold">AI PDF</span></>
-                  ) : (
-                    <><Sparkles className="w-3 h-3 mr-1" /><span className="text-xs font-semibold">AI PDF</span></>
-                  )}
-                </Button>
-                <Button
-                  variant="ghost" size="sm"
-                  onClick={handleExportPdf}
-                  disabled={isExportingPdf}
-                  className="h-6 px-2 hover:bg-white/6 text-muted-foreground hover:text-foreground rounded-lg"
-                >
-                  {isExportingPdf ? (
-                    <><RotateCw className="w-3 h-3 mr-1 animate-spin" /><span className="text-xs">PDF</span></>
-                  ) : (
-                    <><FileDown className="w-3 h-3 mr-1" /><span className="text-xs">PDF</span></>
-                  )}
-                </Button>
                 <Button
                   variant="ghost" size="sm"
                   onClick={handleCopy}
