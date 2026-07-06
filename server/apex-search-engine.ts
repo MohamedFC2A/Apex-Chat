@@ -1,9 +1,16 @@
+import { execFile } from "child_process";
+import { promisify } from "util";
+import path from "path";
+
+const execFilePromise = promisify(execFile);
+
 export interface ApexOrganicResult {
   title: string;
   link: string;
   snippet: string;
   domain?: string;
   score?: number;
+  page_content?: string;
 }
 
 export interface ApexImageAsset {
@@ -36,6 +43,7 @@ export interface ApexSearchResponse {
 
 export interface ApexSearchOptions {
   intent?: "website" | "answer";
+  isOmni?: boolean;
 }
 
 const BLOCKED_IMAGE_DOMAINS = [
@@ -281,63 +289,45 @@ function toImageAsset(img: any, rolePlan: ApexSearchResponse["searchPlan"]["imag
   };
 }
 
-async function serperPost(path: "search" | "images", body: Record<string, any>, apiKey: string): Promise<any> {
-  const response = await fetch(`https://google.serper.dev/${path}`, {
-    method: "POST",
-    headers: {
-      "X-API-KEY": apiKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-  if (!response.ok) throw new Error(`Serper ${path} failed with status ${response.status}`);
-  return response.json();
-}
-
 export async function runApexSearch(message: string, options: ApexSearchOptions = {}): Promise<ApexSearchResponse> {
-  const apiKey = process.env.SERPER_API_KEY || "";
   const searchPlan = buildSearchPlan(message, options.intent || "website");
   const fallback: ApexSearchResponse = { organic: [], images: [], imageAssets: [], searchPlan };
 
   try {
-    console.log(`[Apex Search] text="${searchPlan.textQuery}" imageRoles=${searchPlan.imageQueries.length}`);
+    console.log(`[Apex Search] Running DDGS. text="${searchPlan.textQuery}" imageRoles=${searchPlan.imageQueries.length} isOmni=${!!options.isOmni}`);
 
-    const [textData, ...imageData] = await Promise.all([
-      serperPost("search", { q: searchPlan.textQuery, num: 100 }, apiKey),
-      ...searchPlan.imageQueries.map((imageQuery) => serperPost("images", { q: imageQuery.query, num: 20 }, apiKey)),
-    ]);
+    const args = [
+      path.join(process.cwd(), "server/ddg_search.py"),
+      "--query", searchPlan.textQuery,
+      "--image-queries", JSON.stringify(searchPlan.imageQueries),
+    ];
+    if (options.isOmni) {
+      args.push("--omni");
+    }
 
-    const seenDomains: Record<string, number> = {};
-    const queryTerms = searchPlan.textQuery.toLowerCase().split(/\s+/).filter((term) => term.length > 2);
-    const organic = (textData.organic || [])
-      .map((item: any) => {
-        const title = String(item.title || "");
-        const snippet = String(item.snippet || "");
-        const link = String(item.link || "");
-        const domain = getDomainName(link);
-        const haystack = `${title} ${snippet} ${domain}`.toLowerCase();
-        const score = 100
-          + queryTerms.filter((term) => haystack.includes(term)).length * 12
-          + (domain.includes("wikipedia") ? 25 : 0)
-          + getOrganicDomainBoost(domain, searchPlan.domain);
-        return { title, snippet, link, domain, score };
-      })
-      .sort((a: ApexOrganicResult, b: ApexOrganicResult) => (b.score || 0) - (a.score || 0))
-      .filter((item: ApexOrganicResult) => {
-        if (!item.link) return false;
-        const count = seenDomains[item.domain || ""] || 0;
-        if (count >= 2) return false;
-        seenDomains[item.domain || ""] = count + 1;
-        return true;
-      })
-      .slice(0, 60);
+    const pythonCmd = process.platform === "win32" ? "python" : "python3";
+    const { stdout, stderr } = await execFilePromise(pythonCmd, args, { maxBuffer: 15 * 1024 * 1024 });
+
+    if (stderr) {
+      console.warn("[Apex Search] Python search stderr:", stderr);
+    }
+
+    const pyData = JSON.parse(stdout);
+    const organic: ApexOrganicResult[] = (pyData.organic || []).map((item: any) => ({
+      title: String(item.title || ""),
+      snippet: String(item.snippet || ""),
+      link: String(item.link || ""),
+      domain: String(item.domain || getDomainName(item.link)),
+      score: Number(item.score || 100),
+      page_content: item.page_content ? String(item.page_content) : undefined,
+    }));
 
     const usedImageUrls = new Set<string>();
     const imageAssets: ApexImageAsset[] = [];
     const flatImages: Array<{ title: string; imageUrl: string; source?: string }> = [];
 
-    searchPlan.imageQueries.forEach((rolePlan, index) => {
-      const candidates = (imageData[index]?.images || [])
+    searchPlan.imageQueries.forEach((rolePlan) => {
+      const candidates = (pyData.images || [])
         .map((img: any) => ({
           img,
           score: scoreImageCandidate(img, rolePlan.query, rolePlan.role, rolePlan.width, rolePlan.height),
@@ -352,17 +342,17 @@ export async function runApexSearch(message: string, options: ApexSearchOptions 
         imageAssets.push(toImageAsset(candidate.img, rolePlan, candidate.score));
         break;
       }
+    });
 
-      candidates.slice(0, 4).forEach((candidate: any) => {
-        const imageUrl = getImageUrl(candidate.img);
-        if (imageUrl) {
-          flatImages.push({
-            title: String(candidate.img.title || ""),
-            imageUrl,
-            source: String(candidate.img.source || ""),
-          });
-        }
-      });
+    (pyData.images || []).slice(0, 15).forEach((img: any) => {
+      const imageUrl = getImageUrl(img);
+      if (imageUrl) {
+        flatImages.push({
+          title: String(img.title || ""),
+          imageUrl,
+          source: String(img.source || ""),
+        });
+      }
     });
 
     // Vision-Language Reranking Step
@@ -392,7 +382,7 @@ export async function runApexSearch(message: string, options: ApexSearchOptions 
       searchPlan,
     };
   } catch (error) {
-    console.error("[Apex Search] Search request failed:", error);
+    console.error("[Apex Search] DuckDuckGo search subprocess failed:", error);
     return fallback;
   }
 }
@@ -403,8 +393,13 @@ export function buildApexSearchContext(searchResults: Partial<ApexSearchResponse
 
   if (searchResults.organic?.length) {
     context += "\n=== APEX SEARCH REFERENCES ===\n";
-    searchResults.organic.slice(0, 8).forEach((item, index) => {
-      context += `[Reference ${index + 1}] ${item.title}\nDomain: ${item.domain || getDomainName(item.link)}\nSnippet: ${item.snippet}\nLink: ${item.link}\n\n`;
+    // Up to 20 sources to provide extensive information
+    searchResults.organic.slice(0, 20).forEach((item, index) => {
+      context += `[Reference ${index + 1}] ${item.title}\nDomain: ${item.domain || getDomainName(item.link)}\nSnippet: ${item.snippet}\nLink: ${item.link}\n`;
+      if (item.page_content) {
+        context += `Scraped Content:\n${item.page_content}\n`;
+      }
+      context += `\n`;
     });
   }
 

@@ -8,6 +8,7 @@ import { runUnboundPipeline } from "./apex-unbound/pipeline.js";
 import OpenAI from "openai";
 import DOMPurify from "isomorphic-dompurify";
 import { cleanJsonString } from "./apex-unbound/architect-agent.js";
+import { runApexSearch } from "./apex-search-engine.js";
 // PDF modules are loaded lazily (dynamic import) to avoid Vercel
 // bundle-size / initialization crashes from puppeteer + katex + prismjs.
 // Each route handler imports what it needs at call time.
@@ -682,6 +683,22 @@ export async function registerRoutes(
         prompt: "صمم موقع معرض أعمال شخصي لمصمم واجهات مستخدم يشمل بطاقات مشاريع تفاعلية مع تأثير الـ 3D Tilt ونموذج تواصل مخصص",
       },
     ]);
+  });
+
+  // Search API endpoint powered by DuckDuckGo Search (DDGS)
+  app.post("/api/search", async (req, res) => {
+    const { query, isOmni } = req.body;
+    if (!query || typeof query !== "string") {
+      return res.status(400).json({ error: "query is required" });
+    }
+    try {
+      console.log(`[API Search Route] Query: "${query}", isOmni: ${!!isOmni}`);
+      const searchResults = await runApexSearch(query, { intent: "answer", isOmni: !!isOmni });
+      return res.json(searchResults);
+    } catch (err: any) {
+      console.error("[API Search Route] Error during search:", err);
+      return res.status(500).json({ error: err.message || "Search failed" });
+    }
   });
 
   // ── APEX UNBOUND: Dedicated multi-agent web generation endpoint ──────────────────

@@ -189,14 +189,17 @@ async function generateDedicatedQuizResponse(
   const maxTokens = 8192; // Use full 8K for MCQ to ensure complete JSON output
   const baseParams = getDeepSeekStructuredParams(0.2); // Thinking disabled: avoids reasoning token overhead
 
-  const buildMessages = (userContent: string) => [
-    {
-      role: "system" as const,
-      content:
-        "You are a dedicated structured quiz generation engine. Your only job is to produce accurate multiple-choice quizzes in strict mcq-quiz JSON format. Never chat conversationally. Never ask follow-up questions. Never output prose outside the mcq-quiz block.",
-    },
-    { role: "user" as const, content: userContent },
-  ];
+  const buildMessages = (userContent: string) => {
+    const timeBlock = buildSystemTimeBlock(request.clientLocalTime);
+    return [
+      {
+        role: "system" as const,
+        content:
+          `You are a dedicated structured quiz generation engine. Your only job is to produce accurate multiple-choice quizzes in strict mcq-quiz JSON format. Never chat conversationally. Never ask follow-up questions. Never output prose outside the mcq-quiz block.\n\n${timeBlock}`,
+      },
+      { role: "user" as const, content: userContent },
+    ];
+  };
 
   const candidateContents: string[] = [];
 
@@ -274,14 +277,17 @@ async function generateDedicatedPdfResponse(
   const maxTokens = 8192; // Full 8K output capacity for large PDF documents
   const baseParams = getDeepSeekStructuredParams(0.2); // Thinking disabled: prevents CoT tokens from eating into JSON output capacity
 
-  const buildMessages = (userContent: string) => [
-    {
-      role: "system" as const,
-      content:
-        "You are a dedicated structured PDF document generation engine. Your only job is to produce a highly detailed, comprehensive, and complete PDFDocument JSON in strict pdf-document format, spanning up to 20 pages if necessary. Never chat conversationally. Never use placeholders. Never output prose outside the pdf-document block.",
-    },
-    { role: "user" as const, content: userContent },
-  ];
+  const buildMessages = (userContent: string) => {
+    const timeBlock = buildSystemTimeBlock(request.clientLocalTime);
+    return [
+      {
+        role: "system" as const,
+        content:
+          `You are a dedicated structured PDF document generation engine. Your only job is to produce a highly detailed, comprehensive, and complete PDFDocument JSON in strict pdf-document format, spanning up to 20 pages if necessary. Never chat conversationally. Never use placeholders. Never output prose outside the pdf-document block.\n\n${timeBlock}`,
+      },
+      { role: "user" as const, content: userContent },
+    ];
+  };
 
   const candidateContents: string[] = [];
 
@@ -938,27 +944,7 @@ You have the power to create literally extraordinary code ("خارق حرفيا"
   }
 }
 
-// Build system prompt with feature toggles.
-// The `intent` parameter controls which heavy generation protocols are injected:
-//   - "chat"  → no document/quiz schemas (default, keeps the prompt lean)
-//   - "mcq"   → only the MCQ quiz protocol
-//   - "pdf"   → only the PDF document protocol
-function buildCerebrasSystemPrompt(
-  model: AIModel,
-  mode: ServiceMode,
-  features: FeatureToggles,
-  clientLocalTime?: string,
-  intent: "chat" | "mcq" | "pdf" = "chat"
-): string {
-  let prompt = modeSystemPrompts[mode];
-  // Inject only the protocol block that matches the current intent.
-  // Injecting both protocols on every request costs ~400+ tokens and causes
-  // the model to misinterpret conversational messages as document requests.
-  if (intent === "mcq") prompt += MCQ_GENERATION_PROTOCOL;
-  if (intent === "pdf") prompt += PDF_GENERATION_PROTOCOL;
-  prompt += buildModelSystemPrompt(model);
-
-  // Dynamic Date Injection
+function buildSystemTimeBlock(clientLocalTime?: string): string {
   let dateToUse = new Date();
   let clientTimeZone: string | undefined = undefined;
 
@@ -992,10 +978,35 @@ function buildCerebrasSystemPrompt(
   }
   const formattedTime = dateToUse.toLocaleTimeString("en-US", timeOptions);
 
-  prompt += `\n\n=== CURRENT SYSTEM REAL-TIME TIME & DATE (IMPORTANT) ===
+  return `=== CURRENT SYSTEM REAL-TIME TIME & DATE (IMPORTANT) ===
 Today's Date: ${englishDate} (${arabicDate})
 Current Local Time: ${formattedTime}
-You must answer questions assuming the current date is ${englishDate} (${arabicDate}). If the user asks about matches or events that occur "today", "yesterday", "tomorrow", or "recently", refer to this date. Under no circumstances should you claim today is in 2024 or earlier.`;
+You must answer questions and generate all documents/quizzes assuming the current date is ${englishDate} (${arabicDate}). If the user asks about matches or events that occur "today", "yesterday", "tomorrow", or "recently", refer to this date. Under no circumstances should you claim today is in 2024 or earlier.`;
+}
+
+// Build system prompt with feature toggles.
+// The `intent` parameter controls which heavy generation protocols are injected:
+//   - "chat"  → no document/quiz schemas (default, keeps the prompt lean)
+//   - "mcq"   → only the MCQ quiz protocol
+//   - "pdf"   → only the PDF document protocol
+function buildCerebrasSystemPrompt(
+  model: AIModel,
+  mode: ServiceMode,
+  features: FeatureToggles,
+  clientLocalTime?: string,
+  intent: "chat" | "mcq" | "pdf" = "chat"
+): string {
+  let prompt = modeSystemPrompts[mode];
+  // Inject only the protocol block that matches the current intent.
+  // Injecting both protocols on every request costs ~400+ tokens and causes
+  // the model to misinterpret conversational messages as document requests.
+  if (intent === "mcq") prompt += MCQ_GENERATION_PROTOCOL;
+  if (intent === "pdf") prompt += PDF_GENERATION_PROTOCOL;
+  prompt += buildModelSystemPrompt(model);
+
+  // Dynamic Date Injection
+  const timeBlock = buildSystemTimeBlock(clientLocalTime);
+  prompt += `\n\n${timeBlock}`;
 
   prompt += `\n\nDetect the user's language. If the user speaks Arabic, you must reply entirely in fluent, professional, and elegant Arabic without mixing languages. Always answer in the exact same language as the user's prompt. Organize your responses and RTL structure logically.`;
 

@@ -161,12 +161,33 @@ export async function processOmniRequest(
 ): Promise<ChatResponse> {
   // Perform search once for the original user message at the very beginning of the pipeline
   let searchContext = "";
+  let searchSources: Array<{ title: string; url: string; domain: string }> = [];
   try {
     const deepseekKey = import.meta.env.VITE_DEEPSEEK_API_KEY || "";
-    const searchData = await clientPerformSerperSearch(message, deepseekKey);
+    const searchData = await clientPerformSerperSearch(message, deepseekKey, true); // True triggers deep crawling & 100+ sources
     if (searchData.organic && searchData.organic.length > 0) {
+      searchSources = searchData.organic.map((item) => {
+        let domain = "";
+        try {
+          domain = new URL(item.link).hostname.replace("www.", "");
+        } catch {
+          domain = "";
+        }
+        return {
+          title: item.title,
+          url: item.link,
+          domain: item.domain || domain,
+        };
+      });
+
       searchContext = searchData.organic
-        .map((item, index) => `[${index + 1}] Title: ${item.title}\nURL: ${item.link}\nSnippet: ${item.snippet}`)
+        .map((item, index) => {
+          let str = `[${index + 1}] Title: ${item.title}\nURL: ${item.link}\nSnippet: ${item.snippet}`;
+          if (item.page_content) {
+            str += `\nScraped Content:\n${item.page_content}`;
+          }
+          return str;
+        })
         .join("\n\n");
     }
   } catch (err) {
@@ -177,8 +198,10 @@ export async function processOmniRequest(
   const initialState: OmniState = existingState ? {
     ...existingState,
     step: existingState.step === "complete" ? "complete" : "drafting",
+    sources: existingState.sources || searchSources,
   } : {
     step: "dispatch",
+    sources: searchSources,
     agents: {
       architect: { model: "architect", status: "loading", draft: "" },
       coder: { model: "coder", status: "loading", draft: "" },

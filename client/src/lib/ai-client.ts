@@ -236,6 +236,8 @@ interface SerperSearchResult {
   title: string;
   link: string;
   snippet: string;
+  domain?: string;
+  page_content?: string;
 }
 
 interface SerperImageResult {
@@ -684,165 +686,27 @@ function getDomainName(urlStr: string): string {
   }
 }
 
-export async function clientPerformSerperSearch(query: string, deepseekKey: string): Promise<{
+export async function clientPerformSerperSearch(query: string, deepseekKey: string, isOmni?: boolean): Promise<{
   organic: SerperSearchResult[];
   image?: SerperImageResult;
 }> {
   try {
-    const { textQuery, imageQuery } = await clientOptimizeSearchQueries(query, deepseekKey);
-    
-    // 1. Text Search request (fetch 100 results to filter and deduplicate down to top 60)
-    const searchPromise = fetch("https://google.serper.dev/search", {
+    console.log(`[Client Search] Query: "${query}", isOmni: ${!!isOmni}`);
+    const res = await fetch("/api/search", {
       method: "POST",
       headers: {
-        "X-API-KEY": SERPER_API_KEY,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ q: textQuery, num: 100 })
-    }).then(res => {
-      if (!res.ok) throw new Error(`Serper text search failed with status ${res.status}`);
-      return res.json();
+      body: JSON.stringify({ query, isOmni: !!isOmni })
     });
-
-    // 2. Image Search request
-    const imagePromise = fetch("https://google.serper.dev/images", {
-      method: "POST",
-      headers: {
-        "X-API-KEY": SERPER_API_KEY,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ q: imageQuery, num: 8 })
-    }).then(res => {
-      if (!res.ok) throw new Error(`Serper image search failed with status ${res.status}`);
-      return res.json();
-    });
-
-    const [searchData, imageData] = await Promise.all([searchPromise, imagePromise]);
-
-    // Algorithmic processing of organic search results: Relevance scoring and domain-based deduplication
-    const rawOrganic = searchData.organic || [];
-    const searchKeywords = textQuery.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-    
-    const isSportsQuery = /(كورة|كرة|مباراة|دوري|كأس|لاعب|رياضة|الملعب|الأهلي|الزمالك|ريال مدريد|برشلونة|الهلال|النصر|العراق|football|soccer|match|vs|score|league|cup|goal|player|stadium|club)/gi.test(query);
-    const isTechQuery = /(code|function|api|database|react|typescript|python|html|css|developer|programming|git|npm|كود|برمجة|دالة|موقع|برنامج|قاعدة بيانات)/gi.test(query);
-    const isNewsQuery = /(خبر|أخبار|حدث|رئيس|وزير|سياسة|news|politics|president|minister|today|yesterday|أمس|اليوم)/gi.test(query);
-
-    const scoredResults = rawOrganic.map((item: any) => {
-      const title = item.title || "";
-      const snippet = item.snippet || "";
-      const link = item.link || "";
-      const domain = getDomainName(link);
-      
-      let score = 100;
-
-      // 1. Keyword overlap scoring
-      const titleLower = title.toLowerCase();
-      const snippetLower = snippet.toLowerCase();
-      searchKeywords.forEach(kw => {
-        if (titleLower.includes(kw)) score += 12;
-        if (snippetLower.includes(kw)) score += 6;
-      });
-
-      // 2. Specialized domain boosting
-      if (isSportsQuery) {
-        const sportsDomains = [
-          "kooora.com", "yallakora.com", "filgoal.com", "btolat.com", "beinsports.com",
-          "goal.com", "skysports.com", "espn.com", "sofascore.com", "livescore.com",
-          "alarabiya.net/sport", "alarabiya.net"
-        ];
-        if (sportsDomains.some(d => domain.includes(d))) {
-          score += 60;
-        }
-      }
-      
-      if (isTechQuery) {
-        const techDomains = [
-          "github.com", "stackoverflow.com", "dev.to", "medium.com", "npmjs.com",
-          "mdn", "w3schools.com", "reactjs.org", "nextjs.org"
-        ];
-        if (techDomains.some(d => domain.includes(d))) {
-          score += 40;
-        }
-      }
-
-      if (isNewsQuery) {
-        const newsDomains = [
-          "reuters.com", "bbc.com", "bbc.co.uk", "cnn.com", "alarabiya.net", "aljazeera.net"
-        ];
-        if (newsDomains.some(d => domain.includes(d))) {
-          score += 40;
-        }
-      }
-
-      // 3. Recency boost (often indicators in snippet)
-      const recencyKeywords = ["hours ago", "ساعة", "دقائق", "minutes ago", "today", "اليوم", "أمس", "yesterday"];
-      if (recencyKeywords.some(kw => snippetLower.includes(kw))) {
-        score += 30;
-      }
-
-      return {
-        title,
-        link,
-        snippet,
-        domain,
-        score
-      };
-    });
-
-    // Domain Deduplication: Keep at most 2 results from the same domain
-    const domainCounts: Record<string, number> = {};
-    const deduplicatedResults: any[] = [];
-
-    // Sort by score descending to evaluate highest relevance first
-    scoredResults.sort((a: any, b: any) => b.score - a.score);
-
-    for (const res of scoredResults) {
-      if (res.domain) {
-        const count = domainCounts[res.domain] || 0;
-        if (count >= 2) {
-          continue; // skip single source overload
-        }
-        domainCounts[res.domain] = count + 1;
-      }
-      deduplicatedResults.push({
-        title: res.title,
-        link: res.link,
-        snippet: res.snippet
-      });
-    }
-
-    // Slice to top 60 to ensure robust context containing at least 50 sources
-    const organic = deduplicatedResults.slice(0, 60);
-
-    const images = imageData.images || [];
-    let selectedImage = undefined;
-    
-    if (images.length > 0) {
-      const scoredImages = images.map((img: any) => ({
-        img,
-        score: scoreSerperImage(img, imageQuery)
-      }));
-      scoredImages.sort((a: any, b: any) => b.score - a.score);
-      
-      scoredImages.slice(0, 3).forEach((item: any, idx: number) => {
-      });
-
-      const bestImage = scoredImages[0];
-      if (bestImage && bestImage.score > -100) {
-        selectedImage = {
-          title: bestImage.img.title || "",
-          imageUrl: bestImage.img.imageUrl || bestImage.img.thumbnailUrl || "",
-          source: bestImage.img.source || ""
-        };
-      }
-    }
-
+    if (!res.ok) throw new Error(`Backend search failed with status ${res.status}`);
+    const data = await res.json();
     return {
-      organic,
-      image: selectedImage
+      organic: data.organic || [],
+      image: data.image
     };
   } catch (error) {
-    console.error("[Client Serper API] Error during search:", error);
+    console.error("[Client Search] Error during search:", error);
     return { organic: [] };
   }
 }
