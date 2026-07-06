@@ -187,6 +187,7 @@ export async function runApexOmniPipeline(
   const pipelineStart = Date.now();
   const techniquesUsed: string[] = [];
 
+  const activeClient = client;
   const isOpenRouter = client.baseURL.includes("openrouter.ai");
   const completionsModel: string = actualModel;
 
