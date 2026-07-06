@@ -67,9 +67,9 @@ export async function buildApexFootballContext(message: string, clientLocalTime?
     const todayStr = getClientDate(clientLocalTime);
     const today = new Date(todayStr);
     
-    // 15 days window around today
-    const dateFrom = new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    const dateTo = new Date(today.getTime() + 8 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    // 9 days window around today to respect the 10-day limit of football-data.org
+    const dateFrom = new Date(today.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const dateTo = new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
     const url = `https://api.football-data.org/v4/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`;
     const response = await fetch(url, {
@@ -252,12 +252,29 @@ function translateStatus(status: string): string {
 
 function getClientDate(clientLocalTime?: string): string {
   let date = new Date();
+  let timeZone: string | undefined = undefined;
   if (clientLocalTime) {
     try {
-      const parsed = clientLocalTime.startsWith("{") ? JSON.parse(clientLocalTime) : { iso: clientLocalTime };
-      const parsedDate = new Date(parsed.iso || clientLocalTime);
-      if (!Number.isNaN(parsedDate.getTime())) date = parsedDate;
+      if (clientLocalTime.startsWith("{")) {
+        const parsed = JSON.parse(clientLocalTime);
+        if (parsed.iso) date = new Date(parsed.iso);
+        if (parsed.timeZone) timeZone = parsed.timeZone;
+      } else {
+        const parsedDate = new Date(clientLocalTime);
+        if (!Number.isNaN(parsedDate.getTime())) date = parsedDate;
+      }
     } catch {}
   }
-  return date.toISOString().slice(0, 10);
+  
+  try {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timeZone || 'UTC',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    return formatter.format(date);
+  } catch (e) {
+    return date.toISOString().slice(0, 10);
+  }
 }
