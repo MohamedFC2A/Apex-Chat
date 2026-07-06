@@ -1232,8 +1232,18 @@ export async function sendAIMessage(
     }
 
   } catch (error: any) {
-    console.error("❌ AI Client Error:", error);
-    throw new Error(error.message || "AI service failed. Please try again.");
+    // AbortErrors are user-initiated stops — don't pollute the console
+    const isAbort =
+      error.name === "AbortError" ||
+      error.message === "Aborted" ||
+      error.message?.includes("aborted");
+    if (!isAbort) {
+      console.error("❌ AI Client Error:", error);
+    }
+    // Re-throw preserving the original error name so callers can detect AbortErrors
+    const rethrown = new Error(error.message || "AI service failed. Please try again.");
+    rethrown.name = error.name || "Error";
+    throw rethrown;
   }
 }
 

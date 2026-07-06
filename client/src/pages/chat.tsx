@@ -86,6 +86,8 @@ export default function ChatPage() {
   const activeEventSourceRef = useRef<EventSource | null>(null);
   // Tracks whether the user manually stopped generation to prevent auto-restart
   const wasStoppedByUserRef = useRef<boolean>(false);
+  // Prevents concurrent/overlapping calls to handleSendMessage
+  const isHandlingMessageRef = useRef<boolean>(false);
 
   const {
     streamingContentMap,
@@ -253,6 +255,9 @@ removeGodModeTheme();
 
   const handleSendMessage = useCallback(
     async (content: string, displayContent?: string, isRetry = false) => {
+      // Prevent concurrent/overlapping message sends
+      if (isHandlingMessageRef.current) return;
+      isHandlingMessageRef.current = true;
       let conversationId = activeConversationId;
       const store = useChatStore.getState();
       let existingMessages: Message[] = [];
@@ -558,6 +563,7 @@ removeGodModeTheme();
           toast({ title: "Error", description: error.message || "Failed to process message. Please try again.", variant: "destructive" });
         }
       } finally {
+        isHandlingMessageRef.current = false;
         if (abortControllerRef.current === controller) {
           abortControllerRef.current = null;
         }
@@ -568,28 +574,11 @@ removeGodModeTheme();
     [activeConversationId, selectedModel, serviceMode, tier, features, setIsGenerating, toast, setLocation, reasoningLevel, setOmniStateForConv, setUnboundStateForConv, setStreamingContentForConv, setStreamingReasoningForConv, streamingContentMap, createConversation, addMessage]
   );
 
-  useEffect(() => {
-    // Don't auto-retry if the user manually stopped generation
-    if (!activeConversationId || isGenerating || wasStoppedByUserRef.current) return;
-    const activeConv = conversations.find(c => c.id === activeConversationId);
-    if (!activeConv || activeConv.messages.length === 0) return;
-    
-    const lastMsg = activeConv.messages[activeConv.messages.length - 1];
-    if (lastMsg.role === "user") {
-      const timer = setTimeout(() => {
-        // Re-check stop flag inside timer to avoid race conditions
-        if (wasStoppedByUserRef.current) return;
-        const currentConv = useChatStore.getState().conversations.find(c => c.id === activeConversationId);
-        const currentLast = currentConv?.messages[currentConv.messages.length - 1];
-        if (currentLast && currentLast.role === "user" && !useChatStore.getState().isGenerating) {
-          const content = currentLast.contextContent || currentLast.content;
-          const displayContent = currentLast.contextContent ? currentLast.content : undefined;
-          handleSendMessage(content, displayContent, true);
-        }
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [activeConversationId, conversations, isGenerating, handleSendMessage]);
+  // NOTE: The auto-retry useEffect was REMOVED because it caused a race condition:
+  // addMessage() triggers a re-render, the useEffect would fire with isGenerating=false
+  // (before setIsGenerating(true) committed), see the last message is "user", and call
+  // handleSendMessage again — aborting the first in-flight request → AbortError loop.
+  // The ChatInput component sends messages directly via handleSendMessage; no retry needed.
 
   useEffect(() => {
     const store = useChatStore.getState();
