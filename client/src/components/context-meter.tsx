@@ -24,13 +24,14 @@ export function ContextMeter() {
   const streamingTokens = estimateTokens(streamingContent) + estimateTokens(streamingReasoning);
 
   // 2. Sum up all messages (including content, context, and thinking/reasoning) + base prompts (1500)
+  const baseTokens = messages.length > 0 ? 1500 : 0;
   const usedTokens = messages.reduce((sum, m) => {
     if (m.tokens !== undefined) return sum + m.tokens;
     const contentTokens = estimateTokens(m.content);
     const contextTokens = estimateTokens(m.contextContent || "");
     const reasoningTokens = estimateTokens(m.reasoningContent || "");
     return sum + contentTokens + contextTokens + reasoningTokens;
-  }, 0) + streamingTokens + 1500;
+  }, 0) + streamingTokens + baseTokens;
 
   // 3. Dynamic context limit based on model
   const totalLimit = getModelContextLimit(model);

@@ -316,7 +316,7 @@ removeGodModeTheme();
 
       try {
         const compactHistory = buildCompactConversationHistory(existingMessages);
-        const userMemoryContext = buildRelevantMemoryContext(store.conversations, thisConvId, content);
+        const userMemoryContext: any[] = [];
 
         let response: ChatResponse;
         const isGodModeModel = selectedModel === "apex-unbound";
