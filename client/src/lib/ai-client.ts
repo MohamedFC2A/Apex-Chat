@@ -29,26 +29,85 @@ const cleanEnvValue = (val: string | undefined): string => {
   return val.replace(/[^\x00-\xFF]/g, "").trim();
 };
 
-const DEEPSEEK_API_KEY = cleanEnvValue(import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_DEEPSEEK_API_KEY || "");
-const DEEPSEEK_URL = "https://openrouter.ai/api/v1/chat/completions";
+const CLIENT_API_KEY = cleanEnvValue(import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_DEEPSEEK_API_KEY || "");
 
-// Model mapping: ApexChat model → OpenRouter free model ID
-const MODEL_MAP: Record<string, string> = {
+// Dynamically check if the client key is for OpenRouter or DeepSeek Cloud
+const isClientOpenRouter = CLIENT_API_KEY.startsWith("sk-or-v1-");
+
+const DEEPSEEK_API_KEY = CLIENT_API_KEY;
+const DEEPSEEK_URL = isClientOpenRouter
+  ? "https://openrouter.ai/api/v1/chat/completions"
+  : "https://api.deepseek.com/v1/chat/completions";
+
+// Model mapping: ApexChat model → Target ID based on detected provider
+const MODEL_MAP: Record<string, string> = isClientOpenRouter ? {
   "apex-flash": "poolside/laguna-xs-2.1:free",
   "apex-pro": "openai/gpt-oss-120b:free",
   "apex-elite": "openai/gpt-oss-120b:free",
   "apex-omni": "openai/gpt-oss-120b:free",
   "apex-unbound": "openai/gpt-oss-120b:free",
+} : {
+  "apex-flash": "deepseek-chat",
+  "apex-pro": "deepseek-reasoner",
+  "apex-elite": "deepseek-reasoner",
+  "apex-omni": "deepseek-reasoner",
+  "apex-unbound": "deepseek-reasoner",
 };
 
 type DeepSeekTask = "reasoning" | "generation";
 type LightweightMessage = Pick<Message, "role" | "content">;
 
+function getClientHeaders(apiKey: string): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${apiKey}`
+  };
+  if (isClientOpenRouter) {
+    headers["HTTP-Referer"] = "https://apex-chat.vercel.app";
+    headers["X-Title"] = "Apex Chat";
+  }
+  return headers;
+}
+
 function mapDeepSeekModelForClient(model: AIModel, _task: DeepSeekTask): string {
-  return MODEL_MAP[model] || "poolside/laguna-xs-2.1:free";
+  const fallback = isClientOpenRouter ? "poolside/laguna-xs-2.1:free" : "deepseek-chat";
+  return MODEL_MAP[model] || fallback;
 }
 
 function getDeepSeekRequestParams(model: string, enableThinking = false): Record<string, any> {
+  if (isClientOpenRouter) {
+    return {
+      temperature: 0.7,
+    };
+  }
+
+  // Official DeepSeek parameters
+  if (model === "deepseek-reasoner") {
+    return {};
+  }
+
+  if (model === "deepseek-chat") {
+    if (enableThinking) {
+      return {
+        temperature: 0.7,
+        extra_body: {
+          thinking: {
+            type: "enabled",
+          },
+        },
+      };
+    } else {
+      return {
+        temperature: 0.7,
+        extra_body: {
+          thinking: {
+            type: "disabled",
+          },
+        },
+      };
+    }
+  }
+
   return {
     temperature: 0.7,
   };
@@ -228,10 +287,7 @@ async function forceQuizBlockResponseClient(
   const inferredTopic = extractQuizTopic(userMessage, conversationHistory);
   const response = await fetch(DEEPSEEK_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`
-    },
+    headers: getClientHeaders(apiKey),
     body: JSON.stringify({
       model,
       messages: [
@@ -287,10 +343,7 @@ async function generateDedicatedQuizDirect(
   const runAttempt = async (userContent: string) => {
     const response = await fetch(DEEPSEEK_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
+      headers: getClientHeaders(apiKey),
       body: JSON.stringify({
         model: actualModel,
         messages: [
@@ -358,10 +411,7 @@ async function generateDedicatedPdfDirect(
   const runAttempt = async (userContent: string) => {
     const response = await fetch(DEEPSEEK_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
+      headers: getClientHeaders(apiKey),
       body: JSON.stringify({
         model: actualModel,
         messages: [
@@ -573,12 +623,9 @@ async function clientOptimizeSearchQueries(message: string, apiKey: string): Pro
   try {
     const response = await fetch(DEEPSEEK_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
+      headers: getClientHeaders(apiKey),
       body: JSON.stringify({
-        model: "deepseek-v4-flash",
+        model: isClientOpenRouter ? "poolside/laguna-xs-2.1:free" : "deepseek-chat",
         messages: [
           {
             role: "system",
@@ -1091,10 +1138,7 @@ Do not repeat or generate another markdown image for this URL in your response c
 
   const response = await fetch(DEEPSEEK_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
-    },
+    headers: getClientHeaders(DEEPSEEK_API_KEY),
     body: JSON.stringify(requestBody)
   });
 

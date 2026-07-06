@@ -84,107 +84,107 @@ const MODEL_CARD_CONFIG: Record<
     description:
       "Our most advanced model. Excels at hyper-complex reasoning, math, and deep creative analysis.",
     iconColor: "#a78bfa",
-    iconGlow: "drop-shadow(0 0 8px rgba(167,139,250,0.8))",
-    activeGlow:
-      "0 0 0 1px rgba(139,92,246,0.6), 0 0 24px rgba(139,92,246,0.2), inset 0 0 24px rgba(99,102,241,0.06)",
+    iconGlow: "none",
+    activeGlow: "none",
     activeBorder: "rgba(139,92,246,0.7)",
   },
   "apex-unbound": {
     description:
       "Uncensored and specialized for large-scale software engineering and complex logic.",
     iconColor: "#f472b6",
-    iconGlow: "drop-shadow(0 0 8px rgba(244,114,182,0.8))",
-    activeGlow:
-      "0 0 0 1px rgba(244,114,182,0.5), 0 0 24px rgba(244,114,182,0.15)",
+    iconGlow: "none",
+    activeGlow: "none",
     activeBorder: "rgba(244,114,182,0.6)",
   },
   "apex-elite": {
     description:
       "Blazing fast web-browsing capabilities with deep fact-checking and live data citations.",
     iconColor: "#22d3ee",
-    iconGlow: "drop-shadow(0 0 8px rgba(34,211,238,0.8))",
-    activeGlow:
-      "0 0 0 1px rgba(34,211,238,0.5), 0 0 24px rgba(34,211,238,0.15)",
+    iconGlow: "none",
+    activeGlow: "none",
     activeBorder: "rgba(34,211,238,0.6)",
   },
   "apex-pro": {
     description:
       "The perfect balance of high intelligence and speed optimized for production environments.",
     iconColor: "#34d399",
-    iconGlow: "drop-shadow(0 0 8px rgba(52,211,153,0.8))",
-    activeGlow:
-      "0 0 0 1px rgba(52,211,153,0.5), 0 0 24px rgba(52,211,153,0.15)",
+    iconGlow: "none",
+    activeGlow: "none",
     activeBorder: "rgba(52,211,153,0.6)",
   },
   "apex-flash": {
     description:
       "Ultra-low latency model tailored for instantaneous responses and casual daily chats.",
     iconColor: "#fbbf24",
-    iconGlow: "drop-shadow(0 0 8px rgba(251,191,36,0.8))",
-    activeGlow:
-      "0 0 0 1px rgba(251,191,36,0.5), 0 0 24px rgba(251,191,36,0.15)",
+    iconGlow: "none",
+    activeGlow: "none",
     activeBorder: "rgba(251,191,36,0.6)",
   },
 };
 
 /* ─────────────────────────────────────────────────────────────────
-   Custom glowing SVG icons per model
-───────────────────────────────────────────────────────────────── */
-function OmniIcon({ color, glow }: { color: string; glow: string }) {
+   Custom glossy, specular letter icons per model (no glow)
+   ───────────────────────────────────────────────────────────────── */
+function LetterIcon({
+  letter,
+  gradientColors,
+}: {
+  letter: string;
+  gradientColors: [string, string];
+}) {
+  const gradId = `glossy-grad-${letter}`;
+  const glossId = `glossy-overlay-${letter}`;
   return (
-    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" style={{ filter: glow }}>
-      <circle cx="13" cy="13" r="11" stroke={color} strokeWidth="1.2" opacity="0.35" />
-      <circle cx="13" cy="13" r="6" stroke={color} strokeWidth="1.4" opacity="0.6" />
-      <circle cx="13" cy="13" r="2.5" fill={color} opacity="0.9" />
-      <line x1="13" y1="2" x2="13" y2="6.5" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="13" y1="19.5" x2="13" y2="24" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="2" y1="13" x2="6.5" y2="13" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="19.5" y1="13" x2="24" y2="13" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="13" cy="13" r="10" stroke={color} strokeWidth="0.4" strokeDasharray="2 3" opacity="0.4" />
+    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        {/* Shiny Glossy gradient background */}
+        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={gradientColors[0]} />
+          <stop offset="100%" stopColor={gradientColors[1]} />
+        </linearGradient>
+        {/* Glass specular reflection highlight */}
+        <linearGradient id={glossId} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.45" />
+          <stop offset="40%" stopColor="#ffffff" stopOpacity="0.08" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0.0" />
+        </linearGradient>
+      </defs>
+      
+      {/* Glossy rounded background */}
+      <rect x="0.5" y="0.5" width="25" height="25" rx="6.5" fill={`url(#${gradId})`} stroke="rgba(255,255,255,0.18)" strokeWidth="0.8" />
+      
+      {/* Light sheen overlay */}
+      <path d="M 0.5 7.5 C 0.5 4, 4 0.5, 7.5 0.5 L 18.5 0.5 C 22 0.5, 25.5 4, 25.5 7.5 L 25.5 12.5 C 25.5 12.5, 13 13.5, 0.5 12.5 Z" fill={`url(#${glossId})`} opacity="0.65" />
+      
+      {/* Specular line */}
+      <path d="M 1.5 12 C 9 12.8, 17 12.8, 24.5 12" stroke="rgba(255,255,255,0.12)" strokeWidth="0.6" />
+      
+      {/* The slanting futuristic letter */}
+      <text
+        x="13.5"
+        y="18.2"
+        textAnchor="middle"
+        style={{
+          fontFamily: "var(--font-sans, 'Inter', sans-serif)",
+          fontWeight: 900,
+          fontSize: "13.5px",
+          fill: "#ffffff",
+          textShadow: "0px 1px 2px rgba(0,0,0,0.4)",
+        }}
+      >
+        {letter}
+      </text>
     </svg>
   );
 }
 
-function UnboundIcon({ color, glow }: { color: string; glow: string }) {
-  return (
-    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" style={{ filter: glow }}>
-      <path d="M4 8h18M4 13h12M4 18h9" stroke={color} strokeWidth="1.8" strokeLinecap="round" opacity="0.9" />
-      <path d="M19 15l4-4-4-4" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
-      <rect x="2" y="5" width="22" height="16" rx="3" stroke={color} strokeWidth="0.8" opacity="0.3" />
-    </svg>
-  );
-}
+function OmniIcon(_props?: any) { return <LetterIcon letter="O" gradientColors={["#8b5cf6", "#d946ef"]} />; }
+function UnboundIcon(_props?: any) { return <LetterIcon letter="U" gradientColors={["#ec4899", "#f43f5e"]} />; }
+function SearchIcon(_props?: any) { return <LetterIcon letter="S" gradientColors={["#06b6d4", "#0ea5e9"]} />; }
+function ProIcon(_props?: any) { return <LetterIcon letter="P" gradientColors={["#10b981", "#059669"]} />; }
+function FlashIcon(_props?: any) { return <LetterIcon letter="F" gradientColors={["#f59e0b", "#d97706"]} />; }
 
-function SearchIcon({ color, glow }: { color: string; glow: string }) {
-  return (
-    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" style={{ filter: glow }}>
-      <circle cx="11" cy="11" r="7.5" stroke={color} strokeWidth="1.8" opacity="0.9" />
-      <line x1="16.8" y1="16.8" x2="23" y2="23" stroke={color} strokeWidth="2" strokeLinecap="round" />
-      <path d="M8 11h6M11 8v6" stroke={color} strokeWidth="1.4" strokeLinecap="round" opacity="0.6" />
-      <circle cx="11" cy="11" r="3" fill={color} opacity="0.15" />
-    </svg>
-  );
-}
-
-function ProIcon({ color, glow }: { color: string; glow: string }) {
-  return (
-    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" style={{ filter: glow }}>
-      <polygon points="13,2 16,10 24,10 18,15.5 20,24 13,19 6,24 8,15.5 2,10 10,10" stroke={color} strokeWidth="1.6" strokeLinejoin="round" fill={color} fillOpacity="0.12" opacity="0.9" />
-      <polygon points="13,6 15,12 21,12 16,16 18,22 13,18.5 8,22 10,16 5,12 11,12" fill={color} opacity="0.35" />
-    </svg>
-  );
-}
-
-function FlashIcon({ color, glow }: { color: string; glow: string }) {
-  return (
-    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" style={{ filter: glow }}>
-      <path d="M15 2L5 15h8l-2 9 10-13h-8L15 2z" stroke={color} strokeWidth="1.6" strokeLinejoin="round" fill={color} fillOpacity="0.2" opacity="0.95" />
-      <path d="M13 10l-3 5h5l-3 6" stroke={color} strokeWidth="0.8" strokeLinejoin="round" opacity="0.5" />
-    </svg>
-  );
-}
-
-const MODEL_ICONS: Record<AIModel, React.FC<{ color: string; glow: string }>> = {
+const MODEL_ICONS: Record<AIModel, React.FC<{ color?: string; glow?: string }>> = {
   "apex-omni": OmniIcon,
   "apex-unbound": UnboundIcon,
   "apex-elite": SearchIcon,
@@ -247,9 +247,6 @@ export function ModelSelector({
           style={
             !disabled && !isLocked
               ? {
-                  boxShadow: isOpen
-                    ? `0 0 0 1px ${currentCardCfg.iconColor}30, 0 0 12px ${currentCardCfg.iconColor}15`
-                    : "none",
                   borderColor: isOpen ? `${currentCardCfg.iconColor}50` : undefined,
                 }
               : {}
@@ -625,20 +622,38 @@ function ModelCard({
 
       {/* Text block */}
       <div style={{ flex: 1, minWidth: 0, position: "relative", zIndex: 1 }}>
-        <p
-          style={{
-            fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: isActive ? "#ffffff" : "rgba(255,255,255,0.85)",
-            lineHeight: 1.2,
-            margin: 0,
-          }}
-        >
-          {info.name}
-        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <p
+            style={{
+              fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: isActive ? "#ffffff" : "rgba(255,255,255,0.85)",
+              lineHeight: 1.2,
+              margin: 0,
+            }}
+          >
+            {info.name}
+          </p>
+          <span
+            style={{
+              fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
+              fontSize: 7.5,
+              fontWeight: 650,
+              padding: "1px 4.5px",
+              borderRadius: 3.5,
+              background: isActive ? `${cfg.iconColor}22` : "rgba(255,255,255,0.04)",
+              border: `1px solid ${isActive ? `${cfg.iconColor}44` : "rgba(255,255,255,0.06)"}`,
+              color: isActive ? cfg.iconColor : "rgba(255,255,255,0.4)",
+              letterSpacing: "0.05em",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {model === "apex-flash" ? "LAGUNA-XS" : model === "apex-pro" ? "GPT-OSS" : model === "apex-elite" ? "WEB-SEARCH" : model === "apex-omni" ? "OMNI-10" : "CODE-SPEC"}
+          </span>
+        </div>
         <p
           style={{
             fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
