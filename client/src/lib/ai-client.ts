@@ -1278,7 +1278,8 @@ export async function sendAIMessage(
   features: { thinking: boolean; deepResearch: boolean; godMode: boolean } = { thinking: false, deepResearch: false, godMode: false },
   reasoningLevel: string = "none",
   onChunk?: (content: string, reasoning: string) => void,
-  userMemoryContext?: Array<{ title: string; lastQuery: string; summary?: string; relevance?: number; updatedAt?: number }>
+  userMemoryContext?: Array<{ title: string; lastQuery: string; summary?: string; relevance?: number; updatedAt?: number }>,
+  messageId?: string
 ): Promise<ChatResponse> {
   try {
     
@@ -1307,7 +1308,8 @@ export async function sendAIMessage(
           iso: new Date().toISOString(),
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
         }),
-        stream: !!onChunk
+        stream: !!onChunk,
+        messageId
       })
     });
 

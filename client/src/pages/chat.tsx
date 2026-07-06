@@ -83,27 +83,17 @@ export default function ChatPage() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
-  const [streamingContentMap, setStreamingContentMap] = useState<Record<string, string>>({});
-  const [streamingReasoningMap, setStreamingReasoningMap] = useState<Record<string, string>>({});
+  const {
+    streamingContentMap,
+    streamingReasoningMap,
+    setStreamingContentForConv,
+    setStreamingReasoningForConv,
+    activeGenerationId,
+    setActiveGenerationId
+  } = useChatStore();
   
   const streamingContent = activeConversationId ? streamingContentMap[activeConversationId] || "" : "";
   const streamingReasoning = activeConversationId ? streamingReasoningMap[activeConversationId] || "" : "";
-
-  const setStreamingContentForConv = useCallback((convId: string, contentOrFn: string | ((prev: string) => string)) => {
-    setStreamingContentMap(prev => {
-      const current = prev[convId] || "";
-      const nextContent = typeof contentOrFn === "function" ? contentOrFn(current) : contentOrFn;
-      return { ...prev, [convId]: nextContent };
-    });
-  }, []);
-
-  const setStreamingReasoningForConv = useCallback((convId: string, reasoningOrFn: string | ((prev: string) => string)) => {
-    setStreamingReasoningMap(prev => {
-      const current = prev[convId] || "";
-      const nextReasoning = typeof reasoningOrFn === "function" ? reasoningOrFn(current) : reasoningOrFn;
-      return { ...prev, [convId]: nextReasoning };
-    });
-  }, []);
 
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
@@ -276,6 +266,14 @@ removeGodModeTheme();
         existingMessages = existingMessages.slice(0, -1);
       }
 
+      let assistantMsgId: string = crypto.randomUUID();
+      if (isRetry && existingMessages.length > 0) {
+        const lastMsg = existingMessages[existingMessages.length - 1];
+        if (lastMsg.role === "assistant") {
+          assistantMsgId = lastMsg.id;
+        }
+      }
+
       if (!isRetry) {
         const userMessage: Message = {
           id: crypto.randomUUID(),
@@ -287,6 +285,7 @@ removeGodModeTheme();
         addMessage(thisConvId, userMessage);
       }
       setIsGenerating(true);
+      store.setActiveGenerationId(assistantMsgId);
       setLastError(null);
       setStreamingContentForConv(thisConvId, "");
       setStreamingReasoningForConv(thisConvId, "");
@@ -428,7 +427,8 @@ removeGodModeTheme();
                   store.setActivePdfProgress({ current: currentProgress, total: 100 });
                 }
               },
-              userMemoryContext
+              userMemoryContext,
+              assistantMsgId
             );
             if ((response as any).error) throw new Error((response as any).message || (response as any).error);
 
@@ -465,7 +465,8 @@ removeGodModeTheme();
                 store.setActivePdfProgress({ current: currentProgress, total: 100 });
               }
             },
-            userMemoryContext
+            userMemoryContext,
+            assistantMsgId
           );
 
           if ((response as any).error) {
@@ -474,7 +475,7 @@ removeGodModeTheme();
         }
 
         const assistantMessage: Message = {
-          id: response.id,
+          id: assistantMsgId,
           role: "assistant",
           content: response.content,
           model: selectedModel,
@@ -484,12 +485,14 @@ removeGodModeTheme();
         };
         addMessage(thisConvId!, assistantMessage);
         setIsGenerating(false);
+        store.setActiveGenerationId(null);
         setStreamingContentForConv(thisConvId, "");
         setStreamingReasoningForConv(thisConvId, "");
       } catch (error: any) {
         setLastError(error.message || "Failed to process message");
         setOmniStateForConv(thisConvId, null);
         setIsGenerating(false);
+        store.setActiveGenerationId(null);
         setStreamingContentForConv(thisConvId, "");
         setStreamingReasoningForConv(thisConvId, "");
 
@@ -552,11 +555,146 @@ removeGodModeTheme();
     }
   }, [activeConversationId, conversations, isGenerating, handleSendMessage]);
 
-  const handleStopGenerating = useCallback(() => {
+  useEffect(() => {
+    const store = useChatStore.getState();
+    const activeGenId = store.activeGenerationId;
+    const activeConvId = store.activeConversationId;
+
+    if (activeGenId && activeConvId && !isGenerating) {
+      console.log(`[Resume System] Resuming active generation ${activeGenId} for conversation ${activeConvId}`);
+      
+      const conversation = store.conversations.find(c => c.id === activeConvId);
+      if (!conversation) {
+        store.setActiveGenerationId(null);
+        return;
+      }
+      const lastMsg = conversation.messages.find(m => m.id === activeGenId);
+      
+      if (!lastMsg) {
+        store.setActiveGenerationId(null);
+        return;
+      }
+
+      setIsGenerating(true);
+      const model = lastMsg.model || selectedModel;
+      
+      if (model === "apex-omni") {
+        const userMsgIdx = conversation.messages.findIndex(m => m.id === activeGenId) - 1;
+        const userMsg = userMsgIdx >= 0 ? conversation.messages[userMsgIdx] : null;
+        if (userMsg) {
+          const queryText = userMsg.contextContent || userMsg.content;
+          const existingOmniState = omniStates[activeConvId] || null;
+          console.log("[Resume System] Resuming Omni agent sequence...", existingOmniState);
+          
+          (async () => {
+            try {
+              const compactHistory = buildCompactConversationHistory(conversation.messages.slice(0, userMsgIdx));
+              const response = await processOmniRequest(
+                queryText,
+                (state) => {
+                  setOmniStateForConv(activeConvId, state);
+                  const currentMsg = useChatStore.getState().conversations
+                    .find(c => c.id === activeConvId)?.messages
+                    .find(m => m.id === activeGenId);
+                  
+                  const updatedMsg: Message = {
+                    id: activeGenId,
+                    role: "assistant",
+                    content: state.finalResponse || currentMsg?.content || "",
+                    reasoningContent: currentMsg?.reasoningContent || "",
+                    model: "apex-omni",
+                    timestamp: currentMsg?.timestamp || Date.now(),
+                  };
+                  addMessage(activeConvId, updatedMsg);
+                },
+                compactHistory,
+                existingOmniState
+              );
+              
+              setOmniStateForConv(activeConvId, {
+                ...existingOmniState,
+                step: "complete",
+                finalResponse: response.content,
+              });
+              
+              const finalMsg: Message = {
+                id: activeGenId,
+                role: "assistant",
+                content: response.content,
+                model: "apex-omni",
+                timestamp: Date.now()
+              };
+              addMessage(activeConvId, finalMsg);
+            } catch (err) {
+              console.error("[Resume System] Omni resume failed:", err);
+            } finally {
+              setIsGenerating(false);
+              store.setActiveGenerationId(null);
+            }
+          })();
+        } else {
+          setIsGenerating(false);
+          store.setActiveGenerationId(null);
+        }
+      } else {
+        // Clear streaming content to catch up fresh from SSE chunks
+        setStreamingContentForConv(activeConvId, "");
+        setStreamingReasoningForConv(activeConvId, "");
+
+        const eventSource = new EventSource(`/api/chat/stream/${activeGenId}`);
+        eventSource.onmessage = (event) => {
+          if (event.data === "[DONE]") {
+            eventSource.close();
+            setIsGenerating(false);
+            store.setActiveGenerationId(null);
+            
+            // Build and insert final assistant message
+            const currentConv = useChatStore.getState().conversations.find(c => c.id === activeConvId);
+            const currentMsg = currentConv?.messages.find(m => m.id === activeGenId);
+            const finalMsg: Message = {
+              id: activeGenId,
+              role: "assistant",
+              content: currentMsg?.content || "",
+              reasoningContent: currentMsg?.reasoningContent || "",
+              model: currentMsg?.model || selectedModel,
+              timestamp: Date.now()
+            };
+            addMessage(activeConvId, finalMsg);
+            return;
+          }
+
+          const chunk = JSON.parse(event.data);
+          if (chunk.error) {
+            console.error("Server stream returned error:", chunk.error);
+            eventSource.close();
+            setIsGenerating(false);
+            store.setActiveGenerationId(null);
+            setLastError(chunk.error);
+            return;
+          }
+
+          setStreamingContentForConv(activeConvId, prev => chunk.content ? prev + chunk.content : prev);
+          setStreamingReasoningForConv(activeConvId, prev => chunk.reasoningContent ? prev + chunk.reasoningContent : prev);
+        };
+
+        eventSource.onerror = (err) => {
+          console.warn("EventSource connection error, retrying...", err);
+        };
+      }
+    }
+  }, [activeConversationId, isGenerating, selectedModel]);
+
+  const handleStopGenerating = useCallback(async () => {
+    const store = useChatStore.getState();
+    const activeId = store.activeGenerationId;
     setIsGenerating(false);
+    store.setActiveGenerationId(null);
     if (activeConversationId) {
       setStreamingContentForConv(activeConversationId, "");
       setStreamingReasoningForConv(activeConversationId, "");
+      if (activeId) {
+        await fetch(`/api/chat/stop/${activeId}`, { method: "POST" }).catch(err => console.error(err));
+      }
     }
   }, [activeConversationId, setStreamingContentForConv, setStreamingReasoningForConv, setIsGenerating]);
 

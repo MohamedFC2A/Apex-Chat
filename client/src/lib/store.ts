@@ -25,6 +25,9 @@ interface ChatState {
   activeQuizProgress: { current: number; total: number } | null;
   activePdfProgress: { current: number; total: number } | null;
   omniStates: Record<string, any>; // Persisted omniStates
+  activeGenerationId: string | null;
+  streamingContentMap: Record<string, string>;
+  streamingReasoningMap: Record<string, string>;
 
   // Actions
   setSelectedModel: (model: AIModel) => void;
@@ -32,9 +35,12 @@ interface ChatState {
   setReasoningLevel: (level: ReasoningLevel) => void;
   setSidebarOpen: (open: boolean) => void;
   setIsGenerating: (generating: boolean) => void;
+  setActiveGenerationId: (id: string | null) => void;
   setActiveQuizProgress: (progress: { current: number; total: number } | null) => void;
   setActivePdfProgress: (progress: { current: number; total: number } | null) => void;
   setOmniState: (convId: string, state: any) => void;
+  setStreamingContentForConv: (convId: string, contentOrFn: string | ((prev: string) => string)) => void;
+  setStreamingReasoningForConv: (convId: string, reasoningOrFn: string | ((prev: string) => string)) => void;
 
   // Conversation actions
   createConversation: () => string;
@@ -66,6 +72,9 @@ export const useChatStore = create<ChatState>()(
       activeQuizProgress: null,
       activePdfProgress: null,
       omniStates: {},
+      activeGenerationId: null,
+      streamingContentMap: {},
+      streamingReasoningMap: {},
       
       // Cloud Sync State
       isSyncing: false,
@@ -96,6 +105,21 @@ export const useChatStore = create<ChatState>()(
       setReasoningLevel: (level) => set({ reasoningLevel: level }),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
       setIsGenerating: (generating) => set({ isGenerating: generating }),
+      setActiveGenerationId: (id) => set({ activeGenerationId: id }),
+      setStreamingContentForConv: (convId, contentOrFn) => {
+        set((state) => {
+          const current = state.streamingContentMap[convId] || "";
+          const nextContent = typeof contentOrFn === "function" ? contentOrFn(current) : contentOrFn;
+          return { streamingContentMap: { ...state.streamingContentMap, [convId]: nextContent } };
+        });
+      },
+      setStreamingReasoningForConv: (convId, reasoningOrFn) => {
+        set((state) => {
+          const current = state.streamingReasoningMap[convId] || "";
+          const nextReasoning = typeof reasoningOrFn === "function" ? reasoningOrFn(current) : reasoningOrFn;
+          return { streamingReasoningMap: { ...state.streamingReasoningMap, [convId]: nextReasoning } };
+        });
+      },
       setActiveQuizProgress: (progress) => {
         const current = get().activeQuizProgress;
         if (!current && !progress) return;

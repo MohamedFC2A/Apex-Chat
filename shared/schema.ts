@@ -146,6 +146,7 @@ export const chatRequestSchema = z.object({
     godMode: z.boolean(),
   }),
   conversationId: z.string().optional(),
+  messageId: z.string().optional(),
   conversationHistory: z.array(z.object({
     role: z.enum(["user", "assistant"]),
     content: z.string(),

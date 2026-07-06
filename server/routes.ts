@@ -14,6 +14,18 @@ import { cleanJsonString } from "./apex-unbound/architect-agent.js";
 
 const previewStore = new Map<string, { html: string; createdAt: number }>();
 
+interface ActiveGeneration {
+  messageId: string;
+  conversationId: string;
+  content: string;
+  reasoningContent: string;
+  isComplete: boolean;
+  error?: string;
+  chunks: Array<{ id: string; content?: string; reasoningContent?: string; model?: string; conversationId?: string; totalDuration?: number }>;
+  listeners: Array<(event: { type: "chunk" | "done" | "error"; data?: any }) => void>;
+}
+const activeGenerations = new Map<string, ActiveGeneration>();
+
 function sanitizeFilename(value: string): string {
   return value
     .trim()
@@ -108,6 +120,7 @@ export async function registerRoutes(
         subscriptionTier,
         features,
         conversationId,
+        messageId,
         conversationHistory,
         userMemoryContext,
         clientLocalTime,
@@ -136,69 +149,149 @@ export async function registerRoutes(
         });
       }
 
+      const activeMsgId = messageId || randomUUID();
+      const activeConvId = conversationId || randomUUID();
+
+      let activeGen = activeGenerations.get(activeMsgId);
+      if (!activeGen) {
+        activeGen = {
+          messageId: activeMsgId,
+          conversationId: activeConvId,
+          content: "",
+          reasoningContent: "",
+          isComplete: false,
+          chunks: [],
+          listeners: []
+        };
+        activeGenerations.set(activeMsgId, activeGen);
+
+        // Run message processing in the background (survives client refresh/disconnect)
+        (async () => {
+          try {
+            const processResponse = await processMessage({
+              message,
+              model: targetModel,
+              mode,
+              reasoningLevel,
+              subscriptionTier,
+              features,
+              conversationHistory,
+              userMemoryContext,
+              clientLocalTime,
+            }, (chunk) => {
+              if (activeGen!.isComplete) return; // ignore chunks if stopped/cancelled
+              const chunkData = {
+                id: randomUUID(),
+                content: chunk.content || "",
+                reasoningContent: chunk.reasoningContent || "",
+                model,
+                conversationId: activeConvId
+              };
+              activeGen!.content += chunkData.content;
+              activeGen!.reasoningContent += chunkData.reasoningContent;
+              activeGen!.chunks.push(chunkData);
+              activeGen!.listeners.forEach(listener => listener({ type: "chunk", data: chunkData }));
+            });
+
+            if (activeGen!.isComplete) return;
+
+            if (processResponse && processResponse.totalDuration) {
+              const durationData = {
+                id: randomUUID(),
+                totalDuration: processResponse.totalDuration,
+                model,
+                conversationId: activeConvId
+              };
+              activeGen!.chunks.push(durationData);
+              activeGen!.listeners.forEach(listener => listener({ type: "chunk", data: durationData }));
+            }
+            activeGen!.isComplete = true;
+            activeGen!.listeners.forEach(listener => listener({ type: "done" }));
+          } catch (err: any) {
+            console.error("Background message processing failed:", err);
+            if (!activeGen!.isComplete) {
+              activeGen!.error = err.message || "Failed to process message";
+              activeGen!.listeners.forEach(listener => listener({ type: "error", data: activeGen!.error }));
+              activeGen!.isComplete = true;
+            }
+          }
+        })();
+      }
+
       if (stream) {
         res.setHeader("Content-Type", "text/event-stream");
         res.setHeader("Cache-Control", "no-cache");
         res.setHeader("Connection", "keep-alive");
 
-        try {
-          const processResponse = await processMessage({
-            message,
-            model: targetModel,
-            mode,
-            reasoningLevel,
-            subscriptionTier,
-            features,
-            conversationHistory,
-            userMemoryContext,
-            clientLocalTime,
-          }, (chunk) => {
-            res.write(`data: ${JSON.stringify({
-              id: randomUUID(),
-              content: chunk.content || "",
-              reasoningContent: chunk.reasoningContent || "",
-              model,
-              conversationId: conversationId || randomUUID()
-            })}\n\n`);
-          });
+        // Catch up with accumulated chunks
+        activeGen.chunks.forEach(chunk => {
+          res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+        });
 
-          if (processResponse && processResponse.totalDuration) {
-            res.write(`data: ${JSON.stringify({
-              id: randomUUID(),
-              totalDuration: processResponse.totalDuration,
-              model,
-              conversationId: conversationId || randomUUID()
-            })}\n\n`);
+        if (activeGen.isComplete) {
+          if (activeGen.error) {
+            res.write(`data: ${JSON.stringify({ error: activeGen.error })}\n\n`);
+          } else {
+            res.write("data: [DONE]\n\n");
           }
-        } catch (err: any) {
-          console.error("Streaming error:", err);
-          res.write(`data: ${JSON.stringify({ error: err.message || "Failed to process message" })}\n\n`);
+          res.end();
+          return;
         }
-        res.write("data: [DONE]\n\n");
-        res.end();
+
+        const listener = (event: any) => {
+          if (event.type === "chunk") {
+            res.write(`data: ${JSON.stringify(event.data)}\n\n`);
+          } else if (event.type === "error") {
+            res.write(`data: ${JSON.stringify({ error: event.data })}\n\n`);
+            res.end();
+          } else if (event.type === "done") {
+            res.write("data: [DONE]\n\n");
+            res.end();
+          }
+        };
+
+        activeGen.listeners.push(listener);
+
+        req.on("close", () => {
+          const idx = activeGen!.listeners.indexOf(listener);
+          if (idx !== -1) {
+            activeGen!.listeners.splice(idx, 1);
+          }
+        });
         return;
       }
 
-      const response = await processMessage({
-        message,
-        model: targetModel,
-        mode,
-        reasoningLevel,
-        subscriptionTier,
-        features,
-        conversationHistory,
-        userMemoryContext,
-        clientLocalTime,
-      });
+      // Non-stream block: wait for active generation to finish
+      const checkCompletion = (): Promise<any> => {
+        return new Promise((resolve, reject) => {
+          if (activeGen!.isComplete) {
+            if (activeGen!.error) reject(new Error(activeGen!.error));
+            else resolve(activeGen);
+            return;
+          }
+          const listener = (event: any) => {
+            if (event.type === "done") {
+              resolve(activeGen);
+            } else if (event.type === "error") {
+              reject(new Error(event.data));
+            }
+          };
+          activeGen!.listeners.push(listener);
+        });
+      };
 
-      return res.json({
-        id: randomUUID(),
-        content: response.content,
-        reasoningContent: response.reasoningContent,
-        totalDuration: response.totalDuration,
-        model, // echo the requested model to the client
-        conversationId: conversationId || randomUUID(),
-      });
+      try {
+        await checkCompletion();
+        return res.json({
+          id: activeMsgId,
+          content: activeGen.content,
+          reasoningContent: activeGen.reasoningContent,
+          conversationId: activeConvId,
+          model,
+        });
+      } catch (err: any) {
+        return res.status(500).json({ error: "Failed to process message", message: err.message });
+      }
     } catch (error) {
       console.error("Chat API error:", error);
 
@@ -215,6 +308,87 @@ export async function registerRoutes(
         message: error instanceof Error ? error.message : "Unknown error",
       });
     }
+  });
+
+  // GET: Resume live event stream for active generation
+  app.get("/api/chat/stream/:messageId", (req, res) => {
+    const { messageId } = req.params;
+    const activeGen = activeGenerations.get(messageId);
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    if (!activeGen) {
+      res.write(`data: ${JSON.stringify({ error: "No active session found for this message" })}\n\n`);
+      res.end();
+      return;
+    }
+
+    // Catch up with accumulated chunks
+    activeGen.chunks.forEach(chunk => {
+      res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+    });
+
+    if (activeGen.isComplete) {
+      if (activeGen.error) {
+        res.write(`data: ${JSON.stringify({ error: activeGen.error })}\n\n`);
+      } else {
+        res.write("data: [DONE]\n\n");
+      }
+      res.end();
+      return;
+    }
+
+    const listener = (event: any) => {
+      if (event.type === "chunk") {
+        res.write(`data: ${JSON.stringify(event.data)}\n\n`);
+      } else if (event.type === "error") {
+        res.write(`data: ${JSON.stringify({ error: event.data })}\n\n`);
+        res.end();
+      } else if (event.type === "done") {
+        res.write("data: [DONE]\n\n");
+        res.end();
+      }
+    };
+
+    activeGen.listeners.push(listener);
+
+    req.on("close", () => {
+      const idx = activeGen.listeners.indexOf(listener);
+      if (idx !== -1) {
+        activeGen.listeners.splice(idx, 1);
+      }
+    });
+  });
+
+  // POST: Stop / cancel active generation on both server and client
+  app.post("/api/chat/stop/:messageId", (req, res) => {
+    const { messageId } = req.params;
+    const activeGen = activeGenerations.get(messageId);
+    if (activeGen) {
+      activeGen.isComplete = true;
+      activeGen.error = "Generation stopped by user";
+      activeGen.listeners.forEach(listener => listener({ type: "done" }));
+      activeGen.listeners = [];
+      activeGenerations.delete(messageId);
+    }
+    return res.json({ status: "stopped" });
+  });
+
+  // GET: Check active generation status
+  app.get("/api/chat/status/:messageId", (req, res) => {
+    const { messageId } = req.params;
+    const activeGen = activeGenerations.get(messageId);
+    if (!activeGen) {
+      return res.json({ status: "not_found" });
+    }
+    return res.json({
+      status: activeGen.isComplete ? "completed" : "generating",
+      content: activeGen.content,
+      reasoningContent: activeGen.reasoningContent,
+      conversationId: activeGen.conversationId,
+    });
   });
 
   // Subscription validation endpoint
