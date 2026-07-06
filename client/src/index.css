@@ -967,21 +967,5 @@ body.god-mode .border {
   animation: shimmer-sweep 3s linear infinite;
 }
 
-.gold-metallic-box {
-  background: linear-gradient(135deg, #18140c 0%, #050505 100%);
-  border: 1.2px solid rgba(207, 159, 61, 0.8) !important;
-  box-shadow: 0 0 10px rgba(207, 159, 61, 0.25), inset 0 0 4px rgba(207, 159, 61, 0.15);
-}
-
-.silver-metallic-box {
-  background: linear-gradient(135deg, #101215 0%, #050505 100%);
-  border: 1.2px solid rgba(156, 163, 175, 0.8) !important;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.08), inset 0 0 4px rgba(255, 255, 255, 0.05);
-}
-
-.standard-pixel-box {
-  background: #0d0d0d;
-  border: 1.2px solid rgba(255, 255, 255, 0.12) !important;
-}
 
 
