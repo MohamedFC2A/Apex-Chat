@@ -3,39 +3,44 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import React from "react";
 import { cn } from "@/lib/utils";
-
-// Smart automatic token estimator
-export function estimateTokens(text: string): number {
-  if (!text) return 0;
-  // Detect if text contains Arabic characters
-  const hasArabic = /[\u0600-\u06FF]/.test(text);
-  if (hasArabic) {
-    // Arabic characters average ~2.2 per token in cl100k_base
-    return Math.ceil(text.length / 2.2);
-  }
-  // English characters average ~3.8 per token
-  return Math.ceil(text.length / 3.8);
-}
+import { estimateTokens, getModelContextLimit } from "@shared/schema";
 
 const EMPTY_MESSAGES: any[] = [];
 
 export function ContextMeter() {
   const activeConversationId = useChatStore((state) => state.activeConversationId);
-  const messages = useChatStore((state) => {
-    const activeId = state.activeConversationId;
-    const conv = state.conversations.find((c) => c.id === activeId);
-    return conv?.messages ?? EMPTY_MESSAGES;
-  });
+  const conversations = useChatStore((state) => state.conversations);
+  const selectedModel = useChatStore((state) => state.selectedModel);
+  const streamingContentMap = useChatStore((state) => state.streamingContentMap);
+  const streamingReasoningMap = useChatStore((state) => state.streamingReasoningMap);
 
-  // Calculate used tokens: sum of all messages + base prompt tokens (approx. 1500)
-  const usedTokens = messages.reduce((sum, m) => sum + estimateTokens(m.content), 0) + 1500;
-  const totalLimit = 1000000; // 1M tokens limit
+  const activeConv = conversations.find((c) => c.id === activeConversationId);
+  const messages = activeConv?.messages ?? EMPTY_MESSAGES;
+  const model = activeConv?.model ?? selectedModel;
+
+  // 1. Calculate active streaming tokens if generation is currently running
+  const streamingContent = streamingContentMap[activeConversationId ?? ""] || "";
+  const streamingReasoning = streamingReasoningMap[activeConversationId ?? ""] || "";
+  const streamingTokens = estimateTokens(streamingContent) + estimateTokens(streamingReasoning);
+
+  // 2. Sum up all messages (including content, context, and thinking/reasoning) + base prompts (1500)
+  const usedTokens = messages.reduce((sum, m) => {
+    if (m.tokens !== undefined) return sum + m.tokens;
+    const contentTokens = estimateTokens(m.content);
+    const contextTokens = estimateTokens(m.contextContent || "");
+    const reasoningTokens = estimateTokens(m.reasoningContent || "");
+    return sum + contentTokens + contextTokens + reasoningTokens;
+  }, 0) + streamingTokens + 1500;
+
+  // 3. Dynamic context limit based on model
+  const totalLimit = getModelContextLimit(model);
   const percentage = (usedTokens / totalLimit) * 100;
+  const clampedPercentage = Math.min(100, Math.max(0, percentage));
   const formattedPercent = percentage < 0.01 ? percentage.toFixed(3) : percentage.toFixed(2);
 
   // Pixel blocks configuration
   const totalBlocks = 20;
-  const activeBlocks = Math.round((percentage / 100) * totalBlocks);
+  const activeBlocks = Math.round((clampedPercentage / 100) * totalBlocks);
 
   return (
     <Popover>
@@ -64,7 +69,7 @@ export function ContextMeter() {
                 strokeWidth="4"
                 fill="transparent"
                 strokeDasharray="100"
-                strokeDashoffset={100 - Math.max(0.1, Math.min(100, percentage))}
+                strokeDashoffset={100 - Math.max(0.1, clampedPercentage)}
               />
             </svg>
             <span className="text-[9px] font-mono font-bold text-zinc-300 absolute leading-none">
@@ -82,17 +87,17 @@ export function ContextMeter() {
           <div className="space-y-1.5 font-mono text-[10px]">
             <div className="flex justify-between">
               <span className="text-zinc-500 font-bold uppercase tracking-wider">حجم الاستهلاك:</span>
-              <span className="text-zinc-300 font-bold">{formattedPercent}%</span>
+              <span className="text-zinc-300 font-bold" dir="ltr">{formattedPercent}%</span>
             </div>
             <div className="flex justify-between">
               <span className="text-zinc-500 font-bold uppercase tracking-wider">الرموز المستخدمة (Tokens):</span>
-              <span className="text-zinc-300 font-bold">
-                {usedTokens.toLocaleString()} / 1,000,000
+              <span className="text-zinc-300 font-bold" dir="ltr">
+                {usedTokens.toLocaleString()} / {totalLimit.toLocaleString()}
               </span>
             </div>
           </div>
           
-          {/* Unifed Retro Pixel Grid Progress Bar */}
+          {/* Unified Retro Pixel Grid Progress Bar */}
           <div className="flex gap-[1.5px] w-full py-1">
             {Array.from({ length: totalBlocks }).map((_, i) => {
               const isActive = i < activeBlocks;

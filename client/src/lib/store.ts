@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { AIModel, ServiceMode, ReasoningLevel, Message, Conversation } from "@shared/schema";
+import { estimateTokens } from "@shared/schema";
 import { debouncedSaveConversation, fetchConversationsFromCloud, mergeConversations, deleteConversation as cloudDeleteConversation } from "./cloud-sync";
 
 interface ChatState {
@@ -213,15 +214,27 @@ export const useChatStore = create<ChatState>()(
 
       addMessage: (conversationId, message) => {
         set((state) => {
+          const contentTokens = estimateTokens(message.content);
+          const contextTokens = estimateTokens(message.contextContent || "");
+          const reasoningTokens = estimateTokens(message.reasoningContent || "");
+          const totalMsgTokens = message.tokens ?? (contentTokens + contextTokens + reasoningTokens);
+          const msgReasoningTokens = message.reasoningTokens ?? reasoningTokens;
+
+          const enrichedMessage: Message = {
+            ...message,
+            tokens: totalMsgTokens,
+            reasoningTokens: msgReasoningTokens,
+          };
+
           const updatedConversations = state.conversations.map((conv) =>
             conv.id === conversationId
               ? {
                 ...conv,
-                messages: [...conv.messages, message],
+                messages: [...conv.messages, enrichedMessage],
                 updatedAt: Date.now(),
                 title:
-                  conv.messages.length === 0 && message.role === "user"
-                    ? message.content.slice(0, 40) + (message.content.length > 40 ? "..." : "")
+                  conv.messages.length === 0 && enrichedMessage.role === "user"
+                    ? enrichedMessage.content.slice(0, 40) + (enrichedMessage.content.length > 40 ? "..." : "")
                     : conv.title,
               }
               : conv

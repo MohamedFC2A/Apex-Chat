@@ -116,6 +116,8 @@ export const messageSchema = z.object({
   reasoningContent: z.string().optional(),
   timestamp: z.number(),
   omniState: z.any().optional(),
+  tokens: z.number().optional(),
+  reasoningTokens: z.number().optional(),
 });
 
 export type Message = z.infer<typeof messageSchema>;
@@ -200,3 +202,40 @@ export const insertUserSchema = z.object({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = { id: string; username: string; password: string };
+
+// Mixed Arabic-English token estimator
+export function estimateTokens(text: string): number {
+  if (!text) return 0;
+  
+  let arabicCharCount = 0;
+  let englishCharCount = 0;
+  
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+    // Arabic unicode range
+    if (code >= 0x0600 && code <= 0x06FF) {
+      arabicCharCount++;
+    } else {
+      englishCharCount++;
+    }
+  }
+  
+  // Arabic: ~2.0 characters per token
+  // English: ~4.0 characters per token
+  const arabicTokens = Math.ceil(arabicCharCount / 2.0);
+  const englishTokens = Math.ceil(englishCharCount / 4.0);
+  
+  return arabicTokens + englishTokens;
+}
+
+// Get context window limit by model name
+export function getModelContextLimit(model: string): number {
+  if (!model) return 262144;
+  if (model === "apex-flash" || model === "apex-pro" || model === "apex-elite" || model === "apex-omni" || model === "apex-unbound") {
+    return 262144; // ling-2.6-flash limit is 262,144
+  }
+  if (model.includes("llama-3.3") || model.includes("llama-3.2")) return 131072;
+  if (model.includes("gemini-2.5") || model.includes("qwen-2.5-coder") || model.includes("qwen3")) return 1048576;
+  if (model.includes("ling-2.6")) return 262144;
+  return 262144;
+}
