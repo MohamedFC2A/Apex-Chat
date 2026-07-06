@@ -24,7 +24,12 @@ import {
 
 // ========== CONFIGURATION ==========
 
-const DEEPSEEK_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_DEEPSEEK_API_KEY || "";
+const cleanEnvValue = (val: string | undefined): string => {
+  if (!val) return "";
+  return val.replace(/[^\x00-\xFF]/g, "").trim();
+};
+
+const DEEPSEEK_API_KEY = cleanEnvValue(import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_DEEPSEEK_API_KEY || "");
 const DEEPSEEK_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 // Model mapping: ApexChat model → OpenRouter free model ID

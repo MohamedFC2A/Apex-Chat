@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useChatStore } from "@/lib/store";
 import { useSubscriptionStore } from "@/lib/subscription-store";
 import { useAuthStore } from "@/lib/auth-store";
+import { useAuth } from "@/lib/auth-provider";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -74,6 +75,7 @@ export function ChatSidebar() {
 
   const { tier } = useSubscriptionStore();
   const { user } = useAuthStore();
+  const { logout } = useAuth();
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -507,8 +509,6 @@ function UserProfile({
 
           <DropdownMenuItem
             onClick={async () => {
-              const { useAuth } = await import("@/lib/auth-provider");
-              const { logout } = useAuth();
               await logout();
               setLocation("/login");
             }}
