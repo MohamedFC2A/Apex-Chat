@@ -30,6 +30,10 @@ export default function SettingsPage() {
   const [syncStatus, setSyncStatus] = useState(getSyncState());
   const [isSyncing, setIsSyncing] = useState(false);
 
+  const [hybridSearch, setHybridSearch] = useState(() => localStorage.getItem("apex_search_expansion") !== "false");
+  const [deepCrawling, setDeepCrawling] = useState(() => localStorage.getItem("apex_search_deep") !== "false");
+  const [searchCacheEnabled, setSearchCacheEnabled] = useState(() => localStorage.getItem("apex_search_cache") !== "false");
+
   const { 
     conversations, 
     selectedModel, setSelectedModel, 
@@ -448,6 +452,91 @@ export default function SettingsPage() {
                             </button>
                           );
                         })}
+                      </div>
+                    </div>
+
+                    {/* Apex Search Preferences */}
+                    <div className="space-y-4 pt-4 border-t border-white/5">
+                      <div>
+                        <Label className="text-[11px] font-bold text-zinc-400 flex items-center gap-1.5">
+                          <Settings className="w-3.5 h-3.5 text-violet-400" />
+                          تفضيلات البحث الذكي الخارق (Apex Search Ultra Settings)
+                        </Label>
+                        <p className="text-[10px] text-zinc-500 mt-1">تخصيص سلوك محرك البحث المدمج للحصول على أقصى دقة وسرعة.</p>
+                      </div>
+
+                      <div className="space-y-3 bg-zinc-950/30 p-4 rounded-xl border border-white/5">
+                        {/* Deep Query Expansion toggle */}
+                        <div className="flex items-center justify-between">
+                          <div className="text-right">
+                            <div className="text-xs font-bold text-white">توسيع استعلامات البحث (Deep Query Expansion)</div>
+                            <div className="text-[10px] text-zinc-400 mt-0.5">توليد استعلامات فرعية متعددة تلقائياً بالتوازي لضمان جلب أكبر تغطية ممكنة من DuckDuckGo.</div>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const nextVal = !hybridSearch;
+                              setHybridSearch(nextVal);
+                              localStorage.setItem("apex_search_expansion", String(nextVal));
+                            }}
+                            className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-200 focus:outline-none shrink-0 ${
+                              hybridSearch ? "bg-violet-500" : "bg-zinc-800"
+                            }`}
+                          >
+                            <div
+                              className={`w-4 h-4 rounded-full bg-white transition-transform duration-200 ${
+                                hybridSearch ? "translate-x-4" : "translate-x-0"
+                              }`}
+                            />
+                          </button>
+                        </div>
+
+                        {/* Deep crawling toggle */}
+                        <div className="flex items-center justify-between border-t border-white/5 pt-3">
+                          <div className="text-right">
+                            <div className="text-xs font-bold text-white">الزحف العميق والتحليل الدلالي (Deep Crawling & Semantic Extraction)</div>
+                            <div className="text-[10px] text-zinc-400 mt-0.5">زحف كامل لروابط المواقع واستخراج أجزاء النصوص الأكثر مطابقة للاستعلام بدقة ذكاء اصطناعي.</div>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const nextVal = !deepCrawling;
+                              setDeepCrawling(nextVal);
+                              localStorage.setItem("apex_search_deep", String(nextVal));
+                            }}
+                            className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-200 focus:outline-none shrink-0 ${
+                              deepCrawling ? "bg-violet-500" : "bg-zinc-800"
+                            }`}
+                          >
+                            <div
+                              className={`w-4 h-4 rounded-full bg-white transition-transform duration-200 ${
+                                deepCrawling ? "translate-x-4" : "translate-x-0"
+                              }`}
+                            />
+                          </button>
+                        </div>
+
+                        {/* Cache toggle */}
+                        <div className="flex items-center justify-between border-t border-white/5 pt-3">
+                          <div className="text-right">
+                            <div className="text-xs font-bold text-white">التخزين المؤقت الذكي (Search Result Cache)</div>
+                            <div className="text-[10px] text-zinc-400 mt-0.5">حفظ نتائج الاستعلامات مسبقاً لعرضها فوراً في أقل من جزء من الثانية عند تكرار البحث.</div>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const nextVal = !searchCacheEnabled;
+                              setSearchCacheEnabled(nextVal);
+                              localStorage.setItem("apex_search_cache", String(nextVal));
+                            }}
+                            className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-200 focus:outline-none shrink-0 ${
+                              searchCacheEnabled ? "bg-violet-500" : "bg-zinc-800"
+                            }`}
+                          >
+                            <div
+                              className={`w-4 h-4 rounded-full bg-white transition-transform duration-200 ${
+                                searchCacheEnabled ? "translate-x-4" : "translate-x-0"
+                              }`}
+                            />
+                          </button>
+                        </div>
                       </div>
                     </div>
 

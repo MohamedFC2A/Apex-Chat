@@ -540,48 +540,23 @@ function scoreSerperImage(img: any, query: string): number {
 }
 
 async function performSerperImageSearch(query: string): Promise<SerperImageResult | undefined> {
-  const apiKey = process.env.SERPER_API_KEY;
   try {
-    console.log(`[Serper API] Performing image search for query: "${query}"...`);
-    const res = await fetch("https://google.serper.dev/images", {
-      method: "POST",
-      headers: {
-        "X-API-KEY": apiKey || "",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ q: query, num: 8 })
-    });
-
-    if (!res.ok) throw new Error(`Serper image search failed with status ${res.status}`);
-    const imageData = await res.json();
-    const images = imageData.images || [];
-    
-    if (images.length === 0) return undefined;
-    
-    const scoredImages = images.map((img: any) => ({
-      img,
-      score: scoreSerperImage(img, query)
-    }));
-    
-    scoredImages.sort((a: any, b: any) => b.score - a.score);
-    
-    console.log(`[Serper API] Top image candidates for "${query}":`);
-    scoredImages.slice(0, 3).forEach((item: any, idx: number) => {
-      console.log(`  Candidate ${idx + 1}: ${item.img.imageUrl} (Score: ${item.score}, Source: ${item.img.source})`);
-    });
-
-    const bestImage = scoredImages[0];
-    if (bestImage && bestImage.score > -100) {
+    console.log(`[Apex Search Image] Running DDG image search for query: "${query}"...`);
+    const searchResponse = await runApexSearch(query, { intent: "answer", isOmni: false });
+    const primaryImage = searchResponse.imageAssets.find((asset) => asset.role === "hero") || searchResponse.imageAssets[0];
+    if (primaryImage) {
       return {
-        title: bestImage.img.title || "",
-        imageUrl: bestImage.img.imageUrl || bestImage.img.thumbnailUrl || "",
-        source: bestImage.img.source || ""
+        title: primaryImage.title,
+        imageUrl: primaryImage.optimizedUrl,
+        source: primaryImage.source
       };
     }
-    
+    if (searchResponse.image) {
+      return searchResponse.image;
+    }
     return undefined;
   } catch (error) {
-    console.error("[Serper API] Error during image search:", error);
+    console.error("[Apex Search Image] Error during image search:", error);
     return undefined;
   }
 }
@@ -2083,7 +2058,7 @@ IMPORTANT MEMORY PROTOCOL:
         const formattedYesterdayDate = yesterday.toLocaleDateString("en-US", yesterdayOptions);
 
         systemPrompt += `\n\n=== APEX SEARCH DATA LAYER ===
-You are executing in Apex Search mode. You may receive structured API-Football data and/or Google Search Results.
+You are executing in Apex Search mode. You may receive structured API-Football data and/or DuckDuckGo Search Results.
 If an "API-FOOTBALL LIVE DATA" section exists, treat it as the primary authority for football fixtures, match status, score, live state, postponement, recent form, and upcoming fixtures. Do not override it with generic web snippets.
 Use the available data below to provide a highly accurate, up-to-date answer.
  
@@ -2093,10 +2068,16 @@ Use the available data below to provide a highly accurate, up-to-date answer.
 3. If API-Football data directly answers the question, answer concisely from it and avoid dumping unrelated search references.
 4. With today's date being ${formattedTodayDate}, any match on ${formattedYesterdayDate} occurred YESTERDAY. Never refer to yesterday's matches as "future", "postponed" or "not played".
 
+## Domain-Specific Presentation Rules (Obsidian Glass Style):
+- **Sports/Football (الرياضة):** Display details as an elegant visual summary. Include match state, scores, scorer details if available, league standings, and next fixtures. Use bullet points or small formatted markdown tables.
+- **Finance (المال والأعمال):** Display a clean markdown table showing prices, ticker symbols, percentage changes, and key market capitalization indicators. Keep metrics bold and easy to scan.
+- **Technology/Coding (التقنية والبرمجة):** Output code snippets within properly highlighted markdown code blocks (e.g. \`\`\`typescript, \`\`\`python). Cite official documentations (MDN, GitHub, python.org) directly.
+- **Academic/Science (العلوم والأوراق البحثية):** Extract the abstract, list of authors, publishing year, and place a direct clickable link to the research paper (arXiv, PubMed, etc.) inside the sources list.
+
 ## Deep & Precise Information Protocol:
 1. Provide precise match state, score, competition, venue, date, and event details only when present in the supplied data.
 2. For football questions with API-Football data, cite "API-Football v3 structured data" as the source; do not force 10 web links.
-3. For non-football Google-only answers, prioritize and quote details from these key sports resources if relevant:
+3. For non-football DuckDuckGo-only answers, prioritize and quote details from these key sports resources if relevant:
    - FilGoal (filgoal.com): Expert on Egyptian/Arab football, transfers context.
    - Yallakora (yallakora.com): Instant updates, match schedules, live quotes.
    - Kooora (kooora.com): Saudi, Emirati, Moroccan, and overall Arab league matches.
@@ -2105,15 +2086,12 @@ Use the available data below to provide a highly accurate, up-to-date answer.
    - Bein Sports (beinsports.com): Summaries and broadcasting rights.
    - Goal Arabic (goal.com/ar): Global analytical reports.
 
-At the end of your response:
-- If API-Football data was used, list one source line: "API-Football v3 structured data".
-- If only Google Search Results were used, list the trusted URLs actually present in the Search Results. Do not invent links.
+## CRITICAL RULE FOR SOURCES & CITATIONS (إلزامية كتابة المصادر والمراجع):
+At the very end of your response, you MUST list all referenced sources under a clean, prominent header: "### 🔍 المصادر والمراجع المعتمدة" (or in English if the chat is in English: "### 🔍 Verified Sources & References").
+Format each source on a new line EXACTLY as follows:
+- **[اسم الموقع / عنوان المقال](الرابط)** - اسم النطاق: ملخص مبسط للمعلومات المستفادة.
 
-### المصادر:
-- [Source Title](URL)
-- [Another Source](Another URL)
-
-Only list URLs that are actually present in the Search Results. Do not invent links.
+Only list actual URLs present in the search references below. Do not invent links. If no search data was used, omit this section.
 
 ${footballContext}
 ${searchContext}`;

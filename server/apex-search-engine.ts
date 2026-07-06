@@ -4,6 +4,95 @@ import path from "path";
 
 const execFilePromise = promisify(execFile);
 
+// Local in-memory Cache for Apex Search
+interface CacheEntry {
+  response: ApexSearchResponse;
+  timestamp: number;
+}
+const searchCache = new Map<string, CacheEntry>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
+
+// Asynchronous Node-based URL scraper with timeout
+async function scrapeUrlNode(url: string, timeoutMs = 2500): Promise<string> {
+  if (!url || !url.startsWith("http")) return "";
+  try {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+      signal: controller.signal,
+    });
+    clearTimeout(id);
+    
+    if (!res.ok) return "";
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("text/html")) return "";
+    
+    const html = await res.text();
+    let clean = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, " ");
+    clean = clean.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, " ");
+    clean = clean.replace(/<nav\b[^<]*(?:(?!<\/nav>)<[^<]*)*<\/nav>/gi, " ");
+    clean = clean.replace(/<footer\b[^<]*(?:(?!<\/footer>)<[^<]*)*<\/footer>/gi, " ");
+    clean = clean.replace(/<header\b[^<]*(?:(?!<\/header>)<[^<]*)*<\/header>/gi, " ");
+    clean = clean.replace(/<[^>]+>/g, " ");
+    clean = clean.replace(/\s+/g, " ").trim();
+    
+    return clean;
+  } catch {
+    return "";
+  }
+}
+
+// Semantic Snippet Extractor to rank sentences/paragraphs matching query
+function extractSemanticSnippet(pageContent: string, query: string, maxLength = 1500): string {
+  if (!pageContent || pageContent.length <= maxLength) return pageContent;
+  
+  const paragraphs = pageContent
+    .split(/[.!?。！？\n]\s*/)
+    .map(p => p.trim())
+    .filter(p => p.length > 25 && p.length < 500);
+    
+  if (paragraphs.length === 0) return pageContent.slice(0, maxLength);
+  
+  const queryTerms = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
+  if (queryTerms.length === 0) return pageContent.slice(0, maxLength);
+  
+  const scoredParagraphs = paragraphs.map((p) => {
+    const pLower = p.toLowerCase();
+    let score = 0;
+    queryTerms.forEach((term) => {
+      if (pLower.includes(term)) {
+        score += 10;
+        if (new RegExp(`\\b${term}\\b`, 'i').test(pLower)) {
+          score += 15;
+        }
+      }
+    });
+    return { text: p, score };
+  });
+  
+  scoredParagraphs.sort((a, b) => b.score - a.score);
+  
+  let result = "";
+  for (const item of scoredParagraphs) {
+    if (item.score === 0) break;
+    if (result.length + item.text.length + 3 > maxLength) {
+      if (result.length === 0) {
+        result = item.text.slice(0, maxLength);
+      }
+      break;
+    }
+    result += (result ? " ... " : "") + item.text;
+  }
+  
+  return result || pageContent.slice(0, maxLength);
+}
+
+
 export interface ApexOrganicResult {
   title: string;
   link: string;
@@ -44,6 +133,9 @@ export interface ApexSearchResponse {
 export interface ApexSearchOptions {
   intent?: "website" | "answer";
   isOmni?: boolean;
+  expansion?: boolean;
+  deep?: boolean;
+  cache?: boolean;
 }
 
 const BLOCKED_IMAGE_DOMAINS = [
@@ -293,41 +385,108 @@ export async function runApexSearch(message: string, options: ApexSearchOptions 
   const searchPlan = buildSearchPlan(message, options.intent || "website");
   const fallback: ApexSearchResponse = { organic: [], images: [], imageAssets: [], searchPlan };
 
+  // 1. Cache lookup
+  const skipCache = options.cache === false;
+  const cacheKey = `${message}:${options.intent || "website"}:${!!options.isOmni}`;
+  if (!skipCache) {
+    const cached = searchCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      console.log(`[Apex Search] Cache HIT for key: "${cacheKey}"`);
+      return cached.response;
+    }
+  }
+
   try {
-    console.log(`[Apex Search] Running DDGS. text="${searchPlan.textQuery}" imageRoles=${searchPlan.imageQueries.length} isOmni=${!!options.isOmni}`);
+    console.log(`[Apex Search] Running Hybrid Search. text="${searchPlan.textQuery}" isOmni=${!!options.isOmni}`);
 
-    const args = [
-      path.join(process.cwd(), "server/ddg_search.py"),
-      "--query", searchPlan.textQuery,
-      "--image-queries", JSON.stringify(searchPlan.imageQueries),
-    ];
-    if (options.isOmni) {
-      args.push("--omni");
+    // Define DDG python run promise
+    const runDdgSearch = async (): Promise<{ organic: ApexOrganicResult[], images: any[] }> => {
+      try {
+        const args = [
+          path.join(process.cwd(), "server/ddg_search.py"),
+          "--query", searchPlan.textQuery,
+          "--image-queries", JSON.stringify(searchPlan.imageQueries),
+        ];
+        if (options.isOmni || options.expansion) {
+          args.push("--omni");
+        }
+
+        const pythonCmd = process.platform === "win32" ? "python" : "python3";
+        const { stdout, stderr } = await execFilePromise(pythonCmd, args, { maxBuffer: 15 * 1024 * 1024 });
+
+        if (stderr) {
+          console.warn("[Apex Search] Python search stderr:", stderr);
+        }
+
+        const pyData = JSON.parse(stdout);
+        const organic: ApexOrganicResult[] = (pyData.organic || []).map((item: any) => ({
+          title: String(item.title || ""),
+          snippet: String(item.snippet || ""),
+          link: String(item.link || ""),
+          domain: String(item.domain || getDomainName(item.link)),
+          score: Number(item.score || 100),
+          page_content: item.page_content ? String(item.page_content) : undefined,
+        }));
+
+        const images = (pyData.images || []).map((img: any) => ({
+          title: String(img.title || ""),
+          imageUrl: getImageUrl(img),
+          source: String(img.source || ""),
+          thumbnailUrl: String(img.thumbnailUrl || ""),
+          width: img.width,
+          height: img.height
+        }));
+
+        return { organic, images };
+      } catch (err) {
+        console.error("[Apex Search] DDG search failed, falling back:", err);
+        return { organic: [], images: [] };
+      }
+    };
+
+    // 2. DuckDuckGo Advanced Engine search execution
+    const ddgResults = await runDdgSearch();
+
+    // 3. Merging Organic Results (Deduplicate by URL)
+    const mergedOrganicMap = new Map<string, ApexOrganicResult>();
+    ddgResults.organic.forEach((item) => {
+      mergedOrganicMap.set(item.link, { ...item });
+    });
+
+    const organic = Array.from(mergedOrganicMap.values()).sort((a, b) => (b.score || 100) - (a.score || 100));
+
+    // 4. Parallel Async Scraper for missing page content (Top 12 Results)
+    const scrapeLimit = options.isOmni ? 15 : 10;
+    const skipScraping = options.deep === false;
+    const topResultsToScrape = skipScraping ? [] : organic.slice(0, scrapeLimit).filter((item) => !item.page_content);
+
+    if (topResultsToScrape.length > 0) {
+      console.log(`[Apex Search] Scraping content for ${topResultsToScrape.length} top search results in parallel...`);
+      await Promise.all(
+        topResultsToScrape.map(async (item) => {
+          const content = await scrapeUrlNode(item.link);
+          if (content) {
+            item.page_content = content;
+          }
+        })
+      );
     }
 
-    const pythonCmd = process.platform === "win32" ? "python" : "python3";
-    const { stdout, stderr } = await execFilePromise(pythonCmd, args, { maxBuffer: 15 * 1024 * 1024 });
+    // 5. Semantic Vector Paragraph Ranking
+    organic.forEach((item) => {
+      if (item.page_content) {
+        item.page_content = extractSemanticSnippet(item.page_content, searchPlan.textQuery);
+      }
+    });
 
-    if (stderr) {
-      console.warn("[Apex Search] Python search stderr:", stderr);
-    }
-
-    const pyData = JSON.parse(stdout);
-    const organic: ApexOrganicResult[] = (pyData.organic || []).map((item: any) => ({
-      title: String(item.title || ""),
-      snippet: String(item.snippet || ""),
-      link: String(item.link || ""),
-      domain: String(item.domain || getDomainName(item.link)),
-      score: Number(item.score || 100),
-      page_content: item.page_content ? String(item.page_content) : undefined,
-    }));
-
+    // 6. Merge Images and rank assets
+    const mergedImages = ddgResults.images;
     const usedImageUrls = new Set<string>();
     const imageAssets: ApexImageAsset[] = [];
     const flatImages: Array<{ title: string; imageUrl: string; source?: string }> = [];
 
     searchPlan.imageQueries.forEach((rolePlan) => {
-      const candidates = (pyData.images || [])
+      const candidates = mergedImages
         .map((img: any) => ({
           img,
           score: scoreImageCandidate(img, rolePlan.query, rolePlan.role, rolePlan.width, rolePlan.height),
@@ -344,9 +503,10 @@ export async function runApexSearch(message: string, options: ApexSearchOptions 
       }
     });
 
-    (pyData.images || []).slice(0, 15).forEach((img: any) => {
+    mergedImages.slice(0, 20).forEach((img: any) => {
       const imageUrl = getImageUrl(img);
-      if (imageUrl) {
+      if (imageUrl && !usedImageUrls.has(imageUrl)) {
+        usedImageUrls.add(imageUrl);
         flatImages.push({
           title: String(img.title || ""),
           imageUrl,
@@ -355,7 +515,7 @@ export async function runApexSearch(message: string, options: ApexSearchOptions 
       }
     });
 
-    // Vision-Language Reranking Step
+    // 7. Vision-Language Reranking Step
     const imagePayloads = extractBase64Images(message);
     const candidateTextChunks = organic.map((o: ApexOrganicResult) => `${o.title}\n${o.snippet}`);
     if (candidateTextChunks.length > 0) {
@@ -374,15 +534,20 @@ export async function runApexSearch(message: string, options: ApexSearchOptions 
     }
 
     const primary = imageAssets[0];
-    return {
+    const finalResponse: ApexSearchResponse = {
       organic,
       images: flatImages.slice(0, 12),
       image: primary ? { title: primary.title, imageUrl: primary.optimizedUrl, source: primary.source } : undefined,
       imageAssets,
       searchPlan,
     };
+
+    // Cache the result
+    searchCache.set(cacheKey, { response: finalResponse, timestamp: Date.now() });
+
+    return finalResponse;
   } catch (error) {
-    console.error("[Apex Search] DuckDuckGo search subprocess failed:", error);
+    console.error("[Apex Search] Hybrid search execution failed:", error);
     return fallback;
   }
 }

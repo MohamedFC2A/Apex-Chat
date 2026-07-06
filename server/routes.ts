@@ -692,13 +692,13 @@ export async function registerRoutes(
 
   // Search API endpoint powered by DuckDuckGo Search (DDGS)
   app.post("/api/search", async (req, res) => {
-    const { query, isOmni } = req.body;
+    const { query, isOmni, options } = req.body;
     if (!query || typeof query !== "string") {
       return res.status(400).json({ error: "query is required" });
     }
     try {
-      console.log(`[API Search Route] Query: "${query}", isOmni: ${!!isOmni}`);
-      const searchResults = await runApexSearch(query, { intent: "answer", isOmni: !!isOmni });
+      console.log(`[API Search Route] Query: "${query}", isOmni: ${!!isOmni}, Options:`, options);
+      const searchResults = await runApexSearch(query, { intent: "answer", isOmni: !!isOmni, ...options });
       return res.json(searchResults);
     } catch (err: any) {
       console.error("[API Search Route] Error during search:", err);

@@ -92,16 +92,25 @@ def get_domain_name(url):
     except:
         return ""
 
-def scrape_page_content(url, timeout=2.5):
+USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15'
+]
+
+def scrape_page_content(url, timeout=3.5):
     """
     Crawls and scrapes the actual text content of a webpage.
-    Removes boilerplate elements and returns the first 1500 chars.
+    Removes boilerplate elements and returns the first 3500 chars.
     """
     if not url or not url.startswith("http"):
         return ""
+    import random
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'User-Agent': random.choice(USER_AGENTS),
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.5'
         }
@@ -118,11 +127,12 @@ def scrape_page_content(url, timeout=2.5):
                 
             text = soup.get_text(separator=' ')
             text = re.sub(r'\s+', ' ', text).strip()
-            # Return first 1500 characters of clean content
-            return text[:1500]
+            # Return first 3500 characters of clean content
+            return text[:3500]
     except Exception:
         pass
     return ""
+
 
 def run_text_query(query, limit):
     results = []

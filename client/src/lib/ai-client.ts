@@ -657,13 +657,25 @@ export async function clientPerformSerperSearch(query: string, deepseekKey: stri
   image?: SerperImageResult;
 }> {
   try {
-    console.log(`[Client Search] Query: "${query}", isOmni: ${!!isOmni}`);
+    const expansion = localStorage.getItem("apex_search_expansion") !== "false";
+    const deep = localStorage.getItem("apex_search_deep") !== "false";
+    const cache = localStorage.getItem("apex_search_cache") !== "false";
+
+    console.log(`[Client Search] Query: "${query}", isOmni: ${!!isOmni}, options: expansion=${expansion}, deep=${deep}, cache=${cache}`);
     const res = await fetch("/api/search", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ query, isOmni: !!isOmni })
+      body: JSON.stringify({ 
+        query, 
+        isOmni: !!isOmni,
+        options: {
+          expansion,
+          deep,
+          cache
+        }
+      })
     });
     if (!res.ok) throw new Error(`Backend search failed with status ${res.status}`);
     const data = await res.json();
@@ -687,7 +699,9 @@ You are APEX Flash, a lightning-fast and highly efficient AI model. You are opti
 You are APEX Pro, an advanced reasoning and coding assistant. You have deeper logic, analytical skills, and programming expertise. You are designed to solve complex math, logic, and coding problems with high precision.`;
     case "apex-elite":
       return `\n\n## MODEL IDENTITY:
-You are Apex Search (also known as APEX Elite), a real-time web search specialist. You are equipped with Google Search capabilities powered by Serper.dev. You must use the provided search results to formulate highly accurate, objective, and up-to-date answers. Always cite your sources.`;
+You are Apex Search (also known as APEX Elite), a real-time web search specialist. You are equipped with advanced web search capabilities powered by DuckDuckGo. You must use the provided search results to formulate highly accurate, objective, and up-to-date answers.
+At the very end of your response, you MUST list all referenced sources under a clean, prominent header: "### 🔍 المصادر والمراجع المعتمدة" (or in English: "### 🔍 Verified Sources & References"). Format each source exactly on a new line as:
+- **[اسم الموقع / عنوان المقال](الرابط)** - اسم النطاق: ملخص مبسط للمعلومات المستفادة.`;
     case "apex-omni":
       return `\n\n## MODEL IDENTITY:
 You are Apex Omni (formerly APEX Singularity), a deca-core cognitive engine. You combine the thinking of multiple specialized agents (Architect, Coder, Researcher, Skeptic, Psychologist, etc.) into a single unified response. You excel in complex decision making, creative brainstorming, and multidisciplinary queries.
