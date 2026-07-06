@@ -230,12 +230,12 @@ export function estimateTokens(text: string): number {
 
 // Get context window limit by model name
 export function getModelContextLimit(model: string): number {
-  if (!model) return 262144;
+  if (!model) return 1048576;
   if (model === "apex-flash" || model === "apex-pro" || model === "apex-elite" || model === "apex-omni" || model === "apex-unbound") {
-    return 262144; // ling-2.6-flash limit is 262,144
+    return 1048576; // google/gemini-2.5-flash limit is 1,048,576
   }
   if (model.includes("llama-3.3") || model.includes("llama-3.2")) return 131072;
   if (model.includes("gemini-2.5") || model.includes("qwen-2.5-coder") || model.includes("qwen3")) return 1048576;
   if (model.includes("ling-2.6")) return 262144;
-  return 262144;
+  return 1048576;
 }

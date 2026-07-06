@@ -196,16 +196,16 @@ export async function runApexOmniPipeline(
       return "deepseek-chat";
     }
     const agentModelMap: Record<string, string> = {
-      "1-Analyst": "inclusionai/ling-2.6-flash",
-      "2-Researcher": "inclusionai/ling-2.6-flash",
-      "3-Critic": "inclusionai/ling-2.6-flash",
-      "4-ExpertWriter": "inclusionai/ling-2.6-flash",
-      "5-CodeSpecialist": "inclusionai/ling-2.6-flash",
-      "6-MathSpecialist": "inclusionai/ling-2.6-flash",
-      "7-FactChecker": "inclusionai/ling-2.6-flash",
-      "8-Formatter": "inclusionai/ling-2.6-flash",
-      "9-LanguageAgent": "inclusionai/ling-2.6-flash",
-      "10-QA": "inclusionai/ling-2.6-flash",
+      "1-Analyst": "google/gemini-2.5-flash",
+      "2-Researcher": "google/gemini-2.5-flash",
+      "3-Critic": "google/gemini-2.5-flash",
+      "4-ExpertWriter": "google/gemini-2.5-flash",
+      "5-CodeSpecialist": "google/gemini-2.5-flash",
+      "6-MathSpecialist": "google/gemini-2.5-flash",
+      "7-FactChecker": "google/gemini-2.5-flash",
+      "8-Formatter": "google/gemini-2.5-flash",
+      "9-LanguageAgent": "google/gemini-2.5-flash",
+      "10-QA": "google/gemini-2.5-flash",
     };
     return agentModelMap[agentName] || completionsModel;
   };

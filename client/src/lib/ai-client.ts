@@ -40,16 +40,16 @@ const DEEPSEEK_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 // Verified free OpenRouter models (confirmed via /api/v1/models — July 2026)
 const MODEL_MAP: Record<string, string> = {
-  // Flash: fast lightweight model — inclusionai/ling-2.6-flash
-  "apex-flash": "inclusionai/ling-2.6-flash",
+  // Flash: fast lightweight model — google/gemini-2.5-flash
+  "apex-flash": "google/gemini-2.5-flash",
   // Pro: powerful model for reasoning and coding
-  "apex-pro": "inclusionai/ling-2.6-flash",
+  "apex-pro": "google/gemini-2.5-flash",
   // Elite: largest model for reasoning
-  "apex-elite": "inclusionai/ling-2.6-flash",
+  "apex-elite": "google/gemini-2.5-flash",
   // Omni: balanced model for multi-agent orchestration
-  "apex-omni": "inclusionai/ling-2.6-flash",
+  "apex-omni": "google/gemini-2.5-flash",
   // Unbound: dedicated code model
-  "apex-unbound": "inclusionai/ling-2.6-flash",
+  "apex-unbound": "google/gemini-2.5-flash",
 };
 
 type DeepSeekTask = "reasoning" | "generation";
@@ -68,7 +68,7 @@ function getClientHeaders(apiKey: string): Record<string, string> {
 }
 
 function mapDeepSeekModelForClient(model: AIModel, _task: DeepSeekTask): string {
-  const fallback = "inclusionai/ling-2.6-flash";
+  const fallback = "google/gemini-2.5-flash";
   return MODEL_MAP[model] || fallback;
 }
 
@@ -593,7 +593,7 @@ async function clientOptimizeSearchQueries(message: string, apiKey: string): Pro
       method: "POST",
       headers: getClientHeaders(apiKey),
       body: JSON.stringify({
-        model: "inclusionai/ling-2.6-flash",
+        model: "google/gemini-2.5-flash",
         messages: [
           {
             role: "system",

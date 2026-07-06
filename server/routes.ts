@@ -846,7 +846,7 @@ JSON structure:
 }`;
 
       const response = await client.chat.completions.create({
-        model: "inclusionai/ling-2.6-flash",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Generate a question and 3 choices for: "${prompt}"` },

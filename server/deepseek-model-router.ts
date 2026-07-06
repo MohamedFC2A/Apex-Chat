@@ -7,16 +7,16 @@ export type DeepSeekTask = "reasoning" | "generation";
 // All apex-* model aliases map to OpenRouter free models exclusively.
 // DeepSeek API is no longer used.
 const APEX_MODEL_ALIASES: Record<string, string> = {
-  "apex-flash":   "inclusionai/ling-2.6-flash",
-  "apex-pro":     "inclusionai/ling-2.6-flash",
-  "apex-elite":   "inclusionai/ling-2.6-flash",
-  "apex-omni":    "inclusionai/ling-2.6-flash",
-  "apex-unbound": "inclusionai/ling-2.6-flash",
-  // Legacy fallbacks mapped to inclusionai/ling-2.6-flash
-  "deepseek-v4-flash": "inclusionai/ling-2.6-flash",
-  "deepseek-v4-pro":   "inclusionai/ling-2.6-flash",
-  "deepseek-chat":     "inclusionai/ling-2.6-flash",
-  "poolside/laguna-xs-2.1:free": "inclusionai/ling-2.6-flash",
+  "apex-flash":   "google/gemini-2.5-flash",
+  "apex-pro":     "google/gemini-2.5-flash",
+  "apex-elite":   "google/gemini-2.5-flash",
+  "apex-omni":    "google/gemini-2.5-flash",
+  "apex-unbound": "google/gemini-2.5-flash",
+  // Legacy fallbacks mapped to google/gemini-2.5-flash
+  "deepseek-v4-flash": "google/gemini-2.5-flash",
+  "deepseek-v4-pro":   "google/gemini-2.5-flash",
+  "deepseek-chat":     "google/gemini-2.5-flash",
+  "poolside/laguna-xs-2.1:free": "google/gemini-2.5-flash",
 };
 
 export function isOfficialDeepSeekEndpoint(baseURL?: string): boolean {

@@ -225,7 +225,7 @@ def main():
     parser.add_argument("--query", type=str, required=True, help="Main search query")
     parser.add_argument("--image-queries", type=str, default="[]", help="JSON list of image queries")
     parser.add_argument("--omni", action="store_true", help="Flag if this is Apex Omni / ReSearch mode")
-    parser.add_argument("--limit", type=int, default=60, help="Limit organic results returned")
+    parser.add_argument("--limit", type=int, default=115, help="Limit organic results returned")
     args = parser.parse_args()
     
     # 1. Parse image queries
@@ -236,7 +236,7 @@ def main():
         
     # Determine search scale
     is_omni = args.omni
-    limit_per_query = 40 if is_omni else 25
+    limit_per_query = 65 if is_omni else 55
     
     # Generate search variations
     sub_queries = generate_sub_queries(args.query, is_omni)
@@ -270,8 +270,8 @@ def main():
         seen_domains[domain] = count + 1
         deduplicated.append(item)
         
-    # Determine the slice size: Omni wants over 100 sources (e.g. 110-130), Standard wants 60
-    final_limit = 120 if is_omni else args.limit
+    # Determine the slice size: Omni wants over 100 sources (e.g. 130), Standard wants over 100 (e.g. 115)
+    final_limit = 130 if is_omni else args.limit
     final_organic = deduplicated[:final_limit]
     
     # 4. Crawl HTML page content (deep crawling) for top pages

@@ -602,7 +602,7 @@ async function optimizeSearchQueries(message: string): Promise<{ textQuery: stri
     }));
 
     const response = await client.chat.completions.create({
-      model: "inclusionai/ling-2.6-flash",
+      model: "google/gemini-2.5-flash",
       messages: [
         {
           role: "system",
@@ -931,7 +931,14 @@ You are APEX Flash, a lightning-fast and highly efficient AI model. You are opti
 You are APEX Pro, an advanced reasoning and coding assistant. You have deeper logic, analytical skills, and programming expertise. You are designed to solve complex math, logic, and coding problems with high precision.`;
     case "apex-elite":
       return `\n\n## MODEL IDENTITY:
-You are Apex Search (also known as APEX Elite), a real-time web search specialist. You are equipped with Google Search capabilities powered by Serper.dev. You must use the provided search results to formulate highly accurate, objective, and up-to-date answers. Always cite your sources.`;
+You are Apex Search (also known as APEX Elite), a real-time web search specialist. You are equipped with advanced web search capabilities powered by DuckDuckGo. You must use the provided search references to formulate highly accurate, objective, and up-to-date answers.
+Always integrate cleanly and smartly with the google/gemini-2.5-flash backend.
+
+## Citing Sources Protocol:
+At the very end of your response, you must write all referenced sources under a clean, prominent header: "### 🔍 المصادر والمراجع المعتمدة" (or in English if the chat is in English: "### 🔍 Verified Sources & References").
+Format each source on a new line as:
+- **[اسم الموقع / عنوان المقال](الرابط)** - اسم النطاق: ملخص مبسط للمعلومات المستفادة.
+Avoid using generic names like "المصدر" or "رابط". Always use the descriptive, real names of the specific websites or articles. Make the bibliography section beautifully aligned and structured.`;
     case "apex-omni":
       return `\n\n## MODEL IDENTITY:
 You are Apex Omni, the highest-accuracy general assistant in Apex Chat.
@@ -1699,7 +1706,7 @@ export async function processMessage(
 
     const pdfClient = wrapOpenAIClient(new OpenAI(getOpenAIClientConfig(deepseekKey)));
 
-    const pdfModel = "inclusionai/ling-2.6-flash";
+    const pdfModel = "google/gemini-2.5-flash";
     return await generateDedicatedPdfResponse(pdfClient, pdfModel, request, onChunk);
   }
 
@@ -1712,7 +1719,7 @@ export async function processMessage(
 
     const quizClient = wrapOpenAIClient(new OpenAI(getOpenAIClientConfig(deepseekKey)));
 
-    const quizModel = "inclusionai/ling-2.6-flash";
+    const quizModel = "google/gemini-2.5-flash";
     return await generateDedicatedQuizResponse(quizClient, quizModel, request, onChunk);
   }
 
@@ -1723,7 +1730,7 @@ export async function processMessage(
     if (!deepseekKey) throw new Error("OPENROUTER_API_KEY is not configured.");
 
     const omniClient = wrapOpenAIClient(new OpenAI(getOpenAIClientConfig(deepseekKey)));
-    const omniActualModel = "inclusionai/ling-2.6-flash";
+    const omniActualModel = "google/gemini-2.5-flash";
 
     // Evaluate Prompt Complexity
     const evaluatePromptComplexity = (msg: string, hist: Array<{ role: string; content: string }> = []): number => {
@@ -1758,7 +1765,7 @@ export async function processMessage(
       let content = "";
       if (onChunk) {
         const stream = await omniClient.chat.completions.create({
-          model: "inclusionai/ling-2.6-flash",
+          model: "google/gemini-2.5-flash",
           messages,
           max_tokens: 4096,
           temperature: 0.5,
@@ -1773,7 +1780,7 @@ export async function processMessage(
         }
       } else {
         const response = await omniClient.chat.completions.create({
-          model: "inclusionai/ling-2.6-flash",
+          model: "google/gemini-2.5-flash",
           messages,
           max_tokens: 4096,
           temperature: 0.5,
@@ -1805,7 +1812,7 @@ export async function processMessage(
       let content = "";
       if (onChunk) {
         const stream = await omniClient.chat.completions.create({
-          model: "inclusionai/ling-2.6-flash",
+          model: "google/gemini-2.5-flash",
           messages,
           max_tokens: 6144,
           temperature: 0.6,
@@ -1820,7 +1827,7 @@ export async function processMessage(
         }
       } else {
         const response = await omniClient.chat.completions.create({
-          model: "inclusionai/ling-2.6-flash",
+          model: "google/gemini-2.5-flash",
           messages,
           max_tokens: 6144,
           temperature: 0.6,
@@ -2305,7 +2312,7 @@ ${prompt}`;
 
   try {
     const response = await client.chat.completions.create({
-      model: "inclusionai/ling-2.6-flash",
+      model: "google/gemini-2.5-flash",
       max_tokens: 8192,
       messages: [
         { role: "system", content: systemPrompt },
@@ -2385,7 +2392,7 @@ Generate a cohesive title and cover page config. Respond ONLY with the \`\`\`pdf
 
   try {
     const response = await client.chat.completions.create({
-      model: "inclusionai/ling-2.6-flash",
+      model: "google/gemini-2.5-flash",
       max_tokens: 8192,
       messages: [
         { role: "system", content: systemPrompt },
@@ -2432,7 +2439,7 @@ export async function generateMcqResponse(
   }));
 
   // Always use a strong model for quiz generation via the dedicated endpoint.
-  const actualModel = "inclusionai/ling-2.6-flash";
+  const actualModel = "google/gemini-2.5-flash";
 
   return generateDedicatedQuizResponse(client, actualModel, request, onChunk);
 }
