@@ -1,20 +1,21 @@
 export type DeepSeekTask = "reasoning" | "generation";
 
 // OpenRouter Free Models mapping:
-// - poolside/laguna-xs-2.1:free    → Fastest model
-// - openai/gpt-oss-120b:free        → Strong, intelligent model
+// - poolside/laguna-xs-2.1:free          → Fastest model (Flash)
+// - nvidia/nemotron-3-super-120b-a12b:free → Strong, intelligent model (Pro/Elite)
+// - nvidia/nemotron-3-ultra-550b-a55b:free → Most powerful 550B model (Omni/Unbound)
 //
 // All apex-* model aliases map to OpenRouter free models.
 const APEX_MODEL_ALIASES: Record<string, string> = {
   "apex-flash":   "poolside/laguna-xs-2.1:free",
-  "apex-pro":     "openai/gpt-oss-120b:free",
-  "apex-elite":   "openai/gpt-oss-120b:free",
-  "apex-omni":    "openai/gpt-oss-120b:free",
-  "apex-unbound": "openai/gpt-oss-120b:free",
+  "apex-pro":     "nvidia/nemotron-3-super-120b-a12b:free",
+  "apex-elite":   "nvidia/nemotron-3-super-120b-a12b:free",
+  "apex-omni":    "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "apex-unbound": "nvidia/nemotron-3-ultra-550b-a55b:free",
   // Legacy fallbacks mapped to free OpenRouter models
   "deepseek-v4-flash": "poolside/laguna-xs-2.1:free",
-  "deepseek-v4-pro":   "openai/gpt-oss-120b:free",
-  "deepseek-chat":     "openai/gpt-oss-120b:free",
+  "deepseek-v4-pro":   "nvidia/nemotron-3-super-120b-a12b:free",
+  "deepseek-chat":     "nvidia/nemotron-3-super-120b-a12b:free",
 };
 
 export function isOfficialDeepSeekEndpoint(baseURL?: string): boolean {

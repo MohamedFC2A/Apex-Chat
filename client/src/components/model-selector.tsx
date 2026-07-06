@@ -651,7 +651,7 @@ function ModelCard({
               whiteSpace: "nowrap",
             }}
           >
-            {model === "apex-flash" ? "LAGUNA-XS" : model === "apex-pro" ? "GPT-OSS" : model === "apex-elite" ? "WEB-SEARCH" : model === "apex-omni" ? "OMNI-10" : "CODE-SPEC"}
+            {model === "apex-flash" ? "LAGUNA-XS" : model === "apex-pro" ? "NEMOTRON-120B" : model === "apex-elite" ? "WEB-SEARCH" : model === "apex-omni" ? "OMNI-10" : "NEMOTRON-550B"}
           </span>
         </div>
         <p

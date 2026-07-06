@@ -172,20 +172,20 @@ export async function runApexOmniPipeline(
     },
   });
 
-  const completionsModel = "openai/gpt-oss-120b:free";
+  const completionsModel = "nvidia/nemotron-3-super-120b-a12b:free";
 
   const getAgentModel = (agentName: string): string => {
     const agentModelMap: Record<string, string> = {
       "1-Analyst": "poolside/laguna-xs-2.1:free",
-      "2-Researcher": "poolside/laguna-m.1:free",
+      "2-Researcher": "poolside/laguna-xs-2.1:free",
       "3-Critic": "poolside/laguna-xs-2.1:free",
-      "4-ExpertWriter": "openai/gpt-oss-120b:free",
-      "5-CodeSpecialist": "cohere/north-mini-code:free",
+      "4-ExpertWriter": "nvidia/nemotron-3-super-120b-a12b:free",
+      "5-CodeSpecialist": "nvidia/nemotron-3-super-120b-a12b:free",
       "6-MathSpecialist": "nvidia/nemotron-3-super-120b-a12b:free",
-      "7-FactChecker": "poolside/laguna-m.1:free",
+      "7-FactChecker": "poolside/laguna-xs-2.1:free",
       "8-Formatter": "poolside/laguna-xs-2.1:free",
-      "9-LanguageAgent": "poolside/laguna-m.1:free",
-      "10-QA": "openai/gpt-oss-120b:free",
+      "9-LanguageAgent": "poolside/laguna-xs-2.1:free",
+      "10-QA": "nvidia/nemotron-3-super-120b-a12b:free",
     };
     return agentModelMap[agentName] || completionsModel;
   };

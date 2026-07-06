@@ -1677,7 +1677,7 @@ export async function processMessage(
   // ── APEX OMNI: Route through full AI pipeline ──────────────────────────────
   if (model === "apex-omni") {
     const OpenAI = (await import("openai")).default;
-    const omniActualModel = "openai/gpt-oss-120b:free";
+    const omniActualModel = "nvidia/nemotron-3-ultra-550b-a55b:free";
 
     const deepseekKey = process.env.OPENROUTER_API_KEY || process.env.DEEPSEEK_API_KEY;
     if (!deepseekKey) throw new Error("OPENROUTER_API_KEY is not configured.");
@@ -1770,7 +1770,7 @@ export async function processMessage(
       let content = "";
       if (onChunk) {
         const stream = await omniClient.chat.completions.create({
-          model: "poolside/laguna-m.1:free",
+          model: "poolside/laguna-xs-2.1:free",
           messages,
           max_tokens: 6144,
           temperature: 0.6,
@@ -1785,7 +1785,7 @@ export async function processMessage(
         }
       } else {
         const response = await omniClient.chat.completions.create({
-          model: "poolside/laguna-m.1:free",
+          model: "poolside/laguna-xs-2.1:free",
           messages,
           max_tokens: 6144,
           temperature: 0.6,
@@ -2265,7 +2265,7 @@ ${prompt}`;
 
   try {
     const response = await client.chat.completions.create({
-      model: "openai/gpt-oss-120b:free",
+      model: "nvidia/nemotron-3-super-120b-a12b:free",
       max_tokens: 8192,
       messages: [
         { role: "system", content: systemPrompt },
@@ -2345,7 +2345,7 @@ Generate a cohesive title and cover page config. Respond ONLY with the \`\`\`pdf
 
   try {
     const response = await client.chat.completions.create({
-      model: "openai/gpt-oss-120b:free",
+      model: "nvidia/nemotron-3-super-120b-a12b:free",
       max_tokens: 8192,
       messages: [
         { role: "system", content: systemPrompt },

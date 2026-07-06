@@ -42,10 +42,10 @@ const DEEPSEEK_URL = isClientOpenRouter
 // Model mapping: ApexChat model → Target ID based on detected provider
 const MODEL_MAP: Record<string, string> = isClientOpenRouter ? {
   "apex-flash": "poolside/laguna-xs-2.1:free",
-  "apex-pro": "openai/gpt-oss-120b:free",
-  "apex-elite": "openai/gpt-oss-120b:free",
-  "apex-omni": "openai/gpt-oss-120b:free",
-  "apex-unbound": "openai/gpt-oss-120b:free",
+  "apex-pro": "nvidia/nemotron-3-super-120b-a12b:free",
+  "apex-elite": "nvidia/nemotron-3-super-120b-a12b:free",
+  "apex-omni": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "apex-unbound": "nvidia/nemotron-3-ultra-550b-a55b:free",
 } : {
   "apex-flash": "deepseek-chat",
   "apex-pro": "deepseek-reasoner",
@@ -1282,53 +1282,40 @@ export async function sendAIMessage(
 ): Promise<ChatResponse> {
   try {
     
-    let response;
-    try {
-      response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": onChunk ? "text/event-stream" : "application/json"
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": onChunk ? "text/event-stream" : "application/json"
+      },
+      body: JSON.stringify({
+        message,
+        model,
+        mode,
+        reasoningLevel,
+        subscriptionTier: "omni",
+        features: {
+          ...features,
+          godMode: isGodMode ? true : features.godMode
         },
-        body: JSON.stringify({
-          message,
-          model,
-          mode,
-          reasoningLevel,
-          subscriptionTier: "omni",
-          features: {
-            ...features,
-            godMode: isGodMode ? true : features.godMode
-          },
-          conversationHistory: conversationHistory.map(m => ({
-            role: m.role,
-            content: m.content
-          })),
-          userMemoryContext,
-          clientLocalTime: JSON.stringify({
-            iso: new Date().toISOString(),
-            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-          }),
-          stream: !!onChunk
-        })
-      });
-    } catch (fetchErr) {
-      console.warn("⚠️ Backend fetch failed, trying client-side fallback:", fetchErr);
-      const fallbackTimeStr = JSON.stringify({
-        iso: new Date().toISOString(),
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-      });
-      return await callDeepSeekDirect(message, model, conversationHistory, mode, isGodMode, features, reasoningLevel, onChunk, userMemoryContext, fallbackTimeStr);
-    }
+        conversationHistory: conversationHistory.map(m => ({
+          role: m.role,
+          content: m.content
+        })),
+        userMemoryContext,
+        clientLocalTime: JSON.stringify({
+          iso: new Date().toISOString(),
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        }),
+        stream: !!onChunk
+      })
+    });
 
     const contentType = response.headers.get("content-type") || "";
-    if (!response.ok || contentType.includes("text/html")) {
-      console.warn(`⚠️ Backend returned status ${response.status} (Content-Type: ${contentType}). Triggering client-side fallback.`);
-      const fallbackTimeStr = JSON.stringify({
-        iso: new Date().toISOString(),
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-      });
-      return await callDeepSeekDirect(message, model, conversationHistory, mode, isGodMode, features, reasoningLevel, onChunk, userMemoryContext, fallbackTimeStr);
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "Unknown error");
+      console.error(`❌ Backend returned status ${response.status}:`, errorText);
+      throw new Error(`Server error (${response.status}): ${errorText.substring(0, 200)}`);
     }
 
     if (onChunk && response.body) {
