@@ -602,7 +602,7 @@ async function optimizeSearchQueries(message: string): Promise<{ textQuery: stri
     }));
 
     const response = await client.chat.completions.create({
-      model: "google/gemini-2.5-flash",
+      model: "meta-llama/llama-3.2-3b-instruct:free",
       messages: [
         {
           role: "system",
@@ -1699,7 +1699,7 @@ export async function processMessage(
 
     const pdfClient = wrapOpenAIClient(new OpenAI(getOpenAIClientConfig(deepseekKey)));
 
-    const pdfModel = "meta-llama/llama-3.3-70b-instruct";
+    const pdfModel = "meta-llama/llama-3.3-70b-instruct:free";
     return await generateDedicatedPdfResponse(pdfClient, pdfModel, request, onChunk);
   }
 
@@ -1712,7 +1712,7 @@ export async function processMessage(
 
     const quizClient = wrapOpenAIClient(new OpenAI(getOpenAIClientConfig(deepseekKey)));
 
-    const quizModel = "meta-llama/llama-3.3-70b-instruct";
+    const quizModel = "meta-llama/llama-3.3-70b-instruct:free";
     return await generateDedicatedQuizResponse(quizClient, quizModel, request, onChunk);
   }
 
@@ -1723,7 +1723,7 @@ export async function processMessage(
     if (!deepseekKey) throw new Error("OPENROUTER_API_KEY is not configured.");
 
     const omniClient = wrapOpenAIClient(new OpenAI(getOpenAIClientConfig(deepseekKey)));
-    const omniActualModel = "meta-llama/llama-3.3-70b-instruct";
+    const omniActualModel = "meta-llama/llama-3.3-70b-instruct:free";
 
     // Evaluate Prompt Complexity
     const evaluatePromptComplexity = (msg: string, hist: Array<{ role: string; content: string }> = []): number => {
@@ -1758,7 +1758,7 @@ export async function processMessage(
       let content = "";
       if (onChunk) {
         const stream = await omniClient.chat.completions.create({
-          model: "google/gemini-2.5-flash",
+          model: "meta-llama/llama-3.2-3b-instruct:free",
           messages,
           max_tokens: 4096,
           temperature: 0.5,
@@ -1773,7 +1773,7 @@ export async function processMessage(
         }
       } else {
         const response = await omniClient.chat.completions.create({
-          model: "google/gemini-2.5-flash",
+          model: "meta-llama/llama-3.2-3b-instruct:free",
           messages,
           max_tokens: 4096,
           temperature: 0.5,
@@ -1805,7 +1805,7 @@ export async function processMessage(
       let content = "";
       if (onChunk) {
         const stream = await omniClient.chat.completions.create({
-          model: "google/gemini-2.5-flash",
+          model: "meta-llama/llama-3.2-3b-instruct:free",
           messages,
           max_tokens: 6144,
           temperature: 0.6,
@@ -1820,7 +1820,7 @@ export async function processMessage(
         }
       } else {
         const response = await omniClient.chat.completions.create({
-          model: "google/gemini-2.5-flash",
+          model: "meta-llama/llama-3.2-3b-instruct:free",
           messages,
           max_tokens: 6144,
           temperature: 0.6,
@@ -2305,7 +2305,7 @@ ${prompt}`;
 
   try {
     const response = await client.chat.completions.create({
-      model: "meta-llama/llama-3.3-70b-instruct",
+      model: "meta-llama/llama-3.3-70b-instruct:free",
       max_tokens: 8192,
       messages: [
         { role: "system", content: systemPrompt },
@@ -2385,7 +2385,7 @@ Generate a cohesive title and cover page config. Respond ONLY with the \`\`\`pdf
 
   try {
     const response = await client.chat.completions.create({
-      model: "meta-llama/llama-3.3-70b-instruct",
+      model: "meta-llama/llama-3.3-70b-instruct:free",
       max_tokens: 8192,
       messages: [
         { role: "system", content: systemPrompt },
@@ -2432,7 +2432,7 @@ export async function generateMcqResponse(
   }));
 
   // Always use a strong model for quiz generation via the dedicated endpoint.
-  const actualModel = "meta-llama/llama-3.3-70b-instruct";
+  const actualModel = "meta-llama/llama-3.3-70b-instruct:free";
 
   return generateDedicatedQuizResponse(client, actualModel, request, onChunk);
 }
