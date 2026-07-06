@@ -17,6 +17,7 @@ import { PDFLoadingCard } from "@/components/pdf-loading-card";
 import type { OmniState } from "@/lib/omni-service";
 import type { UnboundState } from "@/lib/unbound-service";
 import { ThinkingBubble } from "@/components/chat-message";
+import { ModelLetterIcon } from "@/components/model-letter-icon";
 import { detectQuizIntent } from "@shared/mcq";
 import { detectPdfIntent } from "@shared/pdf";
 import type { AgentMaskConfiguration } from "@shared/types/v2";
@@ -1947,14 +1948,7 @@ function CodeBlockWrapper({ language, code, parentContent }: { language: string;
 
 
 
-// Map models to their icons
-const modelIcons: Record<AIModel, typeof Sparkles> = {
-  "apex-flash": Zap,
-  "apex-pro": Cpu,
-  "apex-elite": Search,
-  "apex-omni": Crown,
-  "apex-unbound": Code2,
-};
+
 
 interface ChatMessagesProps {
   streamingContent?: string;
@@ -2321,31 +2315,7 @@ function WebsitePreviewBanner({ html }: { html: string }) {
 }
 
 
-// Model → gradient config for avatar — pure B&W theme
-const modelGradients: Record<string, string> = {
-  "apex-flash":   "from-zinc-800 to-black",
-  "apex-pro":     "from-zinc-700 to-black",
-  "apex-elite":   "from-zinc-700 to-zinc-900",
-  "apex-omni":    "from-zinc-600 to-black",
-  "apex-unbound": "from-zinc-700 to-black",
-};
 
-// B&W: all white/gray, with opacity levels for hierarchy
-const modelColors: Record<string, string> = {
-  "apex-flash":   "text-white/55",
-  "apex-pro":     "text-white/65",
-  "apex-elite":   "text-white/75",
-  "apex-omni":    "text-white",
-  "apex-unbound": "text-white/80",
-};
-
-const modelGlows: Record<string, string> = {
-  "apex-flash":   "shadow-none",
-  "apex-pro":     "shadow-none",
-  "apex-elite":   "shadow-none",
-  "apex-omni":    "shadow-[0_0_16px_rgba(255,255,255,0.06)]",
-  "apex-unbound": "shadow-none",
-};
 
 function AssistantMessage({
   content,
@@ -2704,11 +2674,6 @@ function AssistantMessage({
     },
   }), [cleanContent]);
 
-  const ModelIcon = model ? modelIcons[model] || Sparkles : Sparkles;
-  const gradient = model ? (modelGradients[model] || "from-violet-500 to-indigo-600") : "from-violet-500 to-indigo-600";
-  const nameColor = model ? (modelColors[model] || "text-zinc-300") : "text-zinc-300";
-  const glowColor = model ? (modelGlows[model] || "shadow-[0_0_12px_rgba(139,92,246,0.25)]") : "shadow-[0_0_12px_rgba(139,92,246,0.25)]";
-
   return (
     <motion.div
       className={cn(
@@ -2720,16 +2685,9 @@ function AssistantMessage({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
     >
-      {/* Model avatar — pure black/white */}
-      {model !== "apex-omni" && (
-        <Avatar className={cn(
-          "w-8 h-8 flex-shrink-0 transition-all duration-300 rounded-sm",
-          isStreaming && "ring-1 ring-white/10"
-        )}>
-          <AvatarFallback className="bg-[#111] border border-white/10 rounded-sm">
-            <ModelIcon className={cn("w-4 h-4", nameColor)} />
-          </AvatarFallback>
-        </Avatar>
+      {/* Model avatar — premium pixel-art letters */}
+      {model && (
+        <ModelLetterIcon model={model} size={32} isStreaming={isStreaming} />
       )}
 
       <div className="flex-1 space-y-2 min-w-0">

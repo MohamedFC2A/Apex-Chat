@@ -172,7 +172,7 @@ export async function runApexOmniPipeline(
     },
   });
 
-  const completionsModel = "nvidia/nemotron-3-super-120b-a12b:free";
+  const completionsModel: string = "nvidia/nemotron-3-super-120b-a12b:free";
 
   const getAgentModel = (agentName: string): string => {
     const agentModelMap: Record<string, string> = {

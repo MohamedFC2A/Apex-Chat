@@ -919,3 +919,69 @@ body.god-mode .border {
   box-shadow: 0 0 0 1px rgba(139,92,246,0.4), 0 0 14px rgba(139,92,246,0.15) !important;
 }
 
+/* ─── Premium Pixel-Art Model Icon Styles ─── */
+@keyframes shimmer-sweep {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.font-pixel {
+  font-family: 'Press Start 2P', 'Silkscreen', 'Courier New', Courier, monospace;
+}
+
+.gold-metallic-text {
+  background: linear-gradient(
+    90deg,
+    #cf9f3d 0%,
+    #fcf6ba 20%,
+    #e8c566 40%,
+    #ffffff 50%,
+    #e8c566 60%,
+    #fcf6ba 80%,
+    #cf9f3d 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-sweep 3s linear infinite;
+}
+
+.silver-metallic-text {
+  background: linear-gradient(
+    90deg,
+    #9ca3af 0%,
+    #e2e8f0 20%,
+    #cbd5e1 40%,
+    #ffffff 50%,
+    #cbd5e1 60%,
+    #e2e8f0 80%,
+    #9ca3af 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-sweep 3s linear infinite;
+}
+
+.gold-metallic-box {
+  background: linear-gradient(135deg, #18140c 0%, #050505 100%);
+  border: 1.2px solid rgba(207, 159, 61, 0.8) !important;
+  box-shadow: 0 0 10px rgba(207, 159, 61, 0.25), inset 0 0 4px rgba(207, 159, 61, 0.15);
+}
+
+.silver-metallic-box {
+  background: linear-gradient(135deg, #101215 0%, #050505 100%);
+  border: 1.2px solid rgba(156, 163, 175, 0.8) !important;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.08), inset 0 0 4px rgba(255, 255, 255, 0.05);
+}
+
+.standard-pixel-box {
+  background: #0d0d0d;
+  border: 1.2px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+

@@ -11,6 +11,7 @@ import { MODELS, MODEL_INFO, MODEL_TIER_MAP } from "@/lib/constants";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { ModelLetterIcon } from "./model-letter-icon";
 
 interface ModelSelectorProps {
   selectedModel: AIModel;
@@ -125,71 +126,12 @@ const MODEL_CARD_CONFIG: Record<
 /* ─────────────────────────────────────────────────────────────────
    Custom glossy, specular letter icons per model (no glow)
    ───────────────────────────────────────────────────────────────── */
-function LetterIcon({
-  letter,
-  gradientColors,
-}: {
-  letter: string;
-  gradientColors: [string, string];
-}) {
-  const gradId = `glossy-grad-${letter}`;
-  const glossId = `glossy-overlay-${letter}`;
-  return (
-    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        {/* Shiny Glossy gradient background */}
-        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={gradientColors[0]} />
-          <stop offset="100%" stopColor={gradientColors[1]} />
-        </linearGradient>
-        {/* Glass specular reflection highlight */}
-        <linearGradient id={glossId} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.45" />
-          <stop offset="40%" stopColor="#ffffff" stopOpacity="0.08" />
-          <stop offset="100%" stopColor="#ffffff" stopOpacity="0.0" />
-        </linearGradient>
-      </defs>
-      
-      {/* Glossy rounded background */}
-      <rect x="0.5" y="0.5" width="25" height="25" rx="6.5" fill={`url(#${gradId})`} stroke="rgba(255,255,255,0.18)" strokeWidth="0.8" />
-      
-      {/* Light sheen overlay */}
-      <path d="M 0.5 7.5 C 0.5 4, 4 0.5, 7.5 0.5 L 18.5 0.5 C 22 0.5, 25.5 4, 25.5 7.5 L 25.5 12.5 C 25.5 12.5, 13 13.5, 0.5 12.5 Z" fill={`url(#${glossId})`} opacity="0.65" />
-      
-      {/* Specular line */}
-      <path d="M 1.5 12 C 9 12.8, 17 12.8, 24.5 12" stroke="rgba(255,255,255,0.12)" strokeWidth="0.6" />
-      
-      {/* The slanting futuristic letter */}
-      <text
-        x="13.5"
-        y="18.2"
-        textAnchor="middle"
-        style={{
-          fontFamily: "var(--font-sans, 'Inter', sans-serif)",
-          fontWeight: 900,
-          fontSize: "13.5px",
-          fill: "#ffffff",
-          textShadow: "0px 1px 2px rgba(0,0,0,0.4)",
-        }}
-      >
-        {letter}
-      </text>
-    </svg>
-  );
-}
-
-function OmniIcon(_props?: any) { return <LetterIcon letter="O" gradientColors={["#8b5cf6", "#d946ef"]} />; }
-function UnboundIcon(_props?: any) { return <LetterIcon letter="U" gradientColors={["#ec4899", "#f43f5e"]} />; }
-function SearchIcon(_props?: any) { return <LetterIcon letter="S" gradientColors={["#06b6d4", "#0ea5e9"]} />; }
-function ProIcon(_props?: any) { return <LetterIcon letter="P" gradientColors={["#10b981", "#059669"]} />; }
-function FlashIcon(_props?: any) { return <LetterIcon letter="F" gradientColors={["#f59e0b", "#d97706"]} />; }
-
 const MODEL_ICONS: Record<AIModel, React.FC<{ color?: string; glow?: string }>> = {
-  "apex-omni": OmniIcon,
-  "apex-unbound": UnboundIcon,
-  "apex-elite": SearchIcon,
-  "apex-pro": ProIcon,
-  "apex-flash": FlashIcon,
+  "apex-omni": () => <ModelLetterIcon model="apex-omni" size={26} />,
+  "apex-unbound": () => <ModelLetterIcon model="apex-unbound" size={26} />,
+  "apex-elite": () => <ModelLetterIcon model="apex-elite" size={26} />,
+  "apex-pro": () => <ModelLetterIcon model="apex-pro" size={26} />,
+  "apex-flash": () => <ModelLetterIcon model="apex-flash" size={26} />,
 };
 
 /* ─────────────────────────────────────────────────────────────────

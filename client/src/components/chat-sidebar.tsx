@@ -424,6 +424,7 @@ function UserProfile({
   setLocation: (path: string) => void;
 }) {
   const displayName = user?.displayName || user?.email?.split("@")[0] || "User";
+  const { logout } = useAuth();
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
