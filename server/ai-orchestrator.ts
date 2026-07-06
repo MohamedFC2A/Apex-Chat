@@ -1995,11 +1995,7 @@ async function callCerebras(
           const footballData = await buildApexFootballContext(request.message, request.clientLocalTime);
           if (footballData.used) {
             footballContext = footballData.context;
-            console.log(`[Apex Search] API-Football context selected (${footballData.sourceCount} compact sources).`);
-            if (footballData.answer) {
-              onChunk?.({ content: footballData.answer });
-              return { content: footballData.answer };
-            }
+            console.log(`[Apex Search] football-data.org context selected (${footballData.sourceCount} matches).`);
           } else {
             const optimizedQuery = await optimizeSearchQueries(request.message, request.conversationHistory, request.clientLocalTime);
             console.log(`[Apex Search] Context-aware optimized query: "${optimizedQuery.textQuery}"`);
