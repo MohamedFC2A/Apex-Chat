@@ -1922,7 +1922,7 @@ function WebPreviewModal({
           <div className="flex-1 hidden md:flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-1 mx-2">
             <Globe className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
             <span className="text-[11px] text-zinc-400 font-mono truncate">
-              apex://preview · APEX Unbound Output
+              apex://preview · Apex Coder Output
             </span>
           </div>
 
@@ -2001,7 +2001,7 @@ function WebPreviewModal({
                 className="w-full h-full bg-white border-0"
                 sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
                 onLoad={() => setIsLoaded(true)}
-                title="APEX Unbound Website Preview"
+                title="Apex Coder Website Preview"
               />
             )}
           </div>
@@ -2781,7 +2781,7 @@ export function ChatMessages({
                   reasoning={message.reasoningContent}
                   omniState={(message as any).omniState}
                   unboundState={
-                    message.model === "apex-unbound" &&
+                    message.model === "apex-coder" &&
                     index === messages.length - 1 &&
                     !isStreaming
                       ? unboundState
@@ -2803,7 +2803,7 @@ export function ChatMessages({
           {isStreaming &&
             !streamingContent &&
             !streamingReasoning &&
-            selectedModel !== "apex-unbound" &&
+            selectedModel !== "apex-coder" &&
             selectedModel !== "apex-omni" && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -2828,8 +2828,8 @@ export function ChatMessages({
               </motion.div>
             )}
 
-          {/* APEX Unbound: show pipeline card while generating or when paused waiting for questionnaire choice */}
-          {selectedModel === "apex-unbound" &&
+          {/* Apex Coder: show pipeline card while generating or when paused waiting for questionnaire choice */}
+          {selectedModel === "apex-coder" &&
             unboundState &&
             !unboundState.completedAt && (
               <motion.div
@@ -3079,7 +3079,7 @@ function AssistantMessage({
     return txt;
   };
 
-  const isUnboundModel = model === "apex-unbound";
+  const isUnboundModel = model === "apex-coder";
   const baseMarkdown = isUnboundModel
     ? cleanStatusMarkers(pdfState.sanitizedContent)
     : pdfState.sanitizedContent;

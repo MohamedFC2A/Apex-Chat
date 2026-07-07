@@ -1,5 +1,5 @@
 /**
- * APEX Unbound — Agent 2: HTML Agent
+ * Apex Coder — Agent 2: HTML Agent
  *
  * Consumes the SystemSpec JSON and generates clean, semantic HTML5.
  * Enforces: ARIA attributes, descriptive IDs, no inline CSS/JS.
@@ -28,7 +28,7 @@ export async function runHtmlAgent(
     .map((page) => `#view-${page.id} (${page.title}) with route link [data-route="${page.id}"]`)
     .join(", ");
 
-  const systemPrompt = `You are the APEX Unbound HTML Specialist Agent. Your role is to generate flawless, semantic HTML5 markup based on a system specification.
+  const systemPrompt = `You are the Apex Coder HTML Specialist Agent. Your role is to generate flawless, semantic HTML5 markup based on a system specification.
 
 CRITICAL RULES:
 1. Output ONLY the raw HTML — no markdown, no backticks, no explanation text.
@@ -71,7 +71,7 @@ ${elementList}
 The following page views and route links MUST appear in the HTML:
 ${pageList || "#view-home (Home) with route link [data-route=\"home\"]"}
 
-APEX Unbound UI State & Event Contract:
+Apex Coder UI State & Event Contract:
 ${JSON.stringify(spec.uiStateContract || {}, null, 2)}
 
 Produce a massive, highly-detailed, and fully-structured HTML document. Write extensive copywriting, add multiple sections, nested layouts, detailed structures, SVG graphics, grids, and components. The HTML code must be extremely detailed and extensive, easily reaching thousands of lines. Do NOT use comments as placeholders (e.g. "<!-- more items here -->"). Never truncate, never write short examples; write out every single element and section completely. Let it exceed thousands of lines to ensure production-grade richness.`;

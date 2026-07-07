@@ -1,8 +1,8 @@
 /**
- * APEX Unbound Status Card (V3 - Restructured)
+ * Apex Coder Status Card (V3 - Restructured)
  *
  * A premium retro terminal UI card that displays the real-time pipeline phases
- * as the APEX Unbound multi-agent system generates code.
+ * as the Apex Coder multi-agent system generates code.
  *
  * Designed to align with the stark black, pixel-grid progress bar theme.
  */
@@ -257,7 +257,7 @@ export function UnboundStatusCard({ state }: UnboundStatusCardProps) {
           </div>
           <div>
             <h3 className="text-xs font-black text-white tracking-widest uppercase font-mono">
-              APEX Unbound
+              Apex Coder
             </h3>
             <p className="text-[9px] text-zinc-500 uppercase tracking-wider font-mono">
               {isArabic ? "لوحة تنفيذ وتدقيق المشروع" : "Project Execution and Review Console"}

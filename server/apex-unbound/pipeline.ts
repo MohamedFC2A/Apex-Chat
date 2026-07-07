@@ -1,10 +1,10 @@
 /**
- * APEX Unbound Pipeline Orchestrator
+ * Apex Coder Pipeline Orchestrator
  *
  * Master coordinator for the 6-phase multi-agent web generation system:
  *
  * ┌───────────────────────────────────────────────────────────┐
- * │               APEX UNBOUND PIPELINE                       │
+ * │               APEX CODER PIPELINE                       │
  * │                                                           │
  * │  [1] Architect Agent    → SystemSpec JSON                 │
  * │           ↓                                               │
@@ -230,7 +230,7 @@ async function runSelfCorrectionAgent(
 ): Promise<{ htmlCode: string; cssCode: string; jsCode: string; notes: string }> {
   onStatus?.("[Self-Correction Agent] Auditing merged code against selectors, routes, and UI state contract...");
 
-  const systemPrompt = `You are the APEX Unbound Code Reviewer and Self-Correction Agent.
+  const systemPrompt = `You are the Apex Coder Code Reviewer and Self-Correction Agent.
 
 Your job is to inspect the complete HTML, CSS, and JavaScript for runtime selector mismatches, missing route support, missing state classes, and fragile DOM access. You must return corrected code, not commentary.
 
@@ -571,7 +571,7 @@ export async function runUnboundPipeline(
   };
 
   console.log("\n╔══════════════════════════════════════════╗");
-  console.log(isResumed ? (isFollowUp ? "║   APEX UNBOUND FOLLOW-UP STARTING        ║" : "║     APEX UNBOUND PIPELINE RESUMING       ║") : "║     APEX UNBOUND PIPELINE STARTING       ║");
+  console.log(isResumed ? (isFollowUp ? "║   APEX CODER FOLLOW-UP STARTING        ║" : "║     APEX CODER PIPELINE RESUMING       ║") : "║     APEX CODER PIPELINE STARTING       ║");
   console.log("╚══════════════════════════════════════════╝");
 
   // 1. Gather Search Context (if not already present or if this is a follow-up)
@@ -842,7 +842,7 @@ export async function runUnboundPipeline(
     .join("\n");
 
   const formattedOutput = `
-## APEX Unbound Delivery Report
+## Apex Coder Delivery Report
 
 ### Execution Summary
 | Phase | Workstream | Status | Duration | Notes |
@@ -889,7 +889,7 @@ ${jsCode}
 `;
 
   console.log("\n╔══════════════════════════════════════════╗");
-  console.log(`║  APEX UNBOUND COMPLETE: ${(totalDuration / 1000).toFixed(1)}s total`);
+  console.log(`║  APEX CODER COMPLETE: ${(totalDuration / 1000).toFixed(1)}s total`);
   console.log(`║  Bundle: ${(bundle.stats.totalBytes / 1024).toFixed(1)}KB`);
   console.log("╚══════════════════════════════════════════╝\n");
 

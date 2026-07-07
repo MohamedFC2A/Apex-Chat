@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@/lib/auth-store";
 import { useWalletStore } from "@/lib/wallet-store";
@@ -135,14 +135,14 @@ export default function BillingPage() {
 
     if (!user) {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-zinc-400 animate-spin" />
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-black relative overflow-hidden">
+        <div className="min-h-screen bg-background relative overflow-hidden">
             {/* Subtle Grid Pattern */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
 
@@ -155,14 +155,14 @@ export default function BillingPage() {
                 >
                     <Button
                         variant="ghost"
-                        className="mb-6 text-zinc-400 hover:text-white pl-0 hover:bg-transparent"
+                        className="mb-6 text-muted-foreground hover:text-white pl-0 hover:bg-transparent"
                         onClick={() => setLocation("/chat")}
                     >
                         <ArrowLeft className="w-4 h-4 mr-2" />
                         Back to Chat
                     </Button>
                     <h1 className="text-4xl font-bold text-white mb-2">Wallet & Billing</h1>
-                    <p className="text-zinc-400">Manage your credits and view transaction history</p>
+                    <p className="text-muted-foreground">Manage your credits and view transaction history</p>
                 </motion.div>
 
                 {/* The Vault Card */}
@@ -182,7 +182,7 @@ export default function BillingPage() {
                                         <Wallet className="w-6 h-6 text-emerald-400" />
                                     </div>
                                     <div>
-                                        <p className="text-sm text-zinc-400 uppercase tracking-wide">Available Credit</p>
+                                        <p className="text-sm text-muted-foreground uppercase tracking-wide">Available Credit</p>
                                         <h2 className="text-5xl font-black bg-gradient-to-r from-emerald-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent">
                                             $ {walletBalance.toFixed(2)}
                                         </h2>
@@ -191,7 +191,7 @@ export default function BillingPage() {
                                     </div>
                                 </div>
                                 <div className="flex flex-col items-start sm:items-end">
-                                    <p className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mb-1">Active Subscription Tier</p>
+                                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-1">Active Subscription Tier</p>
                                     <Badge className="bg-yellow-500/10 text-yellow-400 border border-yellow-500/35 uppercase tracking-wider text-sm px-3.5 py-1.5 font-mono font-bold">
                                         {tier.toUpperCase()}
                                     </Badge>
@@ -205,7 +205,7 @@ export default function BillingPage() {
                                     value={voucherCode}
                                     onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
                                     onKeyDown={(e) => e.key === "Enter" && handleRedeemCode()}
-                                    className="flex-1 bg-black/50 border-zinc-700 text-white placeholder:text-zinc-500 font-mono uppercase"
+                                    className="flex-1 bg-background/50 border-border text-white placeholder:text-muted-foreground font-mono uppercase"
                                 />
                                 <Button
                                     onClick={handleRedeemCode}
@@ -230,17 +230,17 @@ export default function BillingPage() {
                                     <p className="text-xs text-emerald-400">{voucherSuccess}</p>
                                 </div>
                             )}
-                            <p className="text-xs text-zinc-500 mt-3">
+                            <p className="text-xs text-muted-foreground mt-3">
                                 💡 Redeem voucher codes to add credits to your wallet
                             </p>
                             
                             {/* Sync Status Indicator */}
-                            <div className="mt-4 flex items-center justify-between pt-4 border-t border-zinc-800/50">
+                            <div className="mt-4 flex items-center justify-between pt-4 border-t border-border/50">
                                 <div className="flex items-center gap-2">
                                     {syncStatus.isOnline && !syncStatus.permissionDenied ? (
                                         <>
                                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                            <span className="text-xs text-zinc-500">Synced to Cloud</span>
+                                            <span className="text-xs text-muted-foreground">Synced to Cloud</span>
                                         </>
                                     ) : syncStatus.permissionDenied ? (
                                         <>
@@ -249,8 +249,8 @@ export default function BillingPage() {
                                         </>
                                     ) : (
                                         <>
-                                            <CloudOff className="w-3 h-3 text-zinc-500" />
-                                            <span className="text-xs text-zinc-500">Offline Mode</span>
+                                            <CloudOff className="w-3 h-3 text-muted-foreground" />
+                                            <span className="text-xs text-muted-foreground">Offline Mode</span>
                                         </>
                                     )}
                                 </div>
@@ -270,18 +270,18 @@ export default function BillingPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                 >
-                    <Card className="bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/50 p-6 relative overflow-hidden">
+                    <Card className="bg-card/80 backdrop-blur-xl border border-border/50 p-6 relative overflow-hidden">
                         {/* Holographic Accent */}
                         <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
                         
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-3">
-                                <div className="p-2.5 bg-zinc-900/50 rounded-xl border border-zinc-800">
-                                    <History className="w-5 h-5 text-zinc-400" />
+                                <div className="p-2.5 bg-muted/50 rounded-xl border border-border">
+                                    <History className="w-5 h-5 text-muted-foreground" />
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-bold text-white">Transaction Ledger</h3>
-                                    <p className="text-xs text-zinc-500">Real-time financial activity</p>
+                                    <p className="text-xs text-muted-foreground">Real-time financial activity</p>
                                 </div>
                             </div>
                             {history.length > 0 && (
@@ -294,10 +294,10 @@ export default function BillingPage() {
                         {history.length === 0 ? (
                             <div className="text-center py-16">
                                 <div className="relative inline-block">
-                                    <div className="absolute inset-0 bg-zinc-800/20 blur-2xl" />
+                                    <div className="absolute inset-0 bg-muted/80/20 blur-2xl" />
                                     <DollarSign className="w-16 h-16 text-zinc-800 mx-auto mb-4 relative" />
                                 </div>
-                                <p className="text-zinc-500 font-medium">No transactions yet</p>
+                                <p className="text-muted-foreground font-medium">No transactions yet</p>
                                 <p className="text-xs text-zinc-600 mt-2">Your financial activity will appear here</p>
                             </div>
                         ) : (
@@ -345,7 +345,7 @@ export default function BillingPage() {
                                                         {txn.description}
                                                     </p>
                                                     <div className="flex items-center gap-2">
-                                                        <p className="text-xs text-zinc-500 font-mono">
+                                                        <p className="text-xs text-muted-foreground font-mono">
                                                             {new Date(txn.date).toLocaleDateString('en-US', { 
                                                                 month: 'short', 
                                                                 day: 'numeric', 
@@ -353,7 +353,7 @@ export default function BillingPage() {
                                                             })}
                                                         </p>
                                                         <span className="text-zinc-700">•</span>
-                                                        <p className="text-xs text-zinc-500 font-mono">
+                                                        <p className="text-xs text-muted-foreground font-mono">
                                                             {new Date(txn.date).toLocaleTimeString('en-US', { 
                                                                 hour: '2-digit', 
                                                                 minute: '2-digit' 
@@ -371,7 +371,7 @@ export default function BillingPage() {
                                                         {isRecent && (
                                                             <>
                                                                 <span className="text-zinc-700">•</span>
-                                                                <Badge className="bg-zinc-900 text-zinc-400 border-zinc-800 text-[10px] px-1.5 py-0">
+                                                                <Badge className="bg-muted text-muted-foreground border-border text-[10px] px-1.5 py-0">
                                                                     NEW
                                                                 </Badge>
                                                             </>

@@ -1,29 +1,34 @@
 /**
- * Apex Omni Multi-Agent Pipeline (V5 - Production-Ready 10-Agent System)
+ * Apex Omni Multi-Agent Pipeline (V6 - DODECA-CORE 12-Agent Neuro-Synaptic System)
  *
- * Architecture: 10 specialized AI agents working in parallel and sequentially
- * with intelligent cost optimization (only activates needed agents per query type).
+ * Architecture: 12 specialized AI agents working in parallel and sequential 
+ * orchestration with intelligent cost optimization and Quantum-Inspired 
+ * probabilistic routing (only activates needed agents per query type).
  *
- * AGENT ROSTER:
- * 1.  Analyst Agent      → Analyzes query, detects intent, creates execution plan
- * 2.  Researcher Agent   → Gathers core knowledge and facts for the topic
- * 3.  Critic Agent       → Challenges Analyst's plan, adds missing angles
- * 4.  Expert Writer      → Writes the primary content body
- * 5.  Code Specialist    → Handles code generation and technical snippets
- * 6.  Math Specialist    → Solves equations, proofs, and formulas
- * 7.  Fact Checker       → Verifies accuracy of all factual claims
- * 8.  Formatter Agent    → Structures and formats the final response
- * 9.  Language Agent     → Ensures correct Arabic/English usage and RTL
- * 10. QA Agent           → Final quality check before delivery
+ * AGENT ROSTER (DODECA-CORE):
+ * 1.  Analyst Agent        → Analyzes query, detects intent, creates execution plan
+ * 2.  Researcher Agent     → Gathers core knowledge and facts for the topic
+ * 3.  Critic Agent         → Challenges Analyst's plan, adds missing angles
+ * 4.  Expert Writer        → Writes the primary content body
+ * 5.  Code Specialist      → Handles code generation and technical snippets
+ * 6.  Math Specialist      → Solves equations, proofs, and formulas
+ * 7.  Fact Checker         → Verifies accuracy of all factual claims
+ * 8.  Formatter Agent      → Structures and formats the final response
+ * 9.  Language Agent       → Ensures correct Arabic/English usage and RTL
+ * 10. QA Agent             → Final quality check before delivery
+ * 11. Strategist Agent     → Long-term reasoning, recursive self-improvement loops
+ * 12. Synthesizer Agent    → Cross-agent output fusion, contradiction resolution
  *
  * COST OPTIMIZATION: Simple queries use only agents 1, 4, 8.
- *                    Complex queries use all 10 agents in parallel/sequential hybrid.
+ *                    Medium queries use 6 agents in hybrid mode.
+ *                    Complex/AGI queries fire ALL 12 agents simultaneously.
  *
- * CRITICAL FIXES (V5):
- * - Uses real DeepSeek API model name: "deepseek-chat" (NOT deepseek-v4-pro/flash)
- * - Removed unsupported logit_bias and extra_body.thinking parameters
- * - Fixed agent calls to use clean, compatible API parameters
- * - Improved error handling and fallback logic
+ * ENHANCEMENTS (V6 - DODECA-CORE):
+ * - Neuro-Symbolic AI: combines neural network intuition with symbolic logic
+ * - Quantum-Inspired Optimization (QIO): probabilistic agent routing
+ * - Recursive Self-Refinement: agents critique and enhance each other's outputs
+ * - MoE (Mixture of Experts) dynamic gating: only the best agents speak on each subtopic
+ * - Inference-Time Compute Scaling: more thinking time = better results
  */
 
 import OpenAI from "openai";

@@ -117,6 +117,35 @@
   --apex-glow-cyan: 0 0 30px rgba(6, 182, 212, 0.3);
   --apex-glow-emerald: 0 0 30px rgba(16, 185, 129, 0.3);
   --apex-glow-rose: 0 0 30px rgba(244, 63, 94, 0.3);
+
+  /* ═══════════════════════════════════════════════════════════════════
+     TIER COLOR SYSTEM — Centralized Tier Design Tokens
+     Used by ModelSelector, ModelCard, TierSection, and pricing pages
+  ═══════════════════════════════════════════════════════════════════ */
+
+  /* OMNI Tier (Tier 4) — Electric Indigo / Violet */
+  --tier-omni-accent: 262 83% 58%;
+  --tier-omni-surface: 262 83% 10%;
+  --tier-omni-border: 262 83% 25%;
+  --tier-omni-text: 262 83% 85%;
+
+  /* ELITE Tier (Tier 3) — Cyan / Teal */
+  --tier-elite-accent: 190 90% 55%;
+  --tier-elite-surface: 190 90% 10%;
+  --tier-elite-border: 190 90% 25%;
+  --tier-elite-text: 190 90% 80%;
+
+  /* PRO Tier (Tier 2) — Emerald / Lime */
+  --tier-pro-accent: 160 84% 39%;
+  --tier-pro-surface: 160 84% 10%;
+  --tier-pro-border: 160 84% 22%;
+  --tier-pro-text: 160 84% 75%;
+
+  /* STARTER Tier (Tier 1) — Amber / Orange */
+  --tier-starter-accent: 38 95% 55%;
+  --tier-starter-surface: 38 95% 10%;
+  --tier-starter-border: 38 95% 22%;
+  --tier-starter-text: 38 95% 80%;
 }
 
 .app-viewport {
@@ -295,6 +324,80 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════
+   PREMIUM GLASSMORPHISM — Deep blur panels for cards & overlays
+   ═══════════════════════════════════════════════════════════════════ */
+.glass-panel {
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  background: hsl(var(--background) / 0.8);
+  border: 1px solid rgb(255 255 255 / 0.06);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.glass-card-premium {
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  background: hsl(var(--card) / 0.7);
+  border: 1px solid rgb(255 255 255 / 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MICRO-INTERACTIONS — Subtle, premium feel animations
+   ═══════════════════════════════════════════════════════════════════ */
+.interactive {
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.interactive:active {
+  transform: scale(0.98);
+}
+
+.hover-lift {
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Shimmer loading effect for cards */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.03) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RTL SUPPORT — Arabic-aware layout helpers
+   ═══════════════════════════════════════════════════════════════════ */
+[dir="rtl"] .icon-flip {
+  transform: scaleX(-1);
+}
+
+.rtl-safe {
+  padding-inline-start: var(--ps, 0);
+  padding-inline-end: var(--pe, 0);
+  margin-inline-start: var(--ms, 0);
+  margin-inline-end: var(--me, 0);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    GRADIENT BACKGROUNDS
 ════════════════════════════════════════════════════════════════════ */
 
@@ -464,7 +567,7 @@ body.god-mode .streaming-active h3:last-child::after {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   GOD MODE — APEX UNBOUND THEME
+   GOD MODE — APEX CODER THEME
 ════════════════════════════════════════════════════════════════════ */
 body.god-mode {
   --border: 142 50% 18%;
@@ -724,10 +827,6 @@ body.god-mode .border {
   --avatar-start: #52525b; /* zinc-600 */
   --avatar-end: #27272a;   /* zinc-800 */
 }
-.avatar-pro {
-  --avatar-start: #2563eb; /* blue-600 */
-  --avatar-end: #1e3a8a;   /* blue-900 */
-}
 .avatar-elite {
   --avatar-start: #059669; /* emerald-600 */
   --avatar-end: #064e3b;   /* emerald-900 */
@@ -736,9 +835,9 @@ body.god-mode .border {
   --avatar-start: #d97706; /* amber-600 */
   --avatar-end: #7c2d12;   /* orange-900 */
 }
-.avatar-unbound {
-  --avatar-start: #8b5cf6; /* violet-500 */
-  --avatar-end: #4c1d95;   /* violet-900 */
+.avatar-coder {
+  --avatar-start: #059669; /* emerald-600 */
+  --avatar-end: #064e3b;   /* emerald-900 */
 }
 
 /* Search laser scanning animation */
@@ -887,13 +986,13 @@ body.god-mode .border {
 .silver-metallic-text {
   background: linear-gradient(
     90deg,
-    #9ca3af 0%,
-    #e2e8f0 20%,
-    #cbd5e1 40%,
-    #ffffff 50%,
-    #cbd5e1 60%,
-    #e2e8f0 80%,
-    #9ca3af 100%
+    #059669 0%,
+    #34d399 20%,
+    #6ee7b7 40%,
+    #a7f3d0 50%,
+    #6ee7b7 60%,
+    #34d399 80%,
+    #059669 100%
   );
   background-size: 200% auto;
   -webkit-background-clip: text;

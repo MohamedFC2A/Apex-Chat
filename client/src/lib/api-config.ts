@@ -31,10 +31,9 @@ export function getAPIProviders(): APIProvider[] {
       apiKey: openrouterKey,
       models: {
         "apex-flash": "google/gemini-2.5-flash",
-        "apex-pro": "google/gemini-2.5-flash",
         "apex-elite": "google/gemini-2.5-flash",
         "apex-omni": "google/gemini-2.5-flash",
-        "apex-unbound": "google/gemini-2.5-flash",
+        "apex-coder": "google/gemini-2.5-flash",
       },
       priority: 1,
       available: true,

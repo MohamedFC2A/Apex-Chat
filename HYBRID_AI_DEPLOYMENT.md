@@ -6,7 +6,7 @@ ApexChat now features a **Hybrid AI Engine** that automatically switches between
 
 | Environment | AI Provider | Endpoint | Cost |
 |-------------|-------------|----------|------|
-| **Local Dev** | Ollama (apex-unbound) | `localhost:11434` | Free |
+| **Local Dev** | Ollama (apex-coder) | `localhost:11434` | Free |
 | **Firebase Prod** | Groq Cloud | `api.groq.com` | Free (rate-limited) |
 
 ---
@@ -160,7 +160,7 @@ ApexChat models are automatically mapped to Groq's available models:
 | `llama3.3-70b` | `llama-3.3-70b-versatile` | 128k |
 | `qwen-3-32b` | `llama-3.1-70b-versatile` | 128k |
 | `apex-omni` | `llama-3.3-70b-versatile` | 128k |
-| `apex-unbound` | `llama-3.3-70b-versatile` | 128k |
+| `apex-coder` | `llama-3.3-70b-versatile` | 128k |
 
 **Note:** Groq doesn't have Qwen or custom models, so we use equivalent Llama models.
 

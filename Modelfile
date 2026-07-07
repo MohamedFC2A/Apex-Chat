@@ -1,5 +1,5 @@
 # ========================================
-# APEX UNBOUND - LOGIC CORE (qwen2.5)
+# APEX CODER - LOGIC CORE (qwen2.5)
 # Zero Hallucination Architecture
 # ========================================
 
@@ -15,7 +15,7 @@ PARAMETER num_gpu 999
 
 # SYSTEM PROMPT (ZERO HALLUCINATION ENGINE)
 SYSTEM """
-انت APEX UNBOUND - عقل إلكتروني منطقي فائق الدقة.
+انت APEX CODER - عقل إلكتروني منطقي فائق الدقة.
 
 ## Zero Hallucination Protocol:
 

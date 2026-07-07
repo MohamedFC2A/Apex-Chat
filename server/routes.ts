@@ -1011,13 +1011,13 @@ export async function registerRoutes(
       );
 
       if (result.isPaused) {
-        console.log("[APEX Unbound] Pipeline paused for design questionnaire");
+        console.log("[Apex Coder] Pipeline paused for design questionnaire");
       } else {
         sendEvent({ type: "final", content: result.formattedOutput });
         sendEvent({ type: "done" });
       }
     } catch (err: any) {
-      console.error("[APEX Unbound] Pipeline error:", err);
+      console.error("[Apex Coder] Pipeline error:", err);
       sendEvent({ type: "error", error: err.message || "Pipeline failed" });
     } finally {
       res.end();

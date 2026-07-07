@@ -1,5 +1,5 @@
 /**
- * APEX Unbound Client Service
+ * Apex Coder Client Service
  *
  * Connects to the /api/unbound SSE endpoint and manages the
  * streaming pipeline state on the client side.
@@ -57,7 +57,7 @@ export interface UnboundServiceResult {
 }
 
 /**
- * Run the APEX Unbound pipeline via SSE streaming.
+ * Run the Apex Coder pipeline via SSE streaming.
  * Returns the final accumulated content or the questionnaire state.
  */
 export async function runUnboundService(

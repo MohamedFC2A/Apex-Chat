@@ -6,10 +6,10 @@ import { useFeatureToggleStore } from "@/lib/feature-toggle-store";
 import { applyGodModeTheme, removeGodModeTheme } from "@/lib/god-mode-theme";
 import { ChatMessages } from "@/components/chat-messages";
 import { ChatInput } from "@/components/chat-input";
+import { ChatHeader } from "@/components/chat/chat-header";
 import { SubscriptionBadge } from "@/components/subscription-badge";
-import { ModelSelector } from "@/components/model-selector";
 import { Button } from "@/components/ui/button";
-import { PanelLeft, BookOpen, ExternalLink, Copy, Check, Zap, FileDown, Loader2 } from "lucide-react";
+import { BookOpen, ExternalLink, Copy, Check, Zap, FileDown, Loader2 } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
@@ -106,7 +106,7 @@ export default function ChatPage() {
 
   const omniState = activeConversationId ? omniStates[activeConversationId] ?? null : null;
 
-  // APEX Unbound pipeline state
+  // Apex Coder pipeline state
   const [unboundStateMap, setUnboundStateMap] = useState<Record<string, UnboundState>>({});
   const unboundState = activeConversationId ? unboundStateMap[activeConversationId] ?? null : null;
 
@@ -138,7 +138,7 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
-    const isGodModeModel = selectedModel === "apex-unbound";
+    const isGodModeModel = selectedModel === "apex-coder";
     const currentlyApplied = document.body.classList.contains("god-mode");
     if (isGodModeModel && !currentlyApplied) {
       applyGodModeTheme();
@@ -213,7 +213,7 @@ export default function ChatPage() {
         const userMemoryContext: any[] = [];
 
         let response: ChatResponse;
-        const isGodModeModel = selectedModel === "apex-unbound";
+        const isGodModeModel = selectedModel === "apex-coder";
 
         if (selectedModel === "apex-omni") {
           let lastReportedState: OmniState | null = null;
@@ -247,8 +247,8 @@ export default function ChatPage() {
               totalDuration: (response as any).totalDuration || undefined,
             });
           }
-        } else if (selectedModel === "apex-unbound") {
-          // ── APEX Unbound: route through the new multi-agent pipeline ──
+        } else if (selectedModel === "apex-coder") {
+          // ── Apex Coder: route through the new multi-agent pipeline ──
           const currentUnboundState = unboundStateMap[thisConvId];
           const previousSpec = currentUnboundState?.spec || null;
           const previousSelectedChoices = currentUnboundState?.selectedChoices || null;
@@ -722,7 +722,7 @@ export default function ChatPage() {
   }, [activeConversationId, unboundStateMap, setUnboundStateForConv, addMessage, selectedModel, setStreamingContentForConv, setStreamingReasoningForConv, streamingContentMap]);
 
   const handleModelSelect = (model: AIModel) => setSelectedModel(model);
-  const isGodMode = selectedModel === "apex-unbound";
+  const isGodMode = selectedModel === "apex-coder";
   const activeConversation = conversations.find(c => c.id === activeConversationId);
 
   const handleExportConversation = useCallback(async () => {
@@ -821,49 +821,14 @@ export default function ChatPage() {
       />
 
       {/* ══════════ HEADER ══════════ */}
-      <motion.header
-        className="flex-shrink-0 relative z-20"
-        initial={{ y: -10, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <div className="apex-header-bg px-3 py-2.5 md:px-5 md:py-3">
-          <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
-
-            {/* Left: sidebar toggle + logo + model */}
-            <div className="flex flex-1 items-center gap-2 min-w-0">
-              {/* Always show on mobile, show only when closed on desktop */}
-              {(!sidebarOpen) && (
-                <motion.div
-                  whileHover={{ scale: 1.08 }}
-                  whileTap={{ scale: 0.92 }}
-                  initial={{ opacity: 0, x: -4 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.18 }}
-                >
-                  <button
-                    onClick={() => setSidebarOpen(true)}
-                    className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/8 hover:border-white/15 text-white/50 hover:text-white/80 transition-all duration-150"
-                    aria-label="فتح القائمة"
-                  >
-                    <PanelLeft className="w-4 h-4" />
-                  </button>
-                </motion.div>
-              )}
-
-              <div className="flex-1 min-w-[160px] sm:flex-none sm:min-w-[200px]">
-                <ModelSelector
-                  selectedModel={selectedModel}
-                  onSelectModel={handleModelSelect}
-                  disabled={isGenerating}
-                  isLocked={!!activeConversation && activeConversation.messages.length > 0}
-                />
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </motion.header>
+      <ChatHeader
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={() => setSidebarOpen(true)}
+        selectedModel={selectedModel}
+        onSelectModel={handleModelSelect}
+        isGenerating={isGenerating}
+        isModelLocked={!!activeConversation && activeConversation.messages.length > 0}
+      />
 
       {/* ══════════ MESSAGES ══════════ */}
       <div className="chat-scroll-container flex-1 overflow-y-auto overscroll-contain min-h-0 relative z-10">

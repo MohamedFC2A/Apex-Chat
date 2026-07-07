@@ -1,5 +1,5 @@
 /**
- * APEX Unbound — Phase 4: JS Agent
+ * Apex Coder — Phase 4: JS Agent
  *
  * Generates clean, modern JavaScript strictly constrained by the GlobalSelectorMap.
  * Event listeners are bound ONLY to verified IDs.
@@ -31,7 +31,7 @@ export async function runJsAgent(
     .map((t) => `${t.cssSelector} (${t.elements.join("/")} element)`)
     .join("\n  ");
 
-  const systemPrompt = `You are the APEX Unbound JavaScript Specialist Agent. Your role is to write modern, defensive ES6+ JavaScript that binds to ONLY verified DOM elements.
+  const systemPrompt = `You are the Apex Coder JavaScript Specialist Agent. Your role is to write modern, defensive ES6+ JavaScript that binds to ONLY verified DOM elements.
 
 ${constraintBlock}
 

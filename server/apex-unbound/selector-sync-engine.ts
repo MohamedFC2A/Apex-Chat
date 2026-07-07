@@ -1,5 +1,5 @@
 /**
- * APEX Unbound — Phase 3: Selector Sync Engine
+ * Apex Coder — Phase 3: Selector Sync Engine
  *
  * An AST-based parser that extracts ALL ids, classes, and data-attributes
  * from raw HTML. Produces a GlobalSelectorMap that constrains the CSS and JS agents.

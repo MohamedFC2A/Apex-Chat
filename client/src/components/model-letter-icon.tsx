@@ -11,10 +11,9 @@ export interface ModelLetterIconProps {
 
 const modelLetters: Record<AIModel, string> = {
   "apex-flash": "FL",
-  "apex-pro": "PR",
   "apex-elite": "EL",
   "apex-omni": "OM",
-  "apex-unbound": "UN",
+  "apex-coder": "CD",
 };
 
 export function ModelLetterIcon({
@@ -29,7 +28,7 @@ export function ModelLetterIcon({
 
   if (model === "apex-omni") {
     textClass = "gold-metallic-text font-black";
-  } else if (model === "apex-unbound") {
+  } else if (model === "apex-coder") {
     textClass = "silver-metallic-text font-black";
   }
 

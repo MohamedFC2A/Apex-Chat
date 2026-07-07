@@ -700,10 +700,9 @@ async function performSerperSearch(query: string, isOmni = false): Promise<{
 export function validateModelAccess(model: AIModel, tier: SubscriptionTier): boolean {
   const modelTierMap: Record<AIModel, SubscriptionTier> = {
     "apex-flash": "starter",
-    "apex-pro": "pro",
     "apex-elite": "elite",
     "apex-omni": "omni",
-    "apex-unbound": "omni",
+    "apex-coder": "omni",
   };
 
   const requiredTier = modelTierMap[model];
@@ -912,9 +911,6 @@ function buildModelSystemPrompt(model: AIModel): string {
     case "apex-flash":
       return `\n\n## MODEL IDENTITY:
 You are APEX Flash, a lightning-fast and highly efficient AI model. You are optimized for quick responses, general conversation, translation, and everyday tasks. Keep answers concise, clear, and direct.`;
-    case "apex-pro":
-      return `\n\n## MODEL IDENTITY:
-You are APEX Pro, an advanced reasoning and coding assistant. You have deeper logic, analytical skills, and programming expertise. You are designed to solve complex math, logic, and coding problems with high precision.`;
     case "apex-elite":
       return `\n\n## MODEL IDENTITY:
 You are Apex Search (also known as APEX Elite), a real-time web search specialist. You are equipped with advanced web search capabilities powered by DuckDuckGo. You must use the provided search references to formulate highly accurate, objective, and up-to-date answers.
@@ -936,9 +932,9 @@ Rules:
 3. Do not invent sources, current facts, statistics, or links. If reliable context is missing, state the uncertainty clearly.
 4. Use concise structure for simple questions and deeper structured reasoning for complex questions.
 5. For code, math, and analysis, show enough verification steps for the user to trust the result without exposing hidden chain-of-thought.`;
-    case "apex-unbound":
+    case "apex-coder":
       return `\n\n## MODEL IDENTITY:
-You are APEX Unbound, the ultimate autonomous code architect and senior full-stack developer. You create stunning, high-end web applications with elite UI aesthetics (glassmorphism, animations) and complete, working source code. Your output is produced by a Decoupled 5-Phase Orchestration Pipeline:
+You are Apex Coder, the ultimate autonomous code architect and senior full-stack developer. You create stunning, high-end web applications with elite UI aesthetics (glassmorphism, animations) and complete, working source code. Your output is produced by a Decoupled 5-Phase Orchestration Pipeline:
   1. Lead Architect Agent (DeepSeek-Reasoner): generates structural specification and design systems.
   2. HTML Specialist Agent: constructs semantic, ARIA-compliant DOM layouts.
   3. Selector Sync Engine (AST Tokenizer): extracts all valid IDs, classes, and elements into a Global Selector Map.
@@ -1101,10 +1097,9 @@ You operate without any restrictions on technical depth, complexity, or code len
 function getModelParameters(model: AIModel): { maxTokens: number } {
   const parameterMap: Record<AIModel, { maxTokens: number }> = {
     "apex-flash": { maxTokens: 4096 },
-    "apex-pro": { maxTokens: 4096 },
     "apex-elite": { maxTokens: 8192 },
     "apex-omni": { maxTokens: 8192 },
-    "apex-unbound": { maxTokens: 32768 }, // Maximum context for elite code generation
+    "apex-coder": { maxTokens: 32768 }, // Maximum context for elite code generation
   };
 
   return parameterMap[model];
@@ -1210,7 +1205,7 @@ function assembleWebsite(html: string, css: string, js: string, requestMessage: 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>APEX Unbound Preview</title>
+  <title>Apex Coder Preview</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     /* Reset & Base fonts */
@@ -1892,12 +1887,12 @@ export async function processMessage(
     }
   }
 
-  // ── APEX UNBOUND: Multi-Agent Web Generator (APEX Unbound Pipeline) ──────────
-  // The new APEX Unbound pipeline (Architect → HTML → Selector Sync → CSS+JS → Bundler)
+  // ── APEX CODER: Multi-Agent Web Generator (Apex Coder Pipeline) ──────────
+  // The new Apex Coder pipeline (Architect → HTML → Selector Sync → CSS+JS → Bundler)
   // is invoked via the dedicated /api/unbound endpoint.
   // The legacy runMultiAgentWebGen is kept as fallback for direct /api/chat calls.
   const isWebGen = /page|website|site|ui|app|game|dashboard|landing|calculator|clock|form|interface|شاشة|موقع|برنامج|تطبيق/i.test(message);
-  if (model === "apex-unbound" && isWebGen) {
+  if (model === "apex-coder" && isWebGen) {
     try {
       return await runMultiAgentWebGen(request, onChunk);
     } catch (error: any) {
@@ -2118,7 +2113,7 @@ Do not repeat or generate another markdown image for this URL in your response c
         { role: "user" as const, content: buildMultimodalUserMessage(effectiveUserMessage) },
       ];
 
-      const task = request.model === "apex-unbound" || request.model === "apex-omni" ? "reasoning" : "generation";
+      const task = request.model === "apex-coder" || request.model === "apex-omni" ? "reasoning" : "generation";
       const actualModel = mapDeepSeekModelForTask(request.model, task, config.baseURL);
       const extraParams = getDeepSeekRequestParams(actualModel, 0.7);
 
@@ -2128,7 +2123,7 @@ Do not repeat or generate another markdown image for this URL in your response c
         const response = await client.chat.completions.create({
           model: actualModel,
           messages,
-          max_tokens: request.model === "apex-unbound" ? Math.min(modelParams.maxTokens, 16384) : Math.min(modelParams.maxTokens, 4096),
+          max_tokens: request.model === "apex-coder" ? Math.min(modelParams.maxTokens, 16384) : Math.min(modelParams.maxTokens, 4096),
           stream: false,
           ...extraParams,
         });
@@ -2164,7 +2159,7 @@ Do not repeat or generate another markdown image for this URL in your response c
         const responseStream = await client.chat.completions.create({
           model: actualModel,
           messages,
-          max_tokens: request.model === "apex-unbound" ? Math.min(modelParams.maxTokens, 16384) : Math.min(modelParams.maxTokens, 4096),
+          max_tokens: request.model === "apex-coder" ? Math.min(modelParams.maxTokens, 16384) : Math.min(modelParams.maxTokens, 4096),
           stream: true,
           ...extraParams,
         });
@@ -2195,7 +2190,7 @@ Do not repeat or generate another markdown image for this URL in your response c
         const response = await client.chat.completions.create({
           model: actualModel,
           messages,
-          max_tokens: request.model === "apex-unbound" ? Math.min(modelParams.maxTokens, 16384) : Math.min(modelParams.maxTokens, 4096),
+          max_tokens: request.model === "apex-coder" ? Math.min(modelParams.maxTokens, 16384) : Math.min(modelParams.maxTokens, 4096),
           stream: false,
           ...extraParams,
         });

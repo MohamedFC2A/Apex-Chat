@@ -3,7 +3,7 @@ import { sendAIMessage, clientPerformSerperSearch } from "@/lib/ai-client";
 import type { ChatResponse, Message } from "@shared/schema";
 
 export interface AgentDraft {
-  model: "architect" | "coder" | "security" | "researcher" | "creative" | "linguist" | "skeptic" | "psychologist" | "futurist" | "optimizer";
+  model: "architect" | "coder" | "security" | "researcher" | "creative" | "linguist" | "skeptic" | "psychologist" | "futurist" | "optimizer" | "strategist" | "synthesizer";
   status: "loading" | "drafting" | "complete";
   draft: string;
   response?: string;
@@ -21,7 +21,7 @@ export interface OmniState {
 const AGENT_CONFIGS = {
   architect: {
     name: "The Architect",
-    model: "apex-pro" as const,
+    model: "apex-coder" as const,
     color: "#10a37f",
     icon: "🏗️",
     systemPrompt:
@@ -29,7 +29,7 @@ const AGENT_CONFIGS = {
   },
   coder: {
     name: "The Coder",
-    model: "apex-pro" as const,
+    model: "apex-coder" as const,
     color: "#4285f4",
     icon: "💻",
     systemPrompt:
@@ -37,7 +37,7 @@ const AGENT_CONFIGS = {
   },
   security: {
     name: "The Security Officer",
-    model: "apex-pro" as const,
+    model: "apex-coder" as const,
     color: "#ef4444",
     icon: "🛡️",
     systemPrompt:
@@ -45,7 +45,7 @@ const AGENT_CONFIGS = {
   },
   researcher: {
     name: "The Researcher",
-    model: "apex-pro" as const,
+    model: "apex-coder" as const,
     color: "#8b5cf6",
     icon: "📚",
     systemPrompt:
@@ -69,7 +69,7 @@ const AGENT_CONFIGS = {
   },
   skeptic: {
     name: "The Skeptic",
-    model: "apex-pro" as const,
+    model: "apex-coder" as const,
     color: "#dc2626",
     icon: "🔍",
     systemPrompt:
@@ -93,11 +93,27 @@ const AGENT_CONFIGS = {
   },
   optimizer: {
     name: "The Optimizer",
-    model: "apex-pro" as const,
+    model: "apex-coder" as const,
     color: "#84cc16",
     icon: "⚡",
     systemPrompt:
       "Focus on performance, efficiency, speed optimization, and resource management. Find the fastest, most efficient solution. Detect the user's language and respond in that language. If the user speaks Arabic, reply entirely in Arabic without mixing languages.",
+  },
+  strategist: {
+    name: "The Strategist",
+    model: "apex-omni" as const,
+    color: "#c084fc",
+    icon: "🎯",
+    systemPrompt:
+      "Focus on long-term reasoning, multi-step strategic planning, recursive self-improvement loops, and goal decomposition. Think several steps ahead and anticipate cascading effects. Detect the user's language and respond in that language. If the user speaks Arabic, reply entirely in Arabic without mixing languages.",
+  },
+  synthesizer: {
+    name: "The Synthesizer",
+    model: "apex-omni" as const,
+    color: "#fbbf24",
+    icon: "🔄",
+    systemPrompt:
+      "Fuse outputs from all cognitive agents into a single, coherent, contradiction-free response. Resolve conflicting viewpoints, prioritize the strongest arguments, and produce the definitive final answer. Detect the user's language and respond in that language. If the user speaks Arabic, reply entirely in Arabic without mixing languages.",
   },
 };
 
@@ -128,7 +144,7 @@ async function callAgent(
       customPrompt += `\n\n=== GOOGLE REAL-TIME SEARCH RESULTS ===\nUse the following real-time data to answer the user request:\n${searchContext}`;
     }
 
-    const isProModel = config.model === "apex-pro";
+    const isProModel = config.model === "apex-coder";
 
     const response = await sendAIMessage(
       `${customPrompt}\n\nUser: ${message}`,
@@ -227,6 +243,8 @@ export async function processOmniRequest(
       psychologist: { model: "psychologist", status: "loading", draft: "" },
       futurist: { model: "futurist", status: "loading", draft: "" },
       optimizer: { model: "optimizer", status: "loading", draft: "" },
+      strategist: { model: "strategist", status: "loading", draft: "" },
+      synthesizer: { model: "synthesizer", status: "loading", draft: "" },
     },
   };
   
@@ -381,7 +399,7 @@ export async function processOmniRequest(
   try {
     const finalResponse = await sendAIMessage(
       synthesisPrompt,
-      "apex-pro", // Use APEX Pro for synthesis reasoning (no search trigger)
+      "apex-coder", // Use Apex Coder for synthesis reasoning (no search trigger)
       finalHistory,
       "standard",
       false, // isGodMode

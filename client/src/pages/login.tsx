@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -114,10 +114,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-12 min-h-screen w-full bg-black overflow-hidden select-none font-sans">
+    <div className="grid grid-cols-1 md:grid-cols-12 min-h-screen w-full bg-background overflow-hidden select-none font-sans">
       
       {/* ─── LEFT PANE: BRAND SHOWCASE & LANDING (Desktop Only) ─── */}
-      <div className="hidden md:flex md:col-span-6 lg:col-span-7 flex-col justify-between p-12 bg-zinc-950 border-r border-white/5 relative overflow-hidden">
+      <div className="hidden md:flex md:col-span-6 lg:col-span-7 flex-col justify-between p-12 bg-card border-r border-white/5 relative overflow-hidden">
         
         {/* Glow Gradients */}
         <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-violet-600/10 rounded-full blur-[120px] pointer-events-none" />
@@ -128,7 +128,7 @@ export default function LoginPage() {
 
         {/* Top brand header */}
         <div className="flex items-center gap-2.5 z-10">
-          <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-white/10 flex items-center justify-center shadow-lg">
+          <div className="w-8 h-8 rounded-lg bg-muted border border-white/10 flex items-center justify-center shadow-lg">
             <Zap className="w-4 h-4 text-violet-400" />
           </div>
           <span className="font-display font-bold tracking-[0.2em] text-white text-sm">APEX CHAT</span>
@@ -205,7 +205,7 @@ export default function LoginPage() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, delay: 0.4 + idx * 0.1 }}
-                className={cn("p-4 rounded-xl border bg-zinc-900/40 backdrop-blur-md transition-all duration-300 hover:bg-zinc-900/70 hover:border-white/10", feat.bg)}
+                className={cn("p-4 rounded-xl border bg-muted/40 backdrop-blur-md transition-all duration-300 hover:bg-muted/70 hover:border-white/10", feat.bg)}
               >
                 <div className="flex items-center justify-start gap-2.5 mb-2">
                   <span className={feat.color}>
@@ -233,14 +233,14 @@ export default function LoginPage() {
       </div>
 
       {/* ─── RIGHT PANE: AUTHENTICATION INTERFACE ─── */}
-      <div className="col-span-12 md:col-span-6 lg:col-span-5 flex flex-col justify-center items-center p-6 sm:p-12 bg-black relative">
+      <div className="col-span-12 md:col-span-6 lg:col-span-5 flex flex-col justify-center items-center p-6 sm:p-12 bg-background relative">
         
         {/* Glow behind form */}
         <div className="absolute top-[40%] right-[-10%] w-[60%] h-[60%] bg-violet-950/15 rounded-full blur-[100px] pointer-events-none" />
 
         {/* Mobile-only logo */}
         <div className="flex md:hidden items-center gap-2 mb-8">
-          <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-white/10 flex items-center justify-center shadow-lg">
+          <div className="w-8 h-8 rounded-lg bg-muted border border-white/10 flex items-center justify-center shadow-lg">
             <Zap className="w-4 h-4 text-violet-400" />
           </div>
           <span className="font-display font-bold tracking-[0.2em] text-white text-sm">APEX CHAT</span>
@@ -253,7 +253,7 @@ export default function LoginPage() {
           className="w-full max-w-sm"
         >
           {/* Glass form container */}
-          <div className="bg-zinc-950 border border-white/8 rounded-2xl p-6 sm:p-8 shadow-[0_30px_90px_rgba(0,0,0,0.8)] relative overflow-hidden">
+          <div className="bg-card border border-white/8 rounded-2xl p-6 sm:p-8 shadow-[0_30px_90px_rgba(0,0,0,0.8)] relative overflow-hidden">
             
             {/* Header intro */}
             <div className="text-center mb-6">
@@ -271,7 +271,7 @@ export default function LoginPage() {
 
             {/* Custom Tab Switcher (Only if not in Reset mode) */}
             {mode !== "reset" && (
-              <div className="flex p-0.5 rounded-lg bg-zinc-900/60 border border-white/5 mb-6">
+              <div className="flex p-0.5 rounded-lg bg-muted/60 border border-white/5 mb-6">
                 <button
                   type="button"
                   onClick={() => setMode("login")}
@@ -315,7 +315,7 @@ export default function LoginPage() {
                   onClick={handleGuestSignIn}
                   disabled={isLoading}
                   variant="outline"
-                  className="w-full bg-zinc-900/30 border-white/8 hover:bg-zinc-900 text-white font-bold h-11 text-xs gap-2 rounded-lg transition-all duration-200 hover:border-white/20"
+                  className="w-full bg-muted/30 border-white/8 hover:bg-muted text-white font-bold h-11 text-xs gap-2 rounded-lg transition-all duration-200 hover:border-white/20"
                 >
                   <User className="w-4 h-4 text-zinc-400" />
                   <span>الدخول الفوري كضيف (تخطي)</span>
@@ -351,7 +351,7 @@ export default function LoginPage() {
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
                       required
-                      className="pl-10 pr-4 bg-zinc-900/40 border-white/8 text-white h-11 text-xs focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all rounded-lg"
+                      className="pl-10 pr-4 bg-muted/40 border-white/8 text-white h-11 text-xs focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all rounded-lg"
                     />
                   </div>
                 </div>
@@ -371,7 +371,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="pl-10 pr-4 bg-zinc-900/40 border-white/8 text-white h-11 text-xs focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all rounded-lg"
+                    className="pl-10 pr-4 bg-muted/40 border-white/8 text-white h-11 text-xs focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all rounded-lg"
                   />
                 </div>
               </div>
@@ -403,7 +403,7 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       minLength={6}
-                      className="pl-10 pr-4 bg-zinc-900/40 border-white/8 text-white h-11 text-xs focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all rounded-lg"
+                      className="pl-10 pr-4 bg-muted/40 border-white/8 text-white h-11 text-xs focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 focus-visible:ring-0 focus-visible:ring-offset-0 transition-all rounded-lg"
                     />
                   </div>
                 </div>

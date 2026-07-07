@@ -86,7 +86,7 @@ Border: border-r border-white/5
 │  │  [📎] Type your message...                        [→]  │  │
 │  │                                                          │  │
 │  │  ─────────────────────────────────────────────────────  │  │
-│  │  [🧠] [🔍] [💀]                            ⚡ UNBOUND  │  │
+│  │  [🧠] [🔍] [💀]                            ⚡ CODER  │  │
 │  └────────────────────────────────────────────────────────┘  │
 │                                                                │
 │  ApexChat can make mistakes. Verify important information.    │
@@ -221,15 +221,15 @@ Instead of heavy drop shadows, we use:
 
 ## GOD MODE SPECIAL STATES
 
-When God Mode (apex-unbound) is active:
+When God Mode (apex-coder) is active:
 
 ```
 INPUT BORDER:        border-red-900/50 + glow-red
 TOGGLE BUTTON:       bg-red-950/50 text-red-400 border-red-900/50
                      + animate-pulse
-MODEL SELECTOR:      Shows "UNBOUND" badge
+MODEL SELECTOR:      Shows "CODER" badge
                      bg-red-950/50 text-red-400 border-red-900/50
-STATUS TEXT:         "⚡ UNBOUND" in tracking-wider
+STATUS TEXT:         "⚡ CODER" in tracking-wider
 ```
 
 ---

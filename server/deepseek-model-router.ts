@@ -2,16 +2,15 @@ export type DeepSeekTask = "reasoning" | "generation";
 
 // OpenRouter Free Models mapping (July 2026):
 // - meta-llama/llama-3.1-8b-instruct:free   → Fast lightweight model (Flash)
-// - meta-llama/llama-3.3-70b-instruct:free   → Strong 70B model (Pro/Elite/Omni/Unbound)
+// - meta-llama/llama-3.3-70b-instruct:free   → Strong 70B model (Elite/Omni/Coder)
 //
 // All apex-* model aliases map to OpenRouter free models exclusively.
 // DeepSeek API is no longer used.
 const APEX_MODEL_ALIASES: Record<string, string> = {
   "apex-flash":   "google/gemini-2.5-flash",
-  "apex-pro":     "google/gemini-2.5-flash",
   "apex-elite":   "google/gemini-2.5-flash",
   "apex-omni":    "google/gemini-2.5-flash",
-  "apex-unbound": "google/gemini-2.5-flash",
+  "apex-coder":   "google/gemini-2.5-flash",
   // Legacy fallbacks mapped to google/gemini-2.5-flash
   "deepseek-v4-flash": "google/gemini-2.5-flash",
   "deepseek-v4-pro":   "google/gemini-2.5-flash",

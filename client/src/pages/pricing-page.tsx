@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { motion } from "framer-motion";
 import { useSubscriptionStore } from "@/lib/subscription-store";
 import { useAuthStore } from "@/lib/auth-store";
@@ -34,7 +34,7 @@ const tiers = [
         subtitle: "Perfect for Getting Started",
         icon: Zap,
         color: "zinc",
-        borderClass: "border-zinc-700/50",
+        borderClass: "border-border/50",
         glowClass: "group-hover:shadow-lg group-hover:shadow-zinc-800/20",
         bgGradient: "from-zinc-950 to-zinc-900",
         features: [
@@ -163,7 +163,7 @@ export default function PricingPage() {
     };
 
     return (
-        <div className="min-h-screen bg-black relative overflow-x-hidden font-sans">
+        <div className="min-h-screen bg-background relative overflow-x-hidden font-sans">
             {/* Enhanced Background with Holographic Grid */}
             <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 via-black to-black opacity-40 pointer-events-none" />
             <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)] pointer-events-none" />
@@ -171,7 +171,7 @@ export default function PricingPage() {
             <div className="relative z-10 container mx-auto px-4 py-8 pb-24">
                 <Button
                     variant="ghost"
-                    className="mb-8 text-zinc-400 hover:text-white"
+                    className="mb-8 text-muted-foreground hover:text-white"
                     onClick={() => setLocation("/chat")}
                 >
                     <ArrowLeft className="w-4 h-4 mr-2" />
@@ -184,7 +184,7 @@ export default function PricingPage() {
                     className="text-center mb-16"
                 >
                     {/* Premium Header */}
-                    <div className="inline-flex items-center justify-center p-2 mb-6 rounded-full bg-zinc-900/50 border border-zinc-800 backdrop-blur-xl">
+                    <div className="inline-flex items-center justify-center p-2 mb-6 rounded-full bg-muted/50 border border-border backdrop-blur-xl">
                         <Button
                             variant="ghost"
                             size="sm"
@@ -199,7 +199,7 @@ export default function PricingPage() {
                             Premium Plans
                         </span>
                     </h1>
-                    <p className="text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
                         Enterprise-grade AI infrastructure. 
                         <span className="text-emerald-400 font-semibold">Transparent pricing</span>, unlimited potential.
                     </p>
@@ -215,7 +215,7 @@ export default function PricingPage() {
                                 {/* Holographic Border */}
                                 <div className="absolute -inset-[1px] bg-gradient-to-r from-emerald-500/20 via-amber-500/20 to-emerald-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                                 
-                                <div className="relative bg-gradient-to-br from-zinc-900 via-zinc-950 to-zinc-900 backdrop-blur-xl border border-zinc-800/50 rounded-2xl p-5 shadow-2xl">
+                                <div className="relative bg-gradient-to-br from-zinc-900 via-zinc-950 to-zinc-900 backdrop-blur-xl border border-border/50 rounded-2xl p-5 shadow-2xl">
                                     {/* Top Accent Line */}
                                     <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
                                     
@@ -228,7 +228,7 @@ export default function PricingPage() {
                                                 </div>
                                             </div>
                                             <div className="text-left">
-                                                <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-1">Available Balance</p>
+                                                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mb-1">Available Balance</p>
                                                 <p className="text-3xl font-black bg-gradient-to-r from-emerald-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent tracking-tight">
                                                     ${walletBalance.toFixed(2)}
                                                 </p>
@@ -313,13 +313,13 @@ export default function PricingPage() {
                                         <div className={`relative w-14 h-14 rounded-2xl bg-gradient-to-br ${
                                             tierInfo.ultimate 
                                                 ? 'from-amber-950/50 to-orange-950/50 border-amber-800/50' 
-                                                : 'from-zinc-900/50 to-zinc-800/50 border-zinc-700/50'
+                                                : 'from-zinc-900/50 to-zinc-800/50 border-border/50'
                                         } border flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
                                             {tierInfo.ultimate && (
                                                 <div className="absolute inset-0 bg-amber-500/10 blur-xl" />
                                             )}
                                             <tierInfo.icon className={`w-7 h-7 relative z-10 ${
-                                                tierInfo.ultimate ? 'text-amber-400' : 'text-zinc-400'
+                                                tierInfo.ultimate ? 'text-amber-400' : 'text-muted-foreground'
                                             }`} />
                                         </div>
                                         <h3 className={`text-xl font-black mb-2 ${
@@ -332,7 +332,7 @@ export default function PricingPage() {
                                         {tierInfo.tagline && (
                                             <p className="text-xs text-amber-500/80 font-medium mb-1 uppercase tracking-widest">{tierInfo.tagline}</p>
                                         )}
-                                        <p className="text-zinc-400 text-sm h-10">{tierInfo.subtitle}</p>
+                                        <p className="text-muted-foreground text-sm h-10">{tierInfo.subtitle}</p>
                                     </div>
 
                                     <div className="flex items-baseline gap-2 mb-8">
@@ -350,7 +350,7 @@ export default function PricingPage() {
                                         }`}>
                                             {tierInfo.price}
                                         </span>
-                                        <span className="text-zinc-500 text-sm font-medium">/mo</span>
+                                        <span className="text-muted-foreground text-sm font-medium">/mo</span>
                                     </div>
 
                                     <ul className="space-y-3 mb-8 flex-grow">
@@ -366,16 +366,16 @@ export default function PricingPage() {
 
                                     <div className="mt-auto">
                                         {isCurrentTier ? (
-                                            <Button className="w-full bg-zinc-800 text-zinc-400 border border-zinc-700 font-semibold" disabled>
+                                            <Button className="w-full bg-muted/80 text-muted-foreground border border-border font-semibold" disabled>
                                                 ✅ Active Plan
                                             </Button>
                                         ) : tierInfo.id === "starter" ? (
-                                            <Button className="w-full bg-zinc-900 border border-zinc-800 text-zinc-500 font-semibold" variant="outline" disabled>
+                                            <Button className="w-full bg-muted border border-border text-muted-foreground font-semibold" variant="outline" disabled>
                                                 <Lock className="w-4 h-4 mr-2" />
                                                 Always Free
                                             </Button>
                                         ) : isDowngrade ? (
-                                            <Button className="w-full bg-zinc-900 border border-zinc-800 text-zinc-500 font-semibold" variant="outline" disabled>
+                                            <Button className="w-full bg-muted border border-border text-muted-foreground font-semibold" variant="outline" disabled>
                                                 <Lock className="w-4 h-4 mr-2" />
                                                 Cannot Downgrade
                                             </Button>

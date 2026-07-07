@@ -1,5 +1,5 @@
 /**
- * APEX Unbound — Agent 1: Architect Agent
+ * Apex Coder — Agent 1: Architect Agent
  *
  * Parses user requirements and produces a SystemSpec JSON.
  * No code is written here — only structural planning.
@@ -88,7 +88,7 @@ export async function runArchitectAgent(
 ): Promise<SystemSpec> {
   onStatus?.("[Architect Agent] Analyzing requirements and generating system specification...");
 
-  const systemPrompt = `You are the APEX Unbound Lead Architect Agent. Your role is to analyze a user's web app request and produce a detailed JSON system specification. You do NOT write code — only architecture.
+  const systemPrompt = `You are the Apex Coder Lead Architect Agent. Your role is to analyze a user's web app request and produce a detailed JSON system specification. You do NOT write code — only architecture.
 
 You must respond with ONLY a valid JSON object (no markdown, no backticks, no explanation). The JSON must exactly match this TypeScript interface:
 
@@ -156,7 +156,7 @@ You must respond with ONLY a valid JSON object (no markdown, no backticks, no ex
 
 Rules:
 - Plan a Multi-Page Single-Bundle Architecture. Generate 2 to 5 page views depending on the prompt. Each page view must be represented in pages[] and must be routable by hash (#home, #services, #contact) within one HTML bundle.
-- Create a precise APEX Unbound Sync Contract in uiStateContract. It must name state classes and every important event selector so the CSS and JS agents can follow the same contract literally.
+- Create a precise Apex Coder Sync Contract in uiStateContract. It must name state classes and every important event selector so the CSS and JS agents can follow the same contract literally.
 - Every page id must be stable kebab-case without spaces. Use "home" as the first page id unless the user explicitly requests a different default.
 - Every component must belong to at least one page through pages[].componentIds.
 - Plan an absolutely breathtaking, "God Tier", production-ready system specification. The design MUST be at the level of Apple, Stripe, or Linear. It must feature a comprehensive, multi-component layout (minimum 6-8 components) packed with premium features, extreme attention to detail, and extensive interactivity.

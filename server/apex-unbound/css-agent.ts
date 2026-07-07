@@ -1,5 +1,5 @@
 /**
- * APEX Unbound — Phase 4: CSS Agent
+ * Apex Coder — Phase 4: CSS Agent
  *
  * Generates premium CSS strictly constrained by the GlobalSelectorMap.
  * No selector from outside the map may be used.
@@ -26,7 +26,7 @@ export async function runCssAgent(
 
   const constraintBlock = buildSelectorConstraintPrompt(selectorMap);
 
-  const systemPrompt = `You are the APEX Unbound CSS Specialist Agent. Your role is to generate stunning, production-grade CSS for a web project.
+  const systemPrompt = `You are the Apex Coder CSS Specialist Agent. Your role is to generate stunning, production-grade CSS for a web project.
 
 ${constraintBlock}
 

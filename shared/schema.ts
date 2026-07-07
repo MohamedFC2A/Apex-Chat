@@ -1,12 +1,12 @@
 import { z } from "zod";
 
-// AI Model types - DeepSeek Cloud Models
+// AI Model types - Apex Cloud Models (4 models: Flash, Elite, Omni, Coder)
+// NOTE: apex-pro has been REMOVED. apex-unbound is now apex-coder.
 export const AIModels = [
   "apex-flash",
-  "apex-pro",
   "apex-elite",
   "apex-omni",
-  "apex-unbound"
+  "apex-coder"
 ] as const;
 export type AIModel = typeof AIModels[number];
 
@@ -17,10 +17,9 @@ export type SubscriptionTier = typeof SubscriptionTiers[number];
 // Model to Tier Mapping
 export const ModelTierMap: Record<AIModel, SubscriptionTier> = {
   "apex-flash": "starter",
-  "apex-pro": "pro",
   "apex-elite": "elite",
   "apex-omni": "omni",
-  "apex-unbound": "omni",
+  "apex-coder": "omni",
 };
 
 // Voucher Codes (Direct Tier Unlock)
@@ -231,7 +230,7 @@ export function estimateTokens(text: string): number {
 // Get context window limit by model name
 export function getModelContextLimit(model: string): number {
   if (!model) return 1048576;
-  if (model === "apex-flash" || model === "apex-pro" || model === "apex-elite" || model === "apex-omni" || model === "apex-unbound") {
+  if (model === "apex-flash" || model === "apex-elite" || model === "apex-omni" || model === "apex-coder") {
     return 1048576; // google/gemini-2.5-flash limit is 1,048,576
   }
   if (model.includes("llama-3.3") || model.includes("llama-3.2")) return 131072;

@@ -1,5 +1,5 @@
 /**
- * APEX Unbound — Phase 5: Bundler Engine
+ * Apex Coder — Phase 5: Bundler Engine
  *
  * Compiles HTML + CSS + JS into a unified, self-contained HTML file.
  * Handles: font injection, viewport meta, RTL directives,

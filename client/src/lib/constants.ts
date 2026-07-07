@@ -3,20 +3,19 @@ import { Zap, Sparkles, Brain, Crown, Cpu, Code2, Skull, Search } from "lucide-r
 
 // BRAND MASKING: Premium model names mapped to real Cerebras/Groq APIs
 // Users see next-gen branding, backend routes to actual models
+// NOTE: apex-pro REMOVED. apex-unbound RENAMED to apex-coder (now consolidated).
 export const MODELS: AIModel[] = [
   "apex-flash",
-  "apex-pro",
   "apex-elite",
   "apex-omni",
-  "apex-unbound",
+  "apex-coder",
 ];
 
 export const MODEL_TIER_MAP: Record<AIModel, "starter" | "pro" | "elite" | "omni"> = {
   "apex-flash": "starter",
-  "apex-pro": "pro",
   "apex-elite": "elite",
   "apex-omni": "omni",
-  "apex-unbound": "omni",
+  "apex-coder": "omni",
 };
 
 export const MODEL_INFO: Record<AIModel, { name: string; subtitle: string; icon: typeof Zap }> = {
@@ -25,24 +24,19 @@ export const MODEL_INFO: Record<AIModel, { name: string; subtitle: string; icon:
     subtitle: "Lightning Fast & Efficient", 
     icon: Zap 
   },
-  "apex-pro": { 
-    name: "APEX Pro", 
-    subtitle: "Advanced Logic & Coding", 
-    icon: Cpu 
-  },
   "apex-elite": { 
-    name: "Apex search", 
+    name: "Apex Search", 
     subtitle: "Real-time Web Search & AI", 
     icon: Search 
   },
   "apex-omni": { 
     name: "Apex Omni", 
-    subtitle: "[DECA-CORE] Cognitive Engine", 
+    subtitle: "[DODECA-CORE] Neuro-Synaptic Engine · AGI-Grade Reasoning", 
     icon: Crown 
   },
-  "apex-unbound": {
-    name: "APEX Unbound",
-    subtitle: "DeepSeek Pro · Code Architect",
+  "apex-coder": {
+    name: "Apex Coder",
+    subtitle: "Autonomous Full-Stack Architect · Code & Deploy",
     icon: Code2
   },
 };

@@ -29,12 +29,15 @@ const agentMeta: Record<string, {
   psychologist: { icon: Brain,          name: "Psychologist", role: "User Empathy",        desc: "Modeling user intent, tailoring context, aligning response to user expectations.",                  output: "Context Model",          color: "#ec4899" },
   futurist:     { icon: TrendingUp,     name: "Futurist",     role: "Scalability",         desc: "Evaluating scalability, forecasting implications, future-proofing outputs for longevity.",          output: "Future Forecast",         color: "#06b6d4" },
   optimizer:    { icon: Zap,            name: "Optimizer",    role: "Performance",         desc: "Optimizing resource efficiency, reducing computational overhead, minimizing latency.",              output: "Optimization Plan",       color: "#84cc16" },
+  strategist:   { icon: Brain,          name: "Strategist",   role: "Long-Term Reasoning",  desc: "Performing recursive self-improvement, strategic planning, and multi-step goal decomposition.",     output: "Strategy Blueprint",     color: "#c084fc" },
+  synthesizer:  { icon: Layers,         name: "Synthesizer",  role: "Cross-Agent Fusion",  desc: "Fusing outputs from all agents, resolving contradictions, and producing the final coherent response.", output: "Unified Synthesis",    color: "#fbbf24" },
 };
 
-// Fixed agent order to match processOmniRequest execution order
+// Fixed agent order to match processOmniRequest execution order (DODECA-CORE)
 const AGENT_ORDER = [
   "architect", "coder", "security", "researcher", "creative",
-  "linguist", "skeptic", "psychologist", "futurist", "optimizer"
+  "linguist", "skeptic", "psychologist", "futurist", "optimizer",
+  "strategist", "synthesizer"
 ];
 
 // ─── Custom palette icon ───────────────────────────────────────────────────

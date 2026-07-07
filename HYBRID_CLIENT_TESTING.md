@@ -111,23 +111,23 @@ firebase deploy --only hosting
 
 ---
 
-### **4. Test God Mode (apex-unbound)**
+### **4. Test God Mode (apex-coder)**
 
 **Local Setup:**
 ```bash
-# Ensure apex-unbound model exists
-ollama list | grep apex-unbound
+# Ensure apex-coder model exists
+ollama list | grep apex-coder
 
 # Start Ollama
 ollama serve
 ```
 
 **Test:**
-1. Select **"APEX UNBOUND"** model from dropdown
+1. Select **"APEX CODER"** model from dropdown
 2. Send Arabic message: "ازاي تعمل bubble sort؟"
 3. Check console:
    ```
-   🚀 Sending via Hybrid AI Client (apex-unbound)...
+   🚀 Sending via Hybrid AI Client (apex-coder)...
    🔌 Connecting to Ollama (localhost:11434)...
    ✅ Ollama response received
    ```

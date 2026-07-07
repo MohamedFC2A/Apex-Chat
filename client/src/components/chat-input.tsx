@@ -90,7 +90,7 @@ export function ChatInput({
   // Sync state variables
   useEffect(() => {
     const isSearchModel = selectedModel === "apex-elite";
-    const isGodModel = selectedModel === "apex-unbound";
+    const isGodModel = selectedModel === "apex-coder";
     setDeepResearch(isSearchModel);
     setGodMode(isGodModel);
   }, [selectedModel, setDeepResearch, setGodMode]);
@@ -423,7 +423,7 @@ export function ChatInput({
                   <DropdownMenuItem
                     onClick={() => {
                       setSelectedGenType((prev) => (prev === "quiz" ? null : "quiz"));
-                      if (selectedModel === "apex-unbound") {
+                      if (selectedModel === "apex-coder") {
                         setSelectedModel("apex-flash");
                       }
                     }}
@@ -440,7 +440,7 @@ export function ChatInput({
                   <DropdownMenuItem
                     onClick={() => {
                       setSelectedGenType((prev) => (prev === "pdf" ? null : "pdf"));
-                      if (selectedModel === "apex-unbound") {
+                      if (selectedModel === "apex-coder") {
                         setSelectedModel("apex-flash");
                       }
                     }}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   User, Mail, Camera, Save, ArrowLeft, LogOut, Wallet, Cloud, CloudOff, 
@@ -176,7 +176,7 @@ export default function SettingsPage() {
   return (
     <div 
       ref={containerRef}
-      className="flex flex-col h-screen w-full bg-black text-white relative overflow-hidden select-none font-sans"
+      className="flex flex-col h-screen w-full bg-background text-foreground relative overflow-hidden select-none font-sans"
       style={{
         backgroundImage: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(124, 58, 237, 0.08) 0%, rgba(6, 182, 212, 0.03) 33%, transparent 70%)`,
       }}
@@ -185,13 +185,13 @@ export default function SettingsPage() {
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808007_1px,transparent_1px),linear-gradient(to_bottom,#80808007_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
 
       {/* Header bar */}
-      <header className="sticky top-0 z-20 flex items-center justify-between px-6 h-16 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl shrink-0" dir="rtl">
+      <header className="sticky top-0 z-20 flex items-center justify-between px-6 h-16 border-b border-white/5 bg-card/80 backdrop-blur-xl shrink-0" dir="rtl">
         <div className="flex items-center gap-3">
           <Button
             onClick={() => setLocation("/chat")}
             variant="ghost"
             size="sm"
-            className="gap-2 text-zinc-400 hover:text-white border border-white/5 hover:bg-white/5 rounded-lg"
+            className="gap-2 text-muted-foreground hover:text-white border border-white/5 hover:bg-white/5 rounded-lg"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>العودة للمحادثة</span>
@@ -210,7 +210,7 @@ export default function SettingsPage() {
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6 gap-6" dir="rtl">
         
         {/* SIDEBAR TABS: Navigation */}
-        <div className="w-full md:w-64 flex shrink-0 md:flex-col overflow-x-auto md:overflow-x-visible gap-2 p-1 bg-zinc-950/50 backdrop-blur-md border border-white/5 rounded-xl md:h-fit">
+        <div className="w-full md:w-64 flex shrink-0 md:flex-col overflow-x-auto md:overflow-x-visible gap-2 p-1 bg-card/50 backdrop-blur-md border border-white/5 rounded-xl md:h-fit">
           {[
             { id: "profile", label: "الملف الشخصي", sub: "Profile settings", icon: User },
             { id: "preferences", label: "تفضيلات النظام", sub: "System preferences", icon: Sliders },
@@ -227,13 +227,13 @@ export default function SettingsPage() {
                 className={`flex items-center gap-3 w-full p-3 rounded-lg text-right shrink-0 transition-all duration-200 border ${
                   isSelected
                     ? "bg-white/5 border-white/10 text-white shadow-[0_4px_12px_rgba(255,255,255,0.02)]"
-                    : "border-transparent text-zinc-400 hover:text-white hover:bg-white/5"
+                    : "border-transparent text-muted-foreground hover:text-white hover:bg-white/5"
                 }`}
               >
-                <Icon className={`w-5 h-5 ${isSelected ? "text-violet-400" : "text-zinc-500"}`} />
+                <Icon className={`w-5 h-5 ${isSelected ? "text-violet-400" : "text-muted-foreground"}`} />
                 <div>
                   <div className="text-xs font-bold font-sans">{tab.label}</div>
-                  <div className="text-[9px] text-zinc-500 font-mono tracking-wider">{tab.sub}</div>
+                  <div className="text-[9px] text-muted-foreground font-mono tracking-wider">{tab.sub}</div>
                 </div>
                 {isSelected && (
                   <div className="w-1.5 h-1.5 rounded-full bg-violet-400 mr-auto shrink-0 animate-pulse" />
@@ -244,7 +244,7 @@ export default function SettingsPage() {
         </div>
 
         {/* TAB CONTENTS: Main View */}
-        <div className="flex-1 min-w-0 bg-zinc-950/50 backdrop-blur-md border border-white/5 rounded-xl flex flex-col overflow-y-auto">
+        <div className="flex-1 min-w-0 bg-card/50 backdrop-blur-md border border-white/5 rounded-xl flex flex-col overflow-y-auto">
           <div className="p-6 sm:p-8 flex-1">
             <AnimatePresence mode="wait">
               <motion.div
@@ -261,31 +261,31 @@ export default function SettingsPage() {
                   <div className="space-y-6">
                     <div className="border-b border-white/5 pb-4">
                       <h2 className="text-lg font-bold text-white">الملف الشخصي // PROFILE</h2>
-                      <p className="text-[11px] text-zinc-500 mt-1">تحديث وتعديل البيانات الشخصية المعروضة على حسابك.</p>
+                      <p className="text-[11px] text-muted-foreground mt-1">تحديث وتعديل البيانات الشخصية المعروضة على حسابك.</p>
                     </div>
 
                     {/* Avatar display & edit */}
                     <div className="flex flex-col sm:flex-row items-center gap-6 p-5 bg-white/2 rounded-xl border border-white/5">
                       <Avatar className="w-20 h-20 border-2 border-white/10 shadow-xl">
                         <AvatarImage src={photoURL || user.user_metadata?.avatar_url || undefined} />
-                        <AvatarFallback className="bg-zinc-900 text-white text-xl font-bold">
+                        <AvatarFallback className="bg-muted text-foreground text-xl font-bold">
                           {initials}
                         </AvatarFallback>
                       </Avatar>
 
                       <div className="flex-1 w-full space-y-2">
-                        <Label htmlFor="photoURL" className="text-[11px] font-bold text-zinc-400">
+                        <Label htmlFor="photoURL" className="text-[11px] font-bold text-muted-foreground">
                           رابط صورة الحساب الشخصية (URL)
                         </Label>
                         <div className="relative">
-                          <Camera className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                          <Camera className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
                             id="photoURL"
                             type="url"
                             placeholder="https://example.com/avatar.jpg"
                             value={photoURL}
                             onChange={(e) => setPhotoURL(e.target.value)}
-                            className="pl-10 bg-zinc-950/80 border-white/10 text-white focus:border-violet-500/50 rounded-lg text-xs"
+                            className="pl-10 bg-card/80 border-white/10 text-white focus:border-violet-500/50 rounded-lg text-xs"
                           />
                         </div>
                       </div>
@@ -294,25 +294,25 @@ export default function SettingsPage() {
                     {/* Form fields */}
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="displayName" className="text-[11px] font-bold text-zinc-400">
+                        <Label htmlFor="displayName" className="text-[11px] font-bold text-muted-foreground">
                           الاسم بالكامل (اسم العرض)
                         </Label>
                         <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
                             id="displayName"
                             type="text"
                             placeholder="محمد أحمد"
                             value={displayName}
                             onChange={(e) => setDisplayName(e.target.value)}
-                            className="pl-10 bg-zinc-950/80 border-white/10 text-white focus:border-violet-500/50 rounded-lg text-xs"
+                            className="pl-10 bg-card/80 border-white/10 text-white focus:border-violet-500/50 rounded-lg text-xs"
                           />
                         </div>
                       </div>
 
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <Label htmlFor="email" className="text-[11px] font-bold text-zinc-400">
+                          <Label htmlFor="email" className="text-[11px] font-bold text-muted-foreground">
                             البريد الإلكتروني (معرّف معتمد)
                           </Label>
                           <span className="text-[9px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
@@ -320,16 +320,16 @@ export default function SettingsPage() {
                           </span>
                         </div>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
                             id="email"
                             type="email"
                             value={user.email || "حساب ضيف (محلي)"}
                             disabled
-                            className="pl-10 bg-zinc-900/30 border-white/5 text-zinc-500 cursor-not-allowed rounded-lg text-xs"
+                            className="pl-10 bg-muted/30 border-white/5 text-muted-foreground cursor-not-allowed rounded-lg text-xs"
                           />
                         </div>
-                        <p className="text-[9px] text-zinc-500">
+                        <p className="text-[9px] text-muted-foreground">
                           لا يمكن تغيير البريد الإلكتروني الخاص بك المسجل في النظام.
                         </p>
                       </div>
@@ -354,22 +354,21 @@ export default function SettingsPage() {
                   <div className="space-y-6">
                     <div className="border-b border-white/5 pb-4">
                       <h2 className="text-lg font-bold text-white">تفضيلات النظام // PREFERENCES</h2>
-                      <p className="text-[11px] text-zinc-500 mt-1">تخصيص السلوك الافتراضي لمحرك الدردشة والذكاء الاصطناعي.</p>
+                      <p className="text-[11px] text-muted-foreground mt-1">تخصيص السلوك الافتراضي لمحرك الدردشة والذكاء الاصطناعي.</p>
                     </div>
 
                     {/* Selected Model */}
                     <div className="space-y-2">
-                      <Label className="text-[11px] font-bold text-zinc-400 flex items-center gap-1.5">
+                      <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-1.5">
                         <Cpu className="w-3.5 h-3.5 text-violet-400" />
                         النموذج الافتراضي للدردشة (Default AI Model)
                       </Label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                         {[
                           { id: "apex-flash", name: "APEX Flash", desc: "أسرع استجابة للمحادثات" },
-                          { id: "apex-pro", name: "APEX Pro", desc: "متوازن للبرمجة والمنطق" },
                           { id: "apex-elite", name: "APEX Search", desc: "بحث متكامل في الويب" },
                           { id: "apex-omni", name: "APEX Omni", desc: "الأعلى ذكاءً وقدرة معرفية" },
-                          { id: "apex-unbound", name: "APEX Unbound", desc: "غير خاضع للرقابة / عميق" },
+                          { id: "apex-coder", name: "Apex Coder", desc: "غير خاضع للرقابة / عميق" },
                         ].map((m) => {
                           const isSel = selectedModel === m.id;
                           return (
@@ -379,14 +378,14 @@ export default function SettingsPage() {
                               className={`p-3 rounded-lg border text-right transition-all flex flex-col justify-between ${
                                 isSel
                                   ? "bg-white/5 border-violet-500/50 text-white"
-                                  : "border-white/5 bg-zinc-950/40 text-zinc-400 hover:text-white hover:border-white/10"
+                                  : "border-white/5 bg-card/40 text-muted-foreground hover:text-white hover:border-white/10"
                               }`}
                             >
                               <div className="flex justify-between items-center w-full">
                                 <span className="text-xs font-bold">{m.name}</span>
                                 {isSel && <Check className="w-3.5 h-3.5 text-violet-400" />}
                               </div>
-                              <span className="text-[10px] text-zinc-500 mt-1.5">{m.desc}</span>
+                              <span className="text-[10px] text-muted-foreground mt-1.5">{m.desc}</span>
                             </button>
                           );
                         })}
@@ -395,7 +394,7 @@ export default function SettingsPage() {
 
                     {/* Service Mode */}
                     <div className="space-y-2 pt-2">
-                      <Label className="text-[11px] font-bold text-zinc-400 flex items-center gap-1.5">
+                      <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-1.5">
                         <Sliders className="w-3.5 h-3.5 text-violet-400" />
                         وضع محرك الخدمة (Service Mode)
                       </Label>
@@ -413,11 +412,11 @@ export default function SettingsPage() {
                               className={`p-3 rounded-lg border text-center transition-all ${
                                 isSel
                                   ? "bg-white/5 border-violet-500/50 text-white"
-                                  : "border-white/5 bg-zinc-950/40 text-zinc-400 hover:text-white hover:border-white/10"
+                                  : "border-white/5 bg-card/40 text-muted-foreground hover:text-white hover:border-white/10"
                               }`}
                             >
                               <div className="text-xs font-bold">{mode.label}</div>
-                              <div className="text-[9px] text-zinc-500 mt-1">{mode.desc}</div>
+                              <div className="text-[9px] text-muted-foreground mt-1">{mode.desc}</div>
                             </button>
                           );
                         })}
@@ -426,7 +425,7 @@ export default function SettingsPage() {
 
                     {/* Reasoning level */}
                     <div className="space-y-2 pt-2">
-                      <Label className="text-[11px] font-bold text-zinc-400 flex items-center gap-1.5">
+                      <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5 text-violet-400" />
                         مستوى قوة التفكير (Reasoning/Thinking Level)
                       </Label>
@@ -444,11 +443,11 @@ export default function SettingsPage() {
                               className={`p-3 rounded-lg border text-center transition-all ${
                                 isSel
                                   ? "bg-white/5 border-violet-500/50 text-white"
-                                  : "border-white/5 bg-zinc-950/40 text-zinc-400 hover:text-white hover:border-white/10"
+                                  : "border-white/5 bg-card/40 text-muted-foreground hover:text-white hover:border-white/10"
                               }`}
                             >
                               <div className="text-xs font-bold">{lvl.label}</div>
-                              <div className="text-[9px] text-zinc-500 mt-1">{lvl.desc}</div>
+                              <div className="text-[9px] text-muted-foreground mt-1">{lvl.desc}</div>
                             </button>
                           );
                         })}
@@ -458,19 +457,19 @@ export default function SettingsPage() {
                     {/* Apex Search Preferences */}
                     <div className="space-y-4 pt-4 border-t border-white/5">
                       <div>
-                        <Label className="text-[11px] font-bold text-zinc-400 flex items-center gap-1.5">
+                        <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-1.5">
                           <Settings className="w-3.5 h-3.5 text-violet-400" />
                           تفضيلات البحث الذكي الخارق (Apex Search Ultra Settings)
                         </Label>
-                        <p className="text-[10px] text-zinc-500 mt-1">تخصيص سلوك محرك البحث المدمج للحصول على أقصى دقة وسرعة.</p>
+                        <p className="text-[10px] text-muted-foreground mt-1">تخصيص سلوك محرك البحث المدمج للحصول على أقصى دقة وسرعة.</p>
                       </div>
 
-                      <div className="space-y-3 bg-zinc-950/30 p-4 rounded-xl border border-white/5">
+                      <div className="space-y-3 bg-card/30 p-4 rounded-xl border border-white/5">
                         {/* Deep Query Expansion toggle */}
                         <div className="flex items-center justify-between">
                           <div className="text-right">
                             <div className="text-xs font-bold text-white">توسيع استعلامات البحث (Deep Query Expansion)</div>
-                            <div className="text-[10px] text-zinc-400 mt-0.5">توليد استعلامات فرعية متعددة تلقائياً بالتوازي لضمان جلب أكبر تغطية ممكنة من DuckDuckGo.</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">توليد استعلامات فرعية متعددة تلقائياً بالتوازي لضمان جلب أكبر تغطية ممكنة من DuckDuckGo.</div>
                           </div>
                           <button
                             onClick={() => {
@@ -494,7 +493,7 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between border-t border-white/5 pt-3">
                           <div className="text-right">
                             <div className="text-xs font-bold text-white">الزحف العميق والتحليل الدلالي (Deep Crawling & Semantic Extraction)</div>
-                            <div className="text-[10px] text-zinc-400 mt-0.5">زحف كامل لروابط المواقع واستخراج أجزاء النصوص الأكثر مطابقة للاستعلام بدقة ذكاء اصطناعي.</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">زحف كامل لروابط المواقع واستخراج أجزاء النصوص الأكثر مطابقة للاستعلام بدقة ذكاء اصطناعي.</div>
                           </div>
                           <button
                             onClick={() => {
@@ -518,7 +517,7 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between border-t border-white/5 pt-3">
                           <div className="text-right">
                             <div className="text-xs font-bold text-white">التخزين المؤقت الذكي (Search Result Cache)</div>
-                            <div className="text-[10px] text-zinc-400 mt-0.5">حفظ نتائج الاستعلامات مسبقاً لعرضها فوراً في أقل من جزء من الثانية عند تكرار البحث.</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">حفظ نتائج الاستعلامات مسبقاً لعرضها فوراً في أقل من جزء من الثانية عند تكرار البحث.</div>
                           </div>
                           <button
                             onClick={() => {
@@ -551,7 +550,7 @@ export default function SettingsPage() {
                   <div className="space-y-6">
                     <div className="border-b border-white/5 pb-4">
                       <h2 className="text-lg font-bold text-white">الاشتراك والمحفظة // SUBSCRIPTION & WALLET</h2>
-                      <p className="text-[11px] text-zinc-500 mt-1">تتبع خطتك الحالية ورصيدك المالي المتاح للاستخدام.</p>
+                      <p className="text-[11px] text-muted-foreground mt-1">تتبع خطتك الحالية ورصيدك المالي المتاح للاستخدام.</p>
                     </div>
 
                     {/* Subscription premium display */}
@@ -575,7 +574,7 @@ export default function SettingsPage() {
                       </div>
 
                       {/* Benefits list */}
-                      <div className="grid grid-cols-2 gap-3 mt-6 border-t border-white/5 pt-4 text-zinc-400 text-xs">
+                      <div className="grid grid-cols-2 gap-3 mt-6 border-t border-white/5 pt-4 text-muted-foreground text-xs">
                         <div className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                           <span>الوصول غير المحدود لجميع النماذج الذكية</span>
@@ -596,13 +595,13 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Wallet display */}
-                    <div className="p-5 bg-zinc-900/50 border border-white/5 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="p-5 bg-muted/50 border border-white/5 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
                           <Wallet className="w-6 h-6 text-emerald-400" />
                         </div>
                         <div>
-                          <p className="text-[10px] text-zinc-500 uppercase font-mono tracking-wider">رصيدك الحالي المتاح</p>
+                          <p className="text-[10px] text-muted-foreground uppercase font-mono tracking-wider">رصيدك الحالي المتاح</p>
                           <p className="text-2xl font-black bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300 bg-clip-text text-transparent">
                             ${(userProfile?.wallet?.balance ?? 1000).toFixed(2)}
                           </p>
@@ -611,7 +610,7 @@ export default function SettingsPage() {
 
                       <Button
                         onClick={() => setLocation("/billing")}
-                        className="w-full sm:w-auto bg-zinc-900 hover:bg-zinc-800 text-white border border-white/10 text-xs px-5 py-2.5 rounded-lg transition-all duration-200"
+                        className="w-full sm:w-auto bg-muted hover:bg-muted/80 text-white border border-white/10 text-xs px-5 py-2.5 rounded-lg transition-all duration-200"
                       >
                         <Wallet className="w-4 h-4 ml-2" />
                         <span>شحن الرصيد والمدفوعات</span>
@@ -625,11 +624,11 @@ export default function SettingsPage() {
                   <div className="space-y-6">
                     <div className="border-b border-white/5 pb-4">
                       <h2 className="text-lg font-bold text-white">المزامنة السحابية // CLOUD SYNC</h2>
-                      <p className="text-[11px] text-zinc-500 mt-1">إدارة اتصال قاعدة البيانات السحابية وحفظ المحادثات والذاكرة احتياطياً.</p>
+                      <p className="text-[11px] text-muted-foreground mt-1">إدارة اتصال قاعدة البيانات السحابية وحفظ المحادثات والذاكرة احتياطياً.</p>
                     </div>
 
                     {/* Status Indicator */}
-                    <div className="flex items-center justify-between p-5 bg-zinc-900/40 rounded-xl border border-white/5">
+                    <div className="flex items-center justify-between p-5 bg-muted/40 rounded-xl border border-white/5">
                       <div className="flex items-center gap-4">
                         {syncStatus.isOnline && !syncStatus.permissionDenied ? (
                           <>
@@ -639,7 +638,7 @@ export default function SettingsPage() {
                             </div>
                             <div>
                               <p className="text-sm font-bold text-white">متصل بالسحابة // Connected</p>
-                              <p className="text-[10px] text-zinc-500 mt-0.5">يتم حفظ جميع المحادثات وتزامنها تلقائياً.</p>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">يتم حفظ جميع المحادثات وتزامنها تلقائياً.</p>
                             </div>
                           </>
                         ) : syncStatus.permissionDenied ? (
@@ -647,15 +646,15 @@ export default function SettingsPage() {
                             <AlertCircle className="w-6 h-6 text-amber-500 shrink-0" />
                             <div>
                               <p className="text-sm font-bold text-amber-400">مزامنة محلية فقط // Local Only</p>
-                              <p className="text-[10px] text-zinc-500 mt-0.5">أنت مسجل بحساب محلي/غير متصل بـ Supabase.</p>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">أنت مسجل بحساب محلي/غير متصل بـ Supabase.</p>
                             </div>
                           </>
                         ) : (
                           <>
-                            <CloudOff className="w-6 h-6 text-zinc-500 shrink-0" />
+                            <CloudOff className="w-6 h-6 text-muted-foreground shrink-0" />
                             <div>
-                              <p className="text-sm font-bold text-zinc-400">أنت خارج الشبكة // Offline</p>
-                              <p className="text-[10px] text-zinc-500 mt-0.5">يتم التخزين في المتصفح حالياً حتى معاودة الاتصال.</p>
+                              <p className="text-sm font-bold text-muted-foreground">أنت خارج الشبكة // Offline</p>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">يتم التخزين في المتصفح حالياً حتى معاودة الاتصال.</p>
                             </div>
                           </>
                         )}
@@ -674,12 +673,12 @@ export default function SettingsPage() {
 
                     {/* Sync Stats */}
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 bg-zinc-900/20 rounded-xl border border-white/5">
-                        <p className="text-[10px] text-zinc-500 mb-1">المحادثات المحفوظة</p>
+                      <div className="p-4 bg-muted/20 rounded-xl border border-white/5">
+                        <p className="text-[10px] text-muted-foreground mb-1">المحادثات المحفوظة</p>
                         <p className="text-xl font-bold text-white">{conversations.length} دردشة</p>
                       </div>
-                      <div className="p-4 bg-zinc-900/20 rounded-xl border border-white/5">
-                        <p className="text-[10px] text-zinc-500 mb-1">آخر وقت تحديث</p>
+                      <div className="p-4 bg-muted/20 rounded-xl border border-white/5">
+                        <p className="text-[10px] text-muted-foreground mb-1">آخر وقت تحديث</p>
                         <p className="text-xs font-mono text-zinc-300 mt-1.5">
                           {syncStatus.lastSyncAt 
                             ? new Date(syncStatus.lastSyncAt).toLocaleTimeString("ar-EG")
@@ -696,7 +695,7 @@ export default function SettingsPage() {
                   <div className="space-y-6">
                     <div className="border-b border-white/5 pb-4">
                       <h2 className="text-lg font-bold text-white">الأمان وتسجيل الخروج // SECURITY</h2>
-                      <p className="text-[11px] text-zinc-500 mt-1">إجراءات الأمان وخروج المستخدم بشكل آمن من حساب الدردشة.</p>
+                      <p className="text-[11px] text-muted-foreground mt-1">إجراءات الأمان وخروج المستخدم بشكل آمن من حساب الدردشة.</p>
                     </div>
 
                     {/* Safe logout warning */}
@@ -707,7 +706,7 @@ export default function SettingsPage() {
                         </div>
                         <div>
                           <h4 className="text-sm font-bold text-red-400">منطقة الأمان القصوى // DANGER ZONE</h4>
-                          <p className="text-xs text-zinc-400 leading-relaxed mt-2">
+                          <p className="text-xs text-muted-foreground leading-relaxed mt-2">
                             عند تسجيل الخروج، سيتم مسح بيانات الجلسة المؤقتة محلياً والتحقق من تأمين ملفك الشخصي بالكامل. لمعاودة فتح محادثاتك لاحقاً، يرجى حفظ بيانات تسجيل الدخول الخاصة بك جيداً.
                           </p>
                         </div>

@@ -81,6 +81,32 @@ export default {
           busy: "rgb(239 68 68)",
           offline: "rgb(156 163 175)",
         },
+        tier: {
+          omni: {
+            DEFAULT: "hsl(var(--tier-omni-accent) / <alpha-value>)",
+            surface: "hsl(var(--tier-omni-surface) / <alpha-value>)",
+            border: "hsl(var(--tier-omni-border) / <alpha-value>)",
+            text: "hsl(var(--tier-omni-text) / <alpha-value>)",
+          },
+          elite: {
+            DEFAULT: "hsl(var(--tier-elite-accent) / <alpha-value>)",
+            surface: "hsl(var(--tier-elite-surface) / <alpha-value>)",
+            border: "hsl(var(--tier-elite-border) / <alpha-value>)",
+            text: "hsl(var(--tier-elite-text) / <alpha-value>)",
+          },
+          pro: {
+            DEFAULT: "hsl(var(--tier-pro-accent) / <alpha-value>)",
+            surface: "hsl(var(--tier-pro-surface) / <alpha-value>)",
+            border: "hsl(var(--tier-pro-border) / <alpha-value>)",
+            text: "hsl(var(--tier-pro-text) / <alpha-value>)",
+          },
+          starter: {
+            DEFAULT: "hsl(var(--tier-starter-accent) / <alpha-value>)",
+            surface: "hsl(var(--tier-starter-surface) / <alpha-value>)",
+            border: "hsl(var(--tier-starter-border) / <alpha-value>)",
+            text: "hsl(var(--tier-starter-text) / <alpha-value>)",
+          },
+        },
       },
       fontFamily: {
         sans: ["var(--font-sans)"],
