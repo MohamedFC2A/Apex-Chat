@@ -1,214 +1,31 @@
+/**
+ * ╔══════════════════════════════════════════════════════════════════════════════╗
+ * ║  APEX PDF — Shared Utilities & Facade v4.0                                ║
+ * ║  Re-exports all shared definitions and provides client-safe parsers        ║
+ * ╚══════════════════════════════════════════════════════════════════════════════╝
+ */
+
 import { z } from "zod";
+export * from "./pdf/index.js";
 
-export type PDFDocumentLanguage = "ar" | "en" | "mixed";
-export type PDFDocumentTheme = "dark" | "light" | "auto";
-export type PDFPageSize = "a4" | "letter";
+import type {
+  PDFDocumentLanguage,
+  PDFDocumentTheme,
+  PDFPageSize,
+  PDFDocumentMode,
+  PDFSectionType,
+  ChartDataPoint,
+  TimelineEvent,
+  StatCardData,
+  TwoColumnContent,
+  MCQQuestionSection,
+  FlashcardData,
+  PDFSection,
+  PDFDocument,
+  ParsedPdfRequest,
+} from "./pdf/index.js";
 
-// ─── PDF Document Mode ────────────────────────────────────────────────────────
-// study    = شرح دراسي عميق (الوضع الافتراضي)
-// exam     = ورقة امتحان رسمية مع أسئلة اختيار متعدد
-// quiz     = اختبار قصير (أسئلة + إجابات في PDF)
-// worksheet = ورقة عمل / تدريب عملي
-// flashcard = بطاقات مراجعة سريعة
-export type PDFDocumentMode = "study" | "exam" | "quiz" | "worksheet" | "flashcard";
-
-export type PDFSectionType =
-  | "heading"
-  | "paragraph"
-  | "code"
-  | "math"
-  | "table"
-  | "list"
-  | "image"
-  | "divider"
-  | "quote"
-  | "callout"
-  | "qa"
-  | "stat-card"
-  | "timeline"
-  | "two-column"
-  | "chart-svg"
-  | "badge"
-  | "highlight-box"
-  | "numbered-list"
-  | "watermark"
-  | "mcq-question"
-  | "exam-header"
-  | "answer-key"
-  | "flashcard";
-
-// ─── Chart Data ──────────────────────────────────────────────────────────────
-export interface ChartDataPoint {
-  label: string;
-  value: number;
-  color?: string;
-}
-
-// ─── Timeline Event ───────────────────────────────────────────────────────────
-export interface TimelineEvent {
-  date: string;
-  title: string;
-  description?: string;
-  icon?: string;
-  color?: string;
-}
-
-// ─── Stat Card Data ───────────────────────────────────────────────────────────
-export interface StatCardData {
-  value: string;
-  label: string;
-  unit?: string;
-  trend?: "up" | "down" | "flat";
-  trendValue?: string;
-  icon?: string;
-  color?: string;
-}
-
-// ─── Two-Column Content ───────────────────────────────────────────────────────
-export interface TwoColumnContent {
-  left: string;
-  right: string;
-  leftHeading?: string;
-  rightHeading?: string;
-}
-
-// ─── MCQ Question (for exam/quiz PDF sections) ───────────────────────────────
-export interface MCQQuestionSection {
-  questionNumber?: number;
-  questionText: string;
-  options: { a: string; b: string; c: string; d: string };
-  correctAnswer?: "a" | "b" | "c" | "d"; // hidden in exam mode, shown in quiz/answer-key
-  explanation?: string;
-  points?: number;
-}
-
-// ─── Flashcard ────────────────────────────────────────────────────────────────
-export interface FlashcardData {
-  front: string;
-  back: string;
-  hint?: string;
-  category?: string;
-}
-
-// ─── PDF Section ──────────────────────────────────────────────────────────────
-export interface PDFSection {
-  id: string;
-  type: PDFSectionType;
-  level?: number;
-  language?: string;
-  direction?: "rtl" | "ltr";
-  content: string;
-
-  // List / Bullet types
-  items?: string[];
-
-  // Table
-  rows?: string[][];
-  headers?: string[];
-  totalRow?: boolean;        // style last row as a totals row
-
-  // Callout/badge variant
-  variant?: "info" | "warning" | "success" | "error" | "primary" | "secondary";
-
-  // Figure
-  caption?: string;
-
-  // Q&A
-  question?: string;
-  answer?: string;
-
-  // Stat cards (array of cards for a row)
-  cards?: StatCardData[];
-
-  // Timeline events
-  events?: TimelineEvent[];
-
-  // Two-column layout
-  columns?: TwoColumnContent;
-
-  // SVG Chart
-  chartType?: "bar" | "pie" | "line" | "donut";
-  chartData?: ChartDataPoint[];
-  chartTitle?: string;
-  chartHeight?: number;
-
-  // Watermark
-  watermarkText?: string;
-  watermarkOpacity?: number;
-
-  // Numbered list (enhanced)
-  numberedItems?: Array<{ number: string; title: string; description?: string }>;
-
-  // Highlight box
-  boxColor?: string;
-  boxIcon?: string;
-
-  // Badge text array
-  badges?: Array<{ text: string; variant?: string }>;
-
-  // MCQ Question (exam/quiz mode)
-  mcqQuestion?: MCQQuestionSection;
-  showAnswer?: boolean; // if true, renders correct answer (for quiz/answer-key)
-
-  // Exam header metadata
-  examMeta?: {
-    subject?: string;
-    grade?: string;
-    duration?: string;
-    totalMarks?: number;
-    studentNameField?: boolean;
-    dateField?: boolean;
-    instructions?: string[];
-  };
-
-  // Flashcard data
-  flashcards?: FlashcardData[];
-}
-
-// ─── PDF Document ─────────────────────────────────────────────────────────────
-export interface PDFDocument {
-  title: string;
-  subtitle?: string;
-  author?: string;
-  date?: string;
-  language: PDFDocumentLanguage;
-  theme: PDFDocumentTheme;
-  pageSize: PDFPageSize;
-  coverPage: boolean;
-  tableOfContents: boolean;
-  sections: PDFSection[];
-  /** V2 Authorization Gate: true only when an explicit operational command triggered this document */
-  isCommandAuthorized?: boolean;
-  metadata?: {
-    subject?: string;
-    keywords?: string[];
-    category?: string;
-    watermark?: string;
-    watermarkOpacity?: number;
-  };
-}
-
-// ─── Parsed PDF Request ───────────────────────────────────────────────────────
-export interface ParsedPdfRequest {
-  rawMessage: string;
-  topic: string;
-  language: PDFDocumentLanguage;
-  requestedSections?: string[];
-  includeCode: boolean;
-  includeMath: boolean;
-  includeTableOfContents: boolean;
-  includeCoverPage: boolean;
-  theme?: PDFDocumentTheme;
-  pageSize?: PDFPageSize;
-  /** Detected document mode — drives generation instructions */
-  mode: PDFDocumentMode;
-  /** Number of questions requested (exam/quiz modes) */
-  questionCount?: number;
-  /** Whether to include answer key at the end */
-  includeAnswerKey?: boolean;
-  /** Show answers inline (quiz mode) or separate (exam mode) */
-  showAnswersInline?: boolean;
-}
+import { PDF_SCHEMA } from "./pdf/index.js";
 
 interface PdfNormalizationFallback {
   topic?: string;
@@ -217,129 +34,10 @@ interface PdfNormalizationFallback {
   includeTableOfContents?: boolean;
 }
 
-// ─── Zod Schema ───────────────────────────────────────────────────────────────
-const PDF_SCHEMA = z.object({
-  title: z.string().min(1),
-  subtitle: z.string().optional(),
-  author: z.string().optional(),
-  date: z.string().optional(),
-  language: z.enum(["ar", "en", "mixed"]),
-  theme: z.enum(["dark", "light", "auto"]).default("dark"),
-  pageSize: z.enum(["a4", "letter"]).default("a4"),
-  coverPage: z.boolean().default(true),
-  tableOfContents: z.boolean().default(true),
-  sections: z
-    .array(
-      z.object({
-        id: z.string().min(1),
-        type: z.enum([
-          "heading", "paragraph", "code", "math", "table", "list",
-          "image", "divider", "quote", "callout", "qa",
-          "stat-card", "timeline", "two-column", "chart-svg",
-          "badge", "highlight-box", "numbered-list", "watermark",
-          "mcq-question", "exam-header", "answer-key", "flashcard",
-        ]),
-        level: z.number().int().min(1).max(6).optional(),
-        language: z.string().optional(),
-        direction: z.enum(["rtl", "ltr"]).optional(),
-        content: z.string(),
-        items: z.array(z.string()).optional(),
-        rows: z.array(z.array(z.string())).optional(),
-        headers: z.array(z.string()).optional(),
-        totalRow: z.boolean().optional(),
-        variant: z.enum(["info", "warning", "success", "error", "primary", "secondary"]).optional(),
-        caption: z.string().optional(),
-        question: z.string().optional(),
-        answer: z.string().optional(),
-        cards: z.array(z.object({
-          value: z.string(),
-          label: z.string(),
-          unit: z.string().optional(),
-          trend: z.enum(["up", "down", "flat"]).optional(),
-          trendValue: z.string().optional(),
-          icon: z.string().optional(),
-          color: z.string().optional(),
-        })).optional(),
-        events: z.array(z.object({
-          date: z.string(),
-          title: z.string(),
-          description: z.string().optional(),
-          icon: z.string().optional(),
-          color: z.string().optional(),
-        })).optional(),
-        columns: z.object({
-          left: z.string(),
-          right: z.string(),
-          leftHeading: z.string().optional(),
-          rightHeading: z.string().optional(),
-        }).optional(),
-        chartType: z.enum(["bar", "pie", "line", "donut"]).optional(),
-        chartData: z.array(z.object({
-          label: z.string(),
-          value: z.number(),
-          color: z.string().optional(),
-        })).optional(),
-        chartTitle: z.string().optional(),
-        chartHeight: z.number().optional(),
-        watermarkText: z.string().optional(),
-        watermarkOpacity: z.number().optional(),
-        numberedItems: z.array(z.object({
-          number: z.string(),
-          title: z.string(),
-          description: z.string().optional(),
-        })).optional(),
-        boxColor: z.string().optional(),
-        boxIcon: z.string().optional(),
-        badges: z.array(z.object({
-          text: z.string(),
-          variant: z.string().optional(),
-        })).optional(),
-        // MCQ / Exam fields
-        showAnswer: z.boolean().optional(),
-        mcqQuestion: z.object({
-          questionNumber: z.number().optional(),
-          questionText: z.string(),
-          options: z.object({ a: z.string(), b: z.string(), c: z.string(), d: z.string() }),
-          correctAnswer: z.enum(["a","b","c","d"]).optional(),
-          explanation: z.string().optional(),
-          points: z.number().optional(),
-        }).optional(),
-        examMeta: z.object({
-          subject: z.string().optional(),
-          grade: z.string().optional(),
-          duration: z.string().optional(),
-          totalMarks: z.number().optional(),
-          studentNameField: z.boolean().optional(),
-          dateField: z.boolean().optional(),
-          instructions: z.array(z.string()).optional(),
-        }).optional(),
-        // Flashcard fields
-        flashcards: z.array(z.object({
-          front: z.string(),
-          back: z.string(),
-          hint: z.string().optional(),
-          category: z.string().optional(),
-        })).optional(),
-      })
-    )
-    .min(1),
-  metadata: z
-    .object({
-      subject: z.string().optional(),
-      keywords: z.array(z.string()).optional(),
-      category: z.string().optional(),
-      watermark: z.string().optional(),
-      watermarkOpacity: z.number().optional(),
-    })
-    .optional(),
-});
-
-// ─── Intent Detection ─────────────────────────────────────────────────────────
+// ─── Intent Detection (Client & Shared safe) ───────────────────────────────────
 const PDF_INTENT_REGEX =
   /(?:^|\s)(?:pdf|document|report|export\s+pdf|create\s+(?:a\s+)?(?:pdf|document|report)|generate\s+(?:a\s+)?(?:pdf|document|report)|convert\s+to\s+pdf)(?:\s|$)|(?:ملف\s*pdf|بي\s*دي\s*اف|وثيقة|مستند|تقرير|حو[ّو]ل(?:ه|ها)?\s*(?:ل|إلى)?\s*pdf|اعم[للي]*\s*pdf|صد[ّ]?ر(?:ها|ه)?\s*(?:pdf)?)/i;
 
-// ─── PDF Mode Detection ───────────────────────────────────────────────────────
-// Detects the INTENT behind the PDF request — exam, quiz, worksheet, flashcard, or study
 const EXAM_PDF_REGEX =
   /(?:ورقة\s*امتحان|نموذج\s*امتحان|امتحان\s*(?:pdf|مستند|ورقة)|اسئلة\s*امتحان|exam\s*(?:pdf|paper|sheet)|test\s*(?:pdf|paper|sheet)|examination\s*pdf|create\s*(?:an?\s*)?exam|generate\s*(?:an?\s*)?exam|ورقة\s*اختبار|اختبار\s*(?:pdf|ورقة|رسمي))/i;
 
@@ -365,29 +63,15 @@ export function isPdfExamOrQuizMode(message: string): boolean {
     WORKSHEET_PDF_REGEX.test(message) || FLASHCARD_PDF_REGEX.test(message);
 }
 
-const STOP_WORDS = new Set([
-  "pdf", "document", "report", "file", "export", "generate", "create",
-  "make", "build", "convert", "into", "to", "for", "about", "on", "the",
-  "a", "an", "please", "with", "include", "summary", "professional",
-  "ملف", "وثيقة", "مستند", "تقرير", "بي", "دي", "اف", "اعمل",
-  "اعملي", "اعمللي", "سوي", "سويلي", "حول", "حوّل", "حولها",
-  "صدّر", "صدر", "لي", "عن", "في", "على", "بخصوص", "مع", "احترافي",
-  "احترافية", "ملخص",
-]);
-
-function containsArabic(text: string): boolean {
-  return /[\u0600-\u06FF]/.test(text);
-}
-
-function detectSectionDirection(text: string): "rtl" | "ltr" {
-  return containsArabic(text) ? "rtl" : "ltr";
-}
-
 export function detectPdfIntent(message: string): boolean {
   if (message.includes("SYSTEM DIRECTIVE: You must output a structured PDF document block")) {
     return true;
   }
   return PDF_INTENT_REGEX.test(message);
+}
+
+function containsArabic(text: string): boolean {
+  return /[\u0600-\u06FF]/.test(text);
 }
 
 export function detectPdfLanguage(text: string): PDFDocumentLanguage {
@@ -397,6 +81,25 @@ export function detectPdfLanguage(text: string): PDFDocumentLanguage {
   if (hasArabic) return "ar";
   return "en";
 }
+
+export function cleanMessageOfDirectives(message: string): string {
+  if (!message) return "";
+  const index = message.indexOf("[SYSTEM DIRECTIVE:");
+  if (index !== -1) {
+    return message.substring(0, index).trim();
+  }
+  return message.trim();
+}
+
+const STOP_WORDS = new Set([
+  "pdf", "document", "report", "file", "export", "generate", "create",
+  "make", "build", "convert", "into", "to", "for", "about", "on", "the",
+  "a", "an", "please", "with", "include", "summary", "professional",
+  "ملف", "وثيقة", "مستند", "تقرير", "بي", "دي", "اف", "اعمل",
+  "اعملي", "اعمللي", "سوي", "سويلي", "حول", "حوّل", "حولها",
+  "صدّر", "صدر", "لي", "عن", "في", "على", "بخصوص", "مع", "احترافي",
+  "احترافية", "ملخص",
+]);
 
 function cleanupTopic(rawTopic: string): string {
   const tokens = rawTopic
@@ -451,24 +154,13 @@ function extractRequestedSections(message: string): string[] | undefined {
 }
 
 function extractQuestionCount(message: string): number {
-  // Match patterns like "10 questions", "٥ اسئلة", "5 أسئلة", etc.
   const match = message.match(/([\d٠-٩]+)\s*(?:questions?|سؤال|أسئلة|اسئلة|اسئله|سوال)/i) ||
     message.match(/(?:questions?|سؤال|أسئلة|اسئلة)\s*[:(]?\s*([\d٠-٩]+)/i);
   if (match?.[1]) {
-    // Convert Arabic numerals to Western
     const num = parseInt(match[1].replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))));
     if (!isNaN(num) && num > 0 && num <= 100) return num;
   }
-  return 10; // default
-}
-
-export function cleanMessageOfDirectives(message: string): string {
-  if (!message) return "";
-  const index = message.indexOf("[SYSTEM DIRECTIVE:");
-  if (index !== -1) {
-    return message.substring(0, index).trim();
-  }
-  return message.trim();
+  return 10;
 }
 
 export function parsePdfRequest(message: string): ParsedPdfRequest {
@@ -492,7 +184,7 @@ export function parsePdfRequest(message: string): ParsedPdfRequest {
   let theme: PDFDocumentTheme | undefined;
   if (/(?:light theme|light mode|ثيم فاتح|خلفية بيضاء|خلفية فاتحة|وضع فاتح)/i.test(cleanMessage)) {
     theme = "light";
-  } else if (/(?:dark theme|dark mode|ثيم داكن|خلفية سوداء|خلفية داكنة|وضع داكن)/i.test(cleanMessage)) {
+  } else if (/(?:dark theme|dark mode|ثيم داكن|خلفية داكنة|وضع داكن)/i.test(cleanMessage)) {
     theme = "dark";
   }
 
@@ -507,8 +199,6 @@ export function parsePdfRequest(message: string): ParsedPdfRequest {
     ? extractQuestionCount(cleanMessage)
     : undefined;
 
-  // exam mode: answer key at the end, answers hidden from questions
-  // quiz mode: answers shown inline
   const includeAnswerKey = mode === "exam" || /(?:answer\s*key|مفتاح\s*الإجابات|إجابات\s*نموذجية|جدول\s*الإجابات)/i.test(cleanMessage);
   const showAnswersInline = mode === "quiz" || mode === "worksheet" || mode === "flashcard";
 
@@ -530,487 +220,79 @@ export function parsePdfRequest(message: string): ParsedPdfRequest {
   };
 }
 
-// ─── Mode-Specific Generation Instructions ────────────────────────────────────
-function buildExamPdfInstructions(request: ParsedPdfRequest): string {
-  const count = request.questionCount || 10;
-  const isAr = request.language === "ar";
-  if (isAr) {
-    return `أنشئ الآن ورقة امتحان رسمية واحترافية كـ PDF منظم بتنسيق JSON فقط.
-
-المادة / الموضوع: ${request.topic}
-عدد الأسئلة المطلوبة: ${count} سؤال اختيار من متعدد (4 خيارات لكل سؤال)
-اللغة: عربي
-الثيم: ${request.theme || "light"}
-حجم الصفحة: ${request.pageSize || "a4"}
-
-قواعد إلزامية:
-1. أخرج كتلة \`\`\`pdf-document واحدة فقط بداخلها JSON صالح.
-2. هيكل الـ sections يجب أن يكون:
-   أ) exam-header: معلومات ورقة الامتحان (المادة، الزمن، الدرجة الكلية، اسم الطالب، التاريخ، التعليمات).
-   ب) ${count} سؤال من نوع mcq-question: كل سؤال له questionText وأربعة خيارات (a/b/c/d) وعدد نقاط.
-      - في وضع الامتحان: لا تظهر الإجابة الصحيحة في الأسئلة (showAnswer: false).
-   ج) answer-key: جدول بمفاتيح الإجابات في النهاية.
-3. اجعل الأسئلة متنوعة المستويات (سهل، متوسط، صعب) وذات صلة مباشرة بالموضوع.
-4. استخدم direction: "rtl" لكل شيء.
-5. أضف watermark: "نموذج امتحان — Apex AI" خفيفاً.
-6. اجعل الأسئلة واضحة ومصاغة بشكل أكاديمي سليم.
-
-JSON مثال للأقسام:
-{
-  "title": "امتحان مادة ${request.topic}",
-  "subtitle": "نموذج امتحان أكاديمي",
-  "language": "ar",
-  "theme": "${request.theme || "light"}",
-  "pageSize": "${request.pageSize || "a4"}",
-  "coverPage": false,
-  "tableOfContents": false,
-  "sections": [
-    {"id": "exam-hdr", "type": "exam-header", "content": "ورقة الامتحان", "direction": "rtl",
-      "examMeta": {"subject": "${request.topic}", "grade": "السنة الدراسية", "duration": "90 دقيقة",
-        "totalMarks": ${count * 2}, "studentNameField": true, "dateField": true,
-        "instructions": ["اقرأ كل سؤال بتمعن قبل الإجابة", "اختر الإجابة الصحيحة الواحدة فقط", "لا يُسمح باستخدام الهاتف المحمول"]}},
-    {"id": "q1", "type": "mcq-question", "content": "", "direction": "rtl", "showAnswer": false,
-      "mcqQuestion": {"questionNumber": 1, "questionText": "نص السؤال الأول؟",
-        "options": {"a": "الخيار أ", "b": "الخيار ب", "c": "الخيار ج", "d": "الخيار د"},
-        "correctAnswer": "b", "points": 2}},
-    {"id": "ans-key", "type": "answer-key", "content": "مفتاح الإجابات", "direction": "rtl",
-      "headers": ["رقم السؤال", "الإجابة الصحيحة", "الدرجة"],
-      "rows": [["1", "ب", "2"], ["2", "أ", "2"]]}
-  ]
-}
-أنشئ ${count} سؤال mcq-question كاملاً الآن. لا تضع أي نص خارج كتلة pdf-document.`;
-  }
-
-  return `Generate a formal, professional exam paper as a structured PDF in JSON format only.
-
-Subject / Topic: ${request.topic}
-Required questions: ${count} multiple-choice questions (4 options each)
-Language: English
-Theme: ${request.theme || "light"}
-Page size: ${request.pageSize || "a4"}
-
-Mandatory rules:
-1. Output exactly one \`\`\`pdf-document block containing valid JSON only.
-2. Structure the sections as:
-   a) exam-header: exam paper metadata (subject, duration, total marks, student name field, date, instructions).
-   b) ${count} sections of type mcq-question: each with questionText, four options (a/b/c/d), points value.
-      - Exam mode: do NOT show correct answer in questions (showAnswer: false).
-   c) answer-key: a table with answer key at the end.
-3. Questions must be varied in difficulty (easy/medium/hard) and directly relevant to the topic.
-4. Make questions clear, unambiguous, and academically phrased.
-5. Add a subtle watermark: "Exam Paper — Apex AI".
-
-Generate all ${count} mcq-question sections now. No text outside the pdf-document block.`;
-}
-
-function buildQuizPdfInstructions(request: ParsedPdfRequest): string {
-  const count = request.questionCount || 10;
-  const isAr = request.language === "ar";
-  if (isAr) {
-    return `أنشئ مستند PDF اختبار قصير يحتوي على أسئلة مع الإجابات الصحيحة مُظهرة بشكل جمالي.
-
-الموضوع: ${request.topic}
-عدد الأسئلة: ${count}
-اللغة: عربي
-الثيم: ${request.theme || "light"}
-
-قواعد:
-1. أخرج كتلة \`\`\`pdf-document واحدة فقط بداخلها JSON صالح.
-2. قسم المستند إلى:
-   أ) heading: عنوان الاختبار مع وصف قصير.
-   ب) ${count} سؤال من نوع mcq-question مع showAnswer: true (تظهر الإجابة الصحيحة والشرح).
-   ج) callout (type: "success"): ملاحظة نهائية تحفيزية.
-3. استخدم direction: "rtl" لكل شيء عربي.
-4. اجعل الأسئلة تعليمية ومفيدة مع شرح واضح لكل إجابة.
-
-أنشئ ${count} سؤال mcq-question كاملاً الآن مع showAnswer: true وشرح لكل إجابة.`;
-  }
-
-  return `Generate a quiz PDF document with questions and visible correct answers.
-
-Topic: ${request.topic}
-Question count: ${count}
-Theme: ${request.theme || "light"}
-
-Rules:
-1. Output exactly one \`\`\`pdf-document block with valid JSON only.
-2. Structure as: heading → ${count} mcq-question sections (showAnswer: true) → success callout.
-3. Each mcq-question must show correctAnswer and a clear explanation.
-4. Questions should be educational and explanations should teach, not just state the answer.
-
-Generate all ${count} mcq-question sections with answers and explanations now.`;
-}
-
-function buildWorksheetPdfInstructions(request: ParsedPdfRequest): string {
-  const count = request.questionCount || 10;
-  const isAr = request.language === "ar";
-  if (isAr) {
-    return `أنشئ ورقة عمل / تدريب تعليمية كـ PDF منظم بتنسيق JSON.
-
-الموضوع: ${request.topic}
-عدد التمارين / الأسئلة: ${count}
-اللغة: عربي
-
-قواعد:
-1. أخرج كتلة \`\`\`pdf-document فقط بداخلها JSON صالح.
-2. اجمع بين أنواع متعددة من الأسئلة والأنشطة:
-   - mcq-question: أسئلة اختيار متعدد (showAnswer: true مع شرح).
-   - qa: أسئلة مقالية قصيرة أو تعبئة الفراغ.
-   - numbered-list: خطوات تطبيقية أو مهام عملية.
-   - highlight-box: ملاحظات وتلميحات مساعدة.
-   - callout (info/success): تعليمات وإرشادات.
-3. ابدأ بـ heading يشرح أهداف ورقة العمل.
-4. أضف مساحة للكتابة في qa sections.
-أنشئ ورقة العمل الكاملة الآن.`;
-  }
-
-  return `Generate an educational worksheet / practice PDF in JSON format.
-
-Topic: ${request.topic}
-Exercises / questions: ${count}
-
-Rules:
-1. Output one \`\`\`pdf-document block with valid JSON only.
-2. Mix question types: mcq-question (with answers), qa (short answer), numbered-list (tasks), highlight-box (tips), callout (instructions).
-3. Start with a heading explaining learning objectives.
-4. Include explanations and hints throughout.
-Generate the complete worksheet now.`;
-}
-
-function buildFlashcardPdfInstructions(request: ParsedPdfRequest): string {
-  const count = request.questionCount || 20;
-  const isAr = request.language === "ar";
-  if (isAr) {
-    return `أنشئ مستند PDF بطاقات مراجعة دراسية (Flash Cards) منظمة بتنسيق JSON.
-
-الموضوع: ${request.topic}
-عدد البطاقات: ${count}
-اللغة: عربي
-
-قواعد:
-1. أخرج كتلة \`\`\`pdf-document واحدة فقط.
-2. الهيكل: heading → ${count} sections من نوع flashcard، كل بطاقة تحتوي:
-   - الوجه الأمامي (السؤال / المصطلح / المفهوم)
-   - الوجه الخلفي (الإجابة / التعريف / الشرح)
-   - تلميح اختياري (hint)
-   - تصنيف (category)
-3. اجعل البطاقات متنوعة وتغطي كل جوانب الموضوع.
-4. استخدم تصميماً جمالياً وألواناً متناسقة لكل بطاقة.
-أنشئ ${count} بطاقة مراجعة كاملة الآن.`;
-  }
-
-  return `Generate a study flashcard PDF document in JSON format.
-
-Topic: ${request.topic}
-Card count: ${count}
-
-Rules:
-1. Output one \`\`\`pdf-document block with valid JSON only.
-2. Structure: heading → ${count} flashcard sections, each with front (question/term), back (answer/definition), optional hint, category.
-3. Cover all aspects of the topic with varied, educational cards.
-Generate all ${count} flashcards now.`;
-}
-
-// ─── Generation Instructions ───────────────────────────────────────────────────
-export function buildPdfGenerationInstructions(request: ParsedPdfRequest): string {
-  // Route to mode-specific instruction builder
-  if (request.mode === "exam") return buildExamPdfInstructions(request);
-  if (request.mode === "quiz") return buildQuizPdfInstructions(request);
-  if (request.mode === "worksheet") return buildWorksheetPdfInstructions(request);
-  if (request.mode === "flashcard") return buildFlashcardPdfInstructions(request);
-  // Default: study mode
-
-  const sectionHints = request.requestedSections?.length
-    ? request.requestedSections.join(", ")
-    : request.language === "ar"
-      ? "مقدمة، نقاط رئيسية، جداول مقارنة، رسوم بيانية، خط زمني، إحصاءات، خاتمة"
-      : "introduction, key points, comparison tables, charts, timeline, statistics, conclusion";
-
-  if (request.language === "ar") {
-    return `أنشئ الآن مستند PDF منظمًا تفصيليًا للغاية وكثيف المحتوى كهيكل JSON فقط.
-
-الموضوع المطلوب: ${request.topic}
-الأقسام المفضلة: ${sectionHints}
-يتضمن كود: ${request.includeCode ? "نعم" : "لا"}
-يتضمن معادلات: ${request.includeMath ? "نعم" : "لا"}
-فهرس محتويات: ${request.includeTableOfContents ? "نعم" : "لا"}
-صفحة غلاف: ${request.includeCoverPage ? "نعم" : "لا"}
-ثيم المستند: ${request.theme || "dark"}
-حجم الصفحة: ${request.pageSize || "a4"}
-
-قواعد إلزامية لإنتاج مستند احترافي يناسب حد الـ tokens المتاح:
-1. أخرج كتلة واحدة فقط باسم \`\`\`pdf-document وبداخلها JSON صالح فقط بدون أي نص خارجي.
-2. نظّم المستند في **12 إلى 18 قسمًا** منطقيًا مرتبًا يغطي جوهر الموضوع:
-   - مقدمة شاملة (heading + paragraph). - **بطاقات إحصاء** (stat-card) بـ 4 بطاقات بألوان مبدعة.
-   - **خط زمني** (timeline) بـ 4-5 أحداث. - **رسم بياني SVG** (chart-svg) واحد أو اثنان.
-   - **تخطيط عمودين** (two-column) لمقارنة رئيسية. - **جدول** (table) تفصيلي.
-   - **قوائم مرقمة** (numbered-list) للخطوات. - **صندوق تمييز** (highlight-box).
-   - **أسئلة وأجوبة** (qa) 2-3 أسئلة. - **callout** تحذيري أو معلوماتي.
-   - **اقتباس** (quote) ملهم. - **خاتمة** (paragraph) موجزة وعملية.
-3. اكتب كل فقرة بـ **60-100 كلمة** ركيزة. الجودة تفوق الكمية.
-4. استخدم direction = "rtl" للمحتوى العربي.
-5. اضبط theme = "${request.theme || 'dark'}" و pageSize = "${request.pageSize || 'a4'}" في JSON.
-6. ميّز المصطلحات الهامة بـ ==نص==. كل section يحتوي id و type و content دائمًا.
-
-أمثلة JSON للأنواع الجديدة:
-
-stat-card مثال:
-{"id": "stats-1", "type": "stat-card", "content": "الإحصاءات الرئيسية", "direction": "rtl", "cards": [{"value": "98.7%", "label": "نسبة الدقة", "trend": "up", "trendValue": "+2.3%", "color": "#10b981"}, {"value": "4.2M", "label": "مستخدم نشط", "unit": "مستخدم", "trend": "up", "trendValue": "+15%", "color": "#8b5cf6"}, {"value": "0.3s", "label": "وقت الاستجابة", "trend": "down", "trendValue": "-40ms", "color": "#06b6d4"}, {"value": "99.9%", "label": "وقت التشغيل", "trend": "flat", "color": "#f59e0b"}]}
-
-timeline مثال:
-{"id": "timeline-1", "type": "timeline", "content": "المراحل التاريخية", "direction": "rtl", "events": [{"date": "2020", "title": "البداية", "description": "تأسيس المشروع وبناء الفريق الأساسي"}, {"date": "2021", "title": "التطوير", "description": "إطلاق النسخة التجريبية الأولى"}, {"date": "2022", "title": "النمو", "description": "الوصول إلى مليون مستخدم"}]}
-
-chart-svg مثال:
-{"id": "chart-1", "type": "chart-svg", "content": "توزيع الاستخدام", "chartType": "bar", "chartTitle": "نسبة استخدام التقنيات", "chartData": [{"label": "Python", "value": 45, "color": "#8b5cf6"}, {"label": "JavaScript", "value": 35, "color": "#06b6d4"}, {"label": "Java", "value": 12, "color": "#10b981"}, {"label": "Other", "value": 8, "color": "#f59e0b"}]}
-
-two-column مثال:
-{"id": "col-1", "type": "two-column", "content": "مقارنة النهجين", "direction": "rtl", "columns": {"leftHeading": "المزايا", "left": "نص المزايا التفصيلي هنا...", "rightHeading": "العيوب", "right": "نص العيوب التفصيلي هنا..."}}
-
-highlight-box مثال:
-{"id": "box-1", "type": "highlight-box", "content": "هذه نقطة حاسمة جداً يجب الانتباه إليها بعناية فائقة.", "direction": "rtl", "boxColor": "#8b5cf6", "boxIcon": "⚡"}
-
-numbered-list مثال:
-{"id": "num-1", "type": "numbered-list", "content": "خطوات التنفيذ", "direction": "rtl", "numberedItems": [{"number": "01", "title": "التخطيط", "description": "وضع الخطة الشاملة والأهداف..."}, {"number": "02", "title": "التطوير", "description": "البدء في التطوير الفعلي..."}]}
-
-badge مثال:
-{"id": "badge-1", "type": "badge", "content": "تصنيف المستوى", "badges": [{"text": "متقدم", "variant": "primary"}, {"text": "موصى به", "variant": "success"}, {"text": "جديد", "variant": "info"}]}`;
-  }
-
-  return `Generate a highly structured, extremely detailed, dense, and comprehensive PDF document as JSON only.
-
-Required topic: ${request.topic}
-Preferred sections: ${sectionHints}
-Include code: ${request.includeCode ? "yes" : "no"}
-Include math: ${request.includeMath ? "yes" : "no"}
-Include table of contents: ${request.includeTableOfContents ? "yes" : "no"}
-Include cover page: ${request.includeCoverPage ? "yes" : "no"}
-Preferred document theme: ${request.theme || "dark"}
-Preferred page size: ${request.pageSize || "a4"}
-
-Mandatory rules for producing a high-quality professional document within the available token budget:
-1. Output exactly one \`\`\`pdf-document block with valid JSON only. No text outside the block.
-2. Structure the document into **12 to 18 logical sections** covering the topic's core:
-   - Comprehensive introduction (heading + paragraph). - **Stat cards** (stat-card) 4+ cards with diverse colors.
-   - **Timeline** (timeline) 4-5 events. - **SVG chart** (chart-svg) 1-2 charts best-fit for data.
-   - **Two-column** layout for one key comparison. - **Table** with real data rows/columns.
-   - **Numbered list** (numbered-list) for steps. - **Highlight box** for critical insight.
-   - **Q&A** (qa) 2-3 questions with detailed answers. - **Callout** (info or warning).
-   - **Quote** (quote) one inspiring quote. - **Conclusion** (paragraph) concise and actionable.
-3. Write each paragraph in **60-100 focused words**. Quality over quantity.
-4. Use RTL direction for Arabic content.
-5. Set theme = "${request.theme || 'dark'}" and pageSize = "${request.pageSize || 'a4'}" in JSON.
-6. Highlight key terms using ==term==. Every section must include id, type, and content.
-
-JSON examples for new section types:
-
-stat-card example:
-{"id": "stats-1", "type": "stat-card", "content": "Key Metrics", "cards": [{"value": "98.7%", "label": "Accuracy Rate", "trend": "up", "trendValue": "+2.3%", "color": "#10b981"}, {"value": "4.2M", "label": "Active Users", "unit": "users", "trend": "up", "trendValue": "+15%", "color": "#8b5cf6"}, {"value": "0.3s", "label": "Response Time", "trend": "down", "trendValue": "-40ms", "color": "#06b6d4"}, {"value": "99.9%", "label": "Uptime", "trend": "flat", "color": "#f59e0b"}]}
-
-timeline example:
-{"id": "timeline-1", "type": "timeline", "content": "Historical Milestones", "events": [{"date": "2020 Q1", "title": "Project Launch", "description": "Founded the initiative with a core team of 5 researchers"}, {"date": "2021 Q2", "title": "First Release", "description": "Beta version launched to 10,000 early adopters"}, {"date": "2022 Q4", "title": "Scale Up", "description": "Reached 1 million active users globally"}]}
-
-chart-svg example:
-{"id": "chart-1", "type": "chart-svg", "content": "Usage Distribution", "chartType": "bar", "chartTitle": "Technology Stack Usage", "chartData": [{"label": "Python", "value": 45, "color": "#8b5cf6"}, {"label": "JavaScript", "value": 35, "color": "#06b6d4"}, {"label": "Java", "value": 12, "color": "#10b981"}, {"label": "Other", "value": 8, "color": "#f59e0b"}]}
-
-two-column example:
-{"id": "col-1", "type": "two-column", "content": "Approach Comparison", "columns": {"leftHeading": "Advantages", "left": "Detailed advantages text here...", "rightHeading": "Disadvantages", "right": "Detailed disadvantages text here..."}}
-
-highlight-box example:
-{"id": "box-1", "type": "highlight-box", "content": "This is a critical insight that requires careful attention and must not be overlooked in any implementation.", "boxColor": "#8b5cf6", "boxIcon": "⚡"}
-
-numbered-list example:
-{"id": "num-1", "type": "numbered-list", "content": "Implementation Steps", "numberedItems": [{"number": "01", "title": "Planning", "description": "Establish comprehensive roadmap and define success metrics..."}, {"number": "02", "title": "Development", "description": "Begin iterative development cycles using agile methodology..."}]}
-
-badge example:
-{"id": "badge-1", "type": "badge", "content": "Skill Level Indicators", "badges": [{"text": "Advanced", "variant": "primary"}, {"text": "Recommended", "variant": "success"}, {"text": "New", "variant": "info"}]}`;
-}
-
-// ─── Repair Instructions ───────────────────────────────────────────────────────
-export function buildPdfRepairInstructions(request: ParsedPdfRequest, rawResponse: string): string {
-  if (request.language === "ar") {
-    return `الرد السابق لم يطابق تنسيق PDF المطلوب.
-
-الموضوع الإلزامي: ${request.topic}
-أعد كتابة الرد بالكامل الآن ككتلة \`\`\`pdf-document واحدة فقط وبداخلها JSON صالح فقط.
-يجب أن يكون المستند كله عن "${request.topic}".
-هذا هو الرد السابق لإصلاحه أو إعادة بنائه:
-${rawResponse}`;
-  }
-
-  return `The previous response did not match the required PDF format.
-
-Required topic: ${request.topic}
-Rewrite the entire answer now as exactly one \`\`\`pdf-document block containing valid JSON only.
-The whole document must be about "${request.topic}".
-Here is the previous response to repair or rebuild:
-${rawResponse}`;
-}
-
 // ─── JSON Extraction ───────────────────────────────────────────────────────────
 export function extractPdfJsonText(content: string): string {
   const pdfBlock = content.match(/```pdf-document\s*([\s\S]*?)```/i);
-  if (pdfBlock?.[1]) {
-    return pdfBlock[1].trim();
-  }
+  if (pdfBlock?.[1]) return pdfBlock[1].trim();
 
   const jsonBlock = content.match(/```json\s*([\s\S]*?)```/i);
-  if (jsonBlock?.[1]) {
-    return jsonBlock[1].trim();
-  }
+  if (jsonBlock?.[1]) return jsonBlock[1].trim();
 
   const genericBlock = content.match(/```[\w-]*\s*([\s\S]*?)```/i);
-  if (genericBlock?.[1]) {
-    return genericBlock[1].trim();
-  }
+  if (genericBlock?.[1]) return genericBlock[1].trim();
 
   const firstBrace = content.indexOf("{");
   const lastBrace = content.lastIndexOf("}");
   if (firstBrace !== -1 && lastBrace > firstBrace) {
     return content.slice(firstBrace, lastBrace + 1).trim();
   }
-
   return content.trim();
 }
 
-// ─── Row Normalization ─────────────────────────────────────────────────────────
 function normalizeRows(rawRows: unknown): string[][] | undefined {
   if (!Array.isArray(rawRows)) return undefined;
   const rows = rawRows
     .map((row) => {
-      if (Array.isArray(row)) {
-        return row.map((cell) => String(cell ?? "").trim());
-      }
-
+      if (Array.isArray(row)) return row.map((cell) => String(cell ?? "").trim());
       if (row && typeof row === "object") {
         return Object.values(row as Record<string, unknown>).map((cell) => String(cell ?? "").trim());
       }
-
       return [];
     })
     .filter((row) => row.length > 0);
   return rows.length ? rows : undefined;
 }
 
-// ─── Section Type Normalization ────────────────────────────────────────────────
 function normalizeSectionType(type: unknown): PDFSectionType | null {
   const normalized = String(type ?? "").trim().toLowerCase();
   if (!normalized) return null;
 
   const aliasMap: Record<string, PDFSectionType> = {
-    heading: "heading",
-    title: "heading",
-    subtitle: "heading",
-    header: "heading",
-    subheading: "heading",
-    paragraph: "paragraph",
-    text: "paragraph",
-    body: "paragraph",
-    prose: "paragraph",
-    content: "paragraph",
-    code: "code",
-    codeblock: "code",
-    "code-block": "code",
-    snippet: "code",
-    math: "math",
-    equation: "math",
-    formula: "math",
-    latex: "math",
-    table: "table",
-    grid: "table",
-    spreadsheet: "table",
-    list: "list",
-    bullet: "list",
-    bullets: "list",
-    ordered: "list",
-    unordered: "list",
-    image: "image",
-    figure: "image",
-    divider: "divider",
-    hr: "divider",
-    rule: "divider",
-    quote: "quote",
-    blockquote: "quote",
-    callout: "callout",
-    alert: "callout",
-    note: "callout",
-    warning: "callout",
-    info: "callout",
-    qa: "qa",
-    "q&a": "qa",
-    question: "qa",
-    faq: "qa",
-    // New types
-    "stat-card": "stat-card",
-    statcard: "stat-card",
-    stats: "stat-card",
-    statistics: "stat-card",
-    metric: "stat-card",
-    metrics: "stat-card",
-    kpi: "stat-card",
-    timeline: "timeline",
-    "time-line": "timeline",
-    milestones: "timeline",
-    roadmap: "timeline",
-    "two-column": "two-column",
-    twocolumn: "two-column",
-    columns: "two-column",
-    "split-view": "two-column",
-    "chart-svg": "chart-svg",
-    chart: "chart-svg",
-    graph: "chart-svg",
-    "bar-chart": "chart-svg",
-    "pie-chart": "chart-svg",
-    "line-chart": "chart-svg",
-    badge: "badge",
-    badges: "badge",
-    tags: "badge",
-    labels: "badge",
-    "highlight-box": "highlight-box",
-    highlightbox: "highlight-box",
-    highlight: "highlight-box",
-    "key-point": "highlight-box",
-    keypoint: "highlight-box",
-    "numbered-list": "numbered-list",
-    numberedlist: "numbered-list",
-    steps: "numbered-list",
-    procedure: "numbered-list",
+    heading: "heading", title: "heading", subtitle: "heading", header: "heading", subheading: "heading",
+    paragraph: "paragraph", text: "paragraph", body: "paragraph", prose: "paragraph", content: "paragraph",
+    code: "code", codeblock: "code", "code-block": "code", snippet: "code",
+    math: "math", equation: "math", formula: "math", latex: "math",
+    table: "table", grid: "table", spreadsheet: "table",
+    list: "list", bullet: "list", bullets: "list", ordered: "list", unordered: "list",
+    image: "image", figure: "image", divider: "divider", hr: "divider", rule: "divider",
+    quote: "quote", blockquote: "quote",
+    callout: "callout", alert: "callout", note: "callout", warning: "callout", info: "callout",
+    qa: "qa", "q&a": "qa", question: "qa", faq: "qa",
+    "stat-card": "stat-card", statcard: "stat-card", stats: "stat-card", statistics: "stat-card", metric: "stat-card", metrics: "stat-card", kpi: "stat-card",
+    timeline: "timeline", "time-line": "timeline", milestones: "timeline", roadmap: "timeline",
+    "two-column": "two-column", twocolumn: "two-column", columns: "two-column", "split-view": "two-column",
+    "chart-svg": "chart-svg", chart: "chart-svg", graph: "chart-svg", "bar-chart": "chart-svg", "pie-chart": "chart-svg", "line-chart": "chart-svg",
+    badge: "badge", badges: "badge", tags: "badge", labels: "badge",
+    "highlight-box": "highlight-box", highlightbox: "highlight-box", highlight: "highlight-box", "key-point": "highlight-box", keypoint: "highlight-box",
+    "numbered-list": "numbered-list", numberedlist: "numbered-list", steps: "numbered-list", procedure: "numbered-list",
     watermark: "watermark",
-    // Exam / Quiz / Flashcard types
-    "mcq-question": "mcq-question",
-    mcqquestion: "mcq-question",
-    mcq: "mcq-question",
-    "multiple-choice": "mcq-question",
-    multiplechoice: "mcq-question",
-    "exam-header": "exam-header",
-    examheader: "exam-header",
-    "exam-info": "exam-header",
-    examinfo: "exam-header",
-    "answer-key": "answer-key",
-    answerkey: "answer-key",
-    answers: "answer-key",
-    "answer-sheet": "answer-key",
-    flashcard: "flashcard",
-    "flash-card": "flashcard",
-    card: "flashcard",
-    cards: "flashcard",
+    "mcq-question": "mcq-question", mcqquestion: "mcq-question", mcq: "mcq-question", "multiple-choice": "mcq-question", multiplechoice: "mcq-question",
+    "exam-header": "exam-header", examheader: "exam-header", "exam-info": "exam-header", examinfo: "exam-header",
+    "answer-key": "answer-key", answerkey: "answer-key", answers: "answer-key", "answer-sheet": "answer-key",
+    flashcard: "flashcard", "flash-card": "flashcard", card: "flashcard", cards: "flashcard",
   };
 
   return aliasMap[normalized] || null;
 }
 
-// ─── Section Normalization ─────────────────────────────────────────────────────
+function detectSectionDirection(text: string): "rtl" | "ltr" {
+  return containsArabic(text) ? "rtl" : "ltr";
+}
+
 function normalizeSection(rawSection: Record<string, unknown>, index: number): PDFSection | null {
   const type = normalizeSectionType(rawSection.type) || "paragraph";
   const content = String(
-    rawSection.content ??
-      rawSection.text ??
-      rawSection.body ??
-      rawSection.code ??
-      rawSection.formula ??
-      rawSection.latex ??
-      rawSection.url ??
-      rawSection.src ??
-      ""
+    rawSection.content ?? rawSection.text ?? rawSection.body ?? rawSection.code ?? rawSection.formula ?? rawSection.latex ?? rawSection.url ?? rawSection.src ?? ""
   ).trim();
   const items = Array.isArray(rawSection.items)
     ? rawSection.items.map((item) => String(item ?? "").trim()).filter(Boolean)
@@ -1022,7 +304,6 @@ function normalizeSection(rawSection: Record<string, unknown>, index: number): P
   const question = String(rawSection.question ?? rawSection.q ?? "").trim();
   const answer = String(rawSection.answer ?? rawSection.a ?? "").trim();
 
-  // Special types may not have content
   const hasSpecialData =
     (type === "stat-card" && Array.isArray(rawSection.cards) && (rawSection.cards as unknown[]).length > 0) ||
     (type === "timeline" && Array.isArray(rawSection.events) && (rawSection.events as unknown[]).length > 0) ||
@@ -1042,39 +323,30 @@ function normalizeSection(rawSection: Record<string, unknown>, index: number): P
       ? rawSection.direction
       : detectSectionDirection(content || items?.join(" ") || headers?.join(" ") || question || answer || "");
 
-  // Normalize stat cards
   let cards: StatCardData[] | undefined;
   if (Array.isArray(rawSection.cards)) {
-    cards = (rawSection.cards as unknown[]).map((c: unknown) => {
-      const card = c as Record<string, unknown>;
-      return {
-        value: String(card.value ?? "").trim(),
-        label: String(card.label ?? "").trim(),
-        unit: card.unit ? String(card.unit) : undefined,
-        trend: (card.trend === "up" || card.trend === "down" || card.trend === "flat") ? card.trend : undefined,
-        trendValue: card.trendValue ? String(card.trendValue) : undefined,
-        icon: card.icon ? String(card.icon) : undefined,
-        color: card.color ? String(card.color) : undefined,
-      } as StatCardData;
-    });
+    cards = (rawSection.cards as unknown[]).map((c: any) => ({
+      value: String(c.value ?? "").trim(),
+      label: String(c.label ?? "").trim(),
+      unit: c.unit ? String(c.unit) : undefined,
+      trend: (c.trend === "up" || c.trend === "down" || c.trend === "flat") ? c.trend : undefined,
+      trendValue: c.trendValue ? String(c.trendValue) : undefined,
+      icon: c.icon ? String(c.icon) : undefined,
+      color: c.color ? String(c.color) : undefined,
+    }));
   }
 
-  // Normalize timeline events
   let events: TimelineEvent[] | undefined;
   if (Array.isArray(rawSection.events)) {
-    events = (rawSection.events as unknown[]).map((e: unknown) => {
-      const event = e as Record<string, unknown>;
-      return {
-        date: String(event.date ?? "").trim(),
-        title: String(event.title ?? "").trim(),
-        description: event.description ? String(event.description).trim() : undefined,
-        icon: event.icon ? String(event.icon) : undefined,
-        color: event.color ? String(event.color) : undefined,
-      } as TimelineEvent;
-    }).filter((e) => e.date && e.title);
+    events = (rawSection.events as unknown[]).map((e: any) => ({
+      date: String(e.date ?? "").trim(),
+      title: String(e.title ?? "").trim(),
+      description: e.description ? String(e.description).trim() : undefined,
+      icon: e.icon ? String(e.icon) : undefined,
+      color: e.color ? String(e.color) : undefined,
+    })).filter((e) => e.date && e.title);
   }
 
-  // Normalize two-column
   let columns: TwoColumnContent | undefined;
   if (rawSection.columns && typeof rawSection.columns === "object") {
     const col = rawSection.columns as Record<string, unknown>;
@@ -1086,45 +358,32 @@ function normalizeSection(rawSection: Record<string, unknown>, index: number): P
     };
   }
 
-  // Normalize chart data
   let chartData: ChartDataPoint[] | undefined;
   if (Array.isArray(rawSection.chartData)) {
-    chartData = (rawSection.chartData as unknown[]).map((d: unknown) => {
-      const point = d as Record<string, unknown>;
-      return {
-        label: String(point.label ?? "").trim(),
-        value: Number(point.value ?? 0),
-        color: point.color ? String(point.color) : undefined,
-      } as ChartDataPoint;
-    }).filter((d) => d.label && !isNaN(d.value));
+    chartData = (rawSection.chartData as unknown[]).map((point: any) => ({
+      label: String(point.label ?? "").trim(),
+      value: Number(point.value ?? 0),
+      color: point.color ? String(point.color) : undefined,
+    })).filter((d) => d.label && !isNaN(d.value));
   }
 
-  // Normalize numbered items
   let numberedItems: Array<{ number: string; title: string; description?: string }> | undefined;
   if (Array.isArray(rawSection.numberedItems)) {
-    numberedItems = (rawSection.numberedItems as unknown[]).map((n: unknown) => {
-      const item = n as Record<string, unknown>;
-      return {
-        number: String(item.number ?? "").trim(),
-        title: String(item.title ?? "").trim(),
-        description: item.description ? String(item.description).trim() : undefined,
-      };
-    }).filter((n) => n.title);
+    numberedItems = (rawSection.numberedItems as unknown[]).map((item: any) => ({
+      number: String(item.number ?? "").trim(),
+      title: String(item.title ?? "").trim(),
+      description: item.description ? String(item.description).trim() : undefined,
+    })).filter((n) => n.title);
   }
 
-  // Normalize badges
   let badges: Array<{ text: string; variant?: string }> | undefined;
   if (Array.isArray(rawSection.badges)) {
-    badges = (rawSection.badges as unknown[]).map((b: unknown) => {
-      const badge = b as Record<string, unknown>;
-      return {
-        text: String(badge.text ?? "").trim(),
-        variant: badge.variant ? String(badge.variant) : undefined,
-      };
-    }).filter((b) => b.text);
+    badges = (rawSection.badges as unknown[]).map((badge: any) => ({
+      text: String(badge.text ?? "").trim(),
+      variant: badge.variant ? String(badge.variant) : undefined,
+    })).filter((b) => b.text);
   }
 
-  // Normalize MCQ question
   let mcqQuestion: MCQQuestionSection | undefined;
   if (rawSection.mcqQuestion && typeof rawSection.mcqQuestion === "object") {
     const q = rawSection.mcqQuestion as Record<string, unknown>;
@@ -1145,7 +404,6 @@ function normalizeSection(rawSection: Record<string, unknown>, index: number): P
     };
   }
 
-  // Normalize exam header meta
   let examMeta: PDFSection["examMeta"] | undefined;
   if (rawSection.examMeta && typeof rawSection.examMeta === "object") {
     const m = rawSection.examMeta as Record<string, unknown>;
@@ -1160,31 +418,20 @@ function normalizeSection(rawSection: Record<string, unknown>, index: number): P
     };
   }
 
-  // Normalize flashcards
   let flashcards: FlashcardData[] | undefined;
   if (Array.isArray(rawSection.flashcards)) {
-    flashcards = (rawSection.flashcards as unknown[]).map((f: unknown) => {
-      const fc = f as Record<string, unknown>;
-      return {
-        front: String(fc.front ?? fc.question ?? fc.term ?? "").trim(),
-        back: String(fc.back ?? fc.answer ?? fc.definition ?? "").trim(),
-        hint: fc.hint ? String(fc.hint).trim() : undefined,
-        category: fc.category ? String(fc.category).trim() : undefined,
-      } as FlashcardData;
-    }).filter(f => f.front && f.back);
+    flashcards = (rawSection.flashcards as unknown[]).map((fc: any) => ({
+      front: String(fc.front ?? fc.question ?? fc.term ?? "").trim(),
+      back: String(fc.back ?? fc.answer ?? fc.definition ?? "").trim(),
+      hint: fc.hint ? String(fc.hint).trim() : undefined,
+      category: fc.category ? String(fc.category).trim() : undefined,
+    })).filter(f => f.front && f.back);
   }
 
   return {
     id: String(rawSection.id ?? `section-${index + 1}`).trim() || `section-${index + 1}`,
     type,
-    level:
-      typeof rawSection.level === "number"
-        ? rawSection.level
-        : typeof rawSection.depth === "number"
-          ? rawSection.depth
-          : type === "heading"
-            ? 2
-            : undefined,
+    level: typeof rawSection.level === "number" ? rawSection.level : typeof rawSection.depth === "number" ? rawSection.depth : type === "heading" ? 2 : undefined,
     language: typeof rawSection.language === "string" ? rawSection.language : undefined,
     direction,
     content,
@@ -1194,28 +441,15 @@ function normalizeSection(rawSection: Record<string, unknown>, index: number): P
     totalRow: typeof rawSection.totalRow === "boolean" ? rawSection.totalRow : undefined,
     question: question || undefined,
     answer: answer || undefined,
-    variant:
-      rawSection.variant === "info" ||
-      rawSection.variant === "warning" ||
-      rawSection.variant === "success" ||
-      rawSection.variant === "error" ||
-      rawSection.variant === "primary" ||
-      rawSection.variant === "secondary"
-        ? rawSection.variant
-        : rawSection.type === "warning" || rawSection.type === "error" || rawSection.type === "success" || rawSection.type === "info"
-          ? (rawSection.type as "info" | "warning" | "success" | "error")
-        : undefined,
-    caption:
-      typeof rawSection.caption === "string"
-        ? rawSection.caption
-        : typeof rawSection.alt === "string"
-          ? rawSection.alt
-          : undefined,
+    variant: (rawSection.variant === "info" || rawSection.variant === "warning" || rawSection.variant === "success" || rawSection.variant === "error" || rawSection.variant === "primary" || rawSection.variant === "secondary")
+      ? rawSection.variant
+      : (rawSection.type === "warning" || rawSection.type === "error" || rawSection.type === "success" || rawSection.type === "info")
+        ? (rawSection.type as any) : undefined,
+    caption: typeof rawSection.caption === "string" ? rawSection.caption : typeof rawSection.alt === "string" ? rawSection.alt : undefined,
     cards,
     events,
     columns,
-    chartType: (rawSection.chartType === "bar" || rawSection.chartType === "pie" || rawSection.chartType === "line" || rawSection.chartType === "donut")
-      ? rawSection.chartType : undefined,
+    chartType: (rawSection.chartType === "bar" || rawSection.chartType === "pie" || rawSection.chartType === "line" || rawSection.chartType === "donut") ? rawSection.chartType : undefined,
     chartData,
     chartTitle: typeof rawSection.chartTitle === "string" ? rawSection.chartTitle : undefined,
     chartHeight: typeof rawSection.chartHeight === "number" ? rawSection.chartHeight : undefined,
@@ -1225,7 +459,6 @@ function normalizeSection(rawSection: Record<string, unknown>, index: number): P
     boxColor: typeof rawSection.boxColor === "string" ? rawSection.boxColor : undefined,
     boxIcon: typeof rawSection.boxIcon === "string" ? rawSection.boxIcon : undefined,
     badges,
-    // Exam / Quiz / Flashcard fields
     mcqQuestion,
     showAnswer: typeof rawSection.showAnswer === "boolean" ? rawSection.showAnswer : undefined,
     examMeta,
@@ -1233,46 +466,28 @@ function normalizeSection(rawSection: Record<string, unknown>, index: number): P
   };
 }
 
-// ─── Document Normalization ────────────────────────────────────────────────────
 export function normalizePdfObject(raw: unknown, fallback?: PdfNormalizationFallback): PDFDocument | null {
   if (!raw || typeof raw !== "object") return null;
 
   const root = raw as Record<string, unknown>;
-  const candidate =
-    root["pdf-document"] && typeof root["pdf-document"] === "object"
-      ? (root["pdf-document"] as Record<string, unknown>)
-      : root;
+  const candidate = root["pdf-document"] && typeof root["pdf-document"] === "object" ? root["pdf-document"] as Record<string, unknown> : root;
+  const coverPageObject = candidate.coverPage && typeof candidate.coverPage === "object" ? candidate.coverPage as Record<string, unknown> : null;
 
-  const coverPageObject =
-    candidate.coverPage && typeof candidate.coverPage === "object"
-      ? (candidate.coverPage as Record<string, unknown>)
-      : null;
-
-  const rawSections = Array.isArray(candidate.sections)
-    ? candidate.sections
-    : Array.isArray(candidate.content)
-      ? candidate.content
-      : null;
+  const rawSections = Array.isArray(candidate.sections) ? candidate.sections : Array.isArray(candidate.content) ? candidate.content : null;
   if (!rawSections?.length) return null;
 
   const sections = rawSections
-    .map((section, index) =>
-      section && typeof section === "object" ? normalizeSection(section as Record<string, unknown>, index) : null
-    )
+    .map((section, index) => section && typeof section === "object" ? normalizeSection(section as Record<string, unknown>, index) : null)
     .filter(Boolean) as PDFSection[];
 
   if (!sections.length) return null;
 
-  const inferredLanguage =
-    candidate.language === "ar" || candidate.language === "en" || candidate.language === "mixed"
-      ? candidate.language
-      : fallback?.language || detectPdfLanguage(JSON.stringify(candidate));
+  const inferredLanguage = (candidate.language === "ar" || candidate.language === "en" || candidate.language === "mixed")
+    ? candidate.language
+    : fallback?.language || detectPdfLanguage(JSON.stringify(candidate));
 
-  const title =
-    String(candidate.title ?? coverPageObject?.title ?? "").trim() ||
-    (inferredLanguage === "ar"
-      ? `مستند ${fallback?.topic || "احترافي"}`
-      : `${fallback?.topic || "Professional"} Document`);
+  const title = String(candidate.title ?? coverPageObject?.title ?? "").trim() ||
+    (inferredLanguage === "ar" ? `مستند ${fallback?.topic || "احترافي"}` : `${fallback?.topic || "Professional"} Document`);
 
   const normalized: PDFDocument = {
     title,
@@ -1280,129 +495,57 @@ export function normalizePdfObject(raw: unknown, fallback?: PdfNormalizationFall
     author: String(candidate.author ?? coverPageObject?.author ?? "").trim() || undefined,
     date: String(candidate.date ?? coverPageObject?.date ?? "").trim() || new Date().toISOString().slice(0, 10),
     language: inferredLanguage,
-    theme:
-      candidate.theme === "dark" || candidate.theme === "light" || candidate.theme === "auto"
-        ? candidate.theme
-        : "dark",
-    pageSize:
-      candidate.pageSize === "letter" ||
-      candidate.page_size === "letter" ||
-      candidate.format === "letter"
-        ? "letter"
-        : "a4",
-    coverPage:
-      typeof candidate.coverPage === "boolean"
-        ? candidate.coverPage
-        : !!coverPageObject || fallback?.includeCoverPage || false,
-    tableOfContents:
-      typeof candidate.tableOfContents === "boolean"
-        ? candidate.tableOfContents
-        : typeof candidate.toc === "boolean"
-          ? candidate.toc
-          : fallback?.includeTableOfContents || false,
+    theme: (candidate.theme === "dark" || candidate.theme === "light" || candidate.theme === "auto") ? candidate.theme : "dark",
+    pageSize: (candidate.pageSize === "letter" || candidate.page_size === "letter" || candidate.format === "letter") ? "letter" : "a4",
+    coverPage: typeof candidate.coverPage === "boolean" ? candidate.coverPage : !!coverPageObject || fallback?.includeCoverPage || false,
+    tableOfContents: typeof candidate.tableOfContents === "boolean" ? candidate.tableOfContents : typeof candidate.toc === "boolean" ? candidate.toc : fallback?.includeTableOfContents || false,
     sections,
-    metadata:
-      candidate.metadata && typeof candidate.metadata === "object"
-        ? {
-            subject:
-              typeof (candidate.metadata as Record<string, unknown>).subject === "string"
-                ? String((candidate.metadata as Record<string, unknown>).subject)
-                : undefined,
-            keywords: Array.isArray((candidate.metadata as Record<string, unknown>).keywords)
-              ? ((candidate.metadata as Record<string, unknown>).keywords as unknown[])
-                  .map((keyword) => String(keyword ?? "").trim())
-                  .filter(Boolean)
-              : undefined,
-            category:
-              typeof (candidate.metadata as Record<string, unknown>).category === "string"
-                ? String((candidate.metadata as Record<string, unknown>).category)
-                : undefined,
-            watermark:
-              typeof (candidate.metadata as Record<string, unknown>).watermark === "string"
-                ? String((candidate.metadata as Record<string, unknown>).watermark)
-                : undefined,
-            watermarkOpacity:
-              typeof (candidate.metadata as Record<string, unknown>).watermarkOpacity === "number"
-                ? Number((candidate.metadata as Record<string, unknown>).watermarkOpacity)
-                : undefined,
-          }
-        : undefined,
+    metadata: candidate.metadata && typeof candidate.metadata === "object" ? {
+      subject: typeof (candidate.metadata as any).subject === "string" ? String((candidate.metadata as any).subject) : undefined,
+      keywords: Array.isArray((candidate.metadata as any).keywords) ? (candidate.metadata as any).keywords.map((k: any) => String(k ?? "").trim()).filter(Boolean) : undefined,
+      category: typeof (candidate.metadata as any).category === "string" ? String((candidate.metadata as any).category) : undefined,
+      watermark: typeof (candidate.metadata as any).watermark === "string" ? String((candidate.metadata as any).watermark) : undefined,
+      watermarkOpacity: typeof (candidate.metadata as any).watermarkOpacity === "number" ? Number((candidate.metadata as any).watermarkOpacity) : undefined,
+    } : undefined,
   };
 
   const validation = PDF_SCHEMA.safeParse(normalized);
   return validation.success ? validation.data : null;
 }
 
-// ─── JSON Repair ──────────────────────────────────────────────────────────────
 export function repairJsonText(jsonString: string): string {
   let cleaned = jsonString.trim();
-
-  // 1. Remove markdown syntax
   cleaned = cleaned.replace(/^```[a-zA-Z-]*\s*/, "").replace(/\s*```$/, "");
-
-  // 2. Remove JavaScript-style comments
   cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, "");
   cleaned = cleaned.replace(/(?:^|\s)\/\/.*$/gm, "");
-
-  // 3. Fix trailing commas before closing braces/brackets
   cleaned = cleaned.replace(/,\s*([\]}])/g, "$1");
-
-  // 4. Fix double commas
   cleaned = cleaned.replace(/,\s*,/g, ",");
 
-  // 5. Replace unescaped newlines inside JSON string values
   let result = "";
   let insideString = false;
   let escape = false;
   for (let i = 0; i < cleaned.length; i++) {
     const char = cleaned[i];
-    if (char === '"' && !escape) {
-      insideString = !insideString;
-    }
-    if (char === '\\' && insideString) {
-      escape = !escape;
-    } else {
-      escape = false;
-    }
+    if (char === '"' && !escape) insideString = !insideString;
+    if (char === '\\' && insideString) escape = !escape;
+    else escape = false;
 
-    if (char === '\n' && insideString) {
-      result += '\\n';
-    } else if (char === '\r' && insideString) {
-      result += '\\r';
-    } else if (char === '\t' && insideString) {
-      result += '\\t';
-    } else {
-      result += char;
-    }
+    if (char === '\n' && insideString) result += '\\n';
+    else if (char === '\r' && insideString) result += '\\r';
+    else if (char === '\t' && insideString) result += '\\t';
+    else result += char;
   }
-  cleaned = result;
-
-  return cleaned;
+  return result;
 }
 
-/**
- * repairTruncatedJson – closes unclosed JSON from token-limit cutoffs.
- *
- * When an LLM hits max_tokens mid-JSON, the output ends abruptly with
- * unclosed strings, arrays, or objects. Standard JSON.parse() throws.
- * This function:
- *  1. Closes any unclosed string literal (drops partial last token)
- *  2. Removes any trailing comma / colon after the last complete value
- *  3. Closes all unclosed [ and { in correct order
- *
- * Always wrap calls in try-catch – result may still be invalid in edge cases.
- */
 export function repairTruncatedJson(raw: string): string {
-  // Strip trailing markdown fence if present
   let s = raw.trim().replace(/\s*```\s*$/, "").trim();
-  // Basic cleanup
   s = s.replace(/,\s*([\]}])/g, "$1").replace(/,\s*,/g, ",");
 
-  // ── Step 1: Scan to find unclosed string and build bracket stack ───────────
   const stack: Array<"{" | "["> = [];
   let inStr = false;
   let esc = false;
-  let lastCompleteEnd = 0; // byte index just after last fully-closed value
+  let lastCompleteEnd = 0;
 
   for (let i = 0; i < s.length; i++) {
     const c = s[i];
@@ -1414,34 +557,20 @@ export function repairTruncatedJson(raw: string): string {
       continue;
     }
     if (inStr) continue;
-    if (c === "{" || c === "[") {
-      stack.push(c === "{" ? "{" : "[");
-    } else if (c === "}" || c === "]") {
-      stack.pop();
-      lastCompleteEnd = i + 1;
-    }
+    if (c === "{" || c === "[") stack.push(c === "{" ? "{" : "[");
+    else if (c === "}" || c === "]") { stack.pop(); lastCompleteEnd = i + 1; }
   }
 
-  // ── Step 2: If still inside a string, truncate at the last opening quote ──
   let result = s;
   if (inStr) {
-    // Find the last unmatched opening quote
     let qCount = 0, lastOpenQ = -1, esc2 = false;
     for (let i = 0; i < s.length; i++) {
       if (esc2) { esc2 = false; continue; }
       if (s[i] === "\\") { esc2 = true; continue; }
-      if (s[i] === '"') {
-        qCount++;
-        if (qCount % 2 !== 0) lastOpenQ = i;
-      }
+      if (s[i] === '"') { qCount++; if (qCount % 2 !== 0) lastOpenQ = i; }
     }
     if (lastOpenQ > 0) {
-      // Truncate just before the unclosed string, then close it
-      let truncated = s.slice(0, lastOpenQ).trimEnd();
-      // Remove dangling key separator
-      truncated = truncated.replace(/[,:]\s*$/, "");
-      truncated += '"';
-      // Rebuild stack for the truncated string
+      let truncated = s.slice(0, lastOpenQ).trimEnd().replace(/[,:]\s*$/, "") + '"';
       const st2: Array<"{" | "["> = [];
       let inS2 = false, es2 = false;
       for (let i = 0; i < truncated.length; i++) {
@@ -1458,89 +587,61 @@ export function repairTruncatedJson(raw: string): string {
     }
   }
 
-  // ── Step 3: Close remaining open brackets ─────────────────────────────────
   if (stack.length > 0) {
-    let trimmed = result.trimEnd().replace(/[,:]\s*$/, "");
-    result = trimmed + stack.reverse().map(b => b === "{" ? "}" : "]").join("");
+    result = result.trimEnd().replace(/[,:]\s*$/, "") + stack.reverse().map(b => b === "{" ? "}" : "]").join("");
   } else {
     result = result.trimEnd().replace(/[,:]\s*$/, "");
   }
-
   return result;
 }
 
-// ─── Parse Helpers ────────────────────────────────────────────────────────────
 export function tryParsePdfFromText(content: string, request: ParsedPdfRequest): PDFDocument | null {
   const candidateText = extractPdfJsonText(content);
   const parseAttempts = [candidateText];
-
-  if (candidateText !== content.trim()) {
-    parseAttempts.push(content.trim());
-  }
+  if (candidateText !== content.trim()) parseAttempts.push(content.trim());
 
   for (const attempt of parseAttempts) {
-    // Pass 1: standard whitespace/comma repair
     try {
       const repaired = repairJsonText(attempt);
       const parsed = JSON.parse(repaired);
       const normalized = normalizePdfObject(parsed, {
-        topic: request.topic,
-        language: request.language,
-        includeCoverPage: request.includeCoverPage,
-        includeTableOfContents: request.includeTableOfContents,
+        topic: request.topic, language: request.language, includeCoverPage: request.includeCoverPage, includeTableOfContents: request.includeTableOfContents,
       });
       if (normalized) return normalized;
-    } catch { /* fall through */ }
+    } catch {}
 
-    // Pass 2: truncation repair – closes unclosed brackets from token-limit cutoffs
     try {
       const repaired = repairTruncatedJson(repairJsonText(attempt));
       const parsed = JSON.parse(repaired);
       const normalized = normalizePdfObject(parsed, {
-        topic: request.topic,
-        language: request.language,
-        includeCoverPage: request.includeCoverPage,
-        includeTableOfContents: request.includeTableOfContents,
+        topic: request.topic, language: request.language, includeCoverPage: request.includeCoverPage, includeTableOfContents: request.includeTableOfContents,
       });
-      if (normalized) {
-        console.log("[PDF Parser] ✅ Recovered truncated JSON via repairTruncatedJson");
-        return normalized;
-      }
-    } catch { /* ignore */ }
+      if (normalized) return normalized;
+    } catch {}
   }
-
   return null;
 }
 
 export function tryParseAnyPdfFromText(content: string): PDFDocument | null {
   const candidateText = extractPdfJsonText(content);
   const parseAttempts = [candidateText];
-
-  if (candidateText !== content.trim()) {
-    parseAttempts.push(content.trim());
-  }
+  if (candidateText !== content.trim()) parseAttempts.push(content.trim());
 
   for (const attempt of parseAttempts) {
-    // Pass 1: standard repair
     try {
       const repaired = repairJsonText(attempt);
       const parsed = JSON.parse(repaired);
       const normalized = normalizePdfObject(parsed);
       if (normalized) return normalized;
-    } catch { /* fall through */ }
+    } catch {}
 
-    // Pass 2: truncation repair
     try {
       const repaired = repairTruncatedJson(repairJsonText(attempt));
       const parsed = JSON.parse(repaired);
       const normalized = normalizePdfObject(parsed);
-      if (normalized) {
-        console.log("[PDF Parser] ✅ Recovered truncated JSON via repairTruncatedJson (any)");
-        return normalized;
-      }
-    } catch { /* ignore */ }
+      if (normalized) return normalized;
+    } catch {}
   }
-
   return null;
 }
 
@@ -1548,48 +649,29 @@ export function formatPdfAsCodeBlock(doc: PDFDocument): string {
   return `\`\`\`pdf-document\n${JSON.stringify(doc, null, 2)}\n\`\`\``;
 }
 
-// ─── Page Count Estimator ─────────────────────────────────────────────────────
 export function estimatePdfPageCount(doc: PDFDocument): number {
   const totalWeight = doc.sections.reduce((sum, section) => {
     switch (section.type) {
-      case "heading":
-        return sum + 100;
-      case "paragraph":
-        return sum + Math.max(section.content.length * 1.2, 160);
-      case "code":
-        return sum + Math.max(section.content.split("\n").length * 70, 220);
-      case "math":
-        return sum + 180;
-      case "table":
-        return sum + Math.max((section.rows?.length || 1) * 110, 220);
-      case "list":
-        return sum + Math.max((section.items?.length || 1) * 80, 160);
-      case "numbered-list":
-        return sum + Math.max((section.numberedItems?.length || 1) * 130, 220);
+      case "heading": return sum + 100;
+      case "paragraph": return sum + Math.max(section.content.length * 1.2, 160);
+      case "code": return sum + Math.max(section.content.split("\n").length * 70, 220);
+      case "math": return sum + 180;
+      case "table": return sum + Math.max((section.rows?.length || 1) * 110, 220);
+      case "list": return sum + Math.max((section.items?.length || 1) * 80, 160);
+      case "numbered-list": return sum + Math.max((section.numberedItems?.length || 1) * 130, 220);
       case "quote":
       case "callout":
-      case "highlight-box":
-        return sum + 160;
-      case "image":
-        return sum + 280;
-      case "divider":
-        return sum + 40;
-      case "qa":
-        return sum + 320;
-      case "stat-card":
-        return sum + Math.max((section.cards?.length || 1) * 120, 200);
-      case "timeline":
-        return sum + Math.max((section.events?.length || 1) * 140, 280);
-      case "two-column":
-        return sum + 280;
-      case "chart-svg":
-        return sum + 320;
-      case "badge":
-        return sum + 80;
-      case "watermark":
-        return sum + 0;
-      default:
-        return sum + 120;
+      case "highlight-box": return sum + 160;
+      case "image": return sum + 280;
+      case "divider": return sum + 40;
+      case "qa": return sum + 320;
+      case "stat-card": return sum + Math.max((section.cards?.length || 1) * 120, 200);
+      case "timeline": return sum + Math.max((section.events?.length || 1) * 140, 280);
+      case "two-column": return sum + 280;
+      case "chart-svg": return sum + 320;
+      case "badge": return sum + 80;
+      case "watermark": return sum + 0;
+      default: return sum + 120;
     }
   }, 0);
 

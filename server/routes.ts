@@ -501,7 +501,8 @@ export async function registerRoutes(
       // Dynamic imports — keeps Puppeteer/KaTeX/Prism out of the initial bundle
       const { conversationToPdfDocument, markdownToPdfDocument } = await import("./markdown-to-pdf.js");
       const { buildPdfHtml } = await import("./pdf-engine.js");
-      const { optimizePdfDocument, generateOptimizedPdf } = await import("./pdf-optimizer.js");
+      const { optimizePdfDocument } = await import("./pdf-optimizer.js");
+      const { pdfJobQueue } = await import("./pdf/index.js");
 
       let pdfDocument: PDFDocument;
 
@@ -515,7 +516,7 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Invalid export request" });
       }
 
-      // Apply smart optimizations (deduplication, short paragraph merge, TOC enrichment)
+      // Apply smart optimizations
       const optimizedDoc = optimizePdfDocument(pdfDocument, {
         deduplication: true,
         mergeShortParagraphs: true,
@@ -532,9 +533,13 @@ export async function registerRoutes(
         });
       }
 
-      const pdfBuffer = await generateOptimizedPdf(optimizedDoc, {
-        theme: options?.theme === "light" ? "light" : options?.theme === "dark" ? "dark" : pdfDocument.theme,
-        pageSize: options?.pageSize === "letter" ? "letter" : "a4",
+      // Queue through the modular priority queue
+      const pdfBuffer = await pdfJobQueue.enqueue(optimizedDoc, {
+        priority: "high",
+        overrides: {
+          theme: options?.theme === "light" ? "light" : options?.theme === "dark" ? "dark" : pdfDocument.theme,
+          pageSize: options?.pageSize === "letter" ? "letter" : "a4",
+        },
       });
 
       const filename = `${sanitizeFilename(pdfDocument.title)}.pdf`;
@@ -583,6 +588,124 @@ export async function registerRoutes(
         error: "Failed to generate PDF",
         message: error instanceof Error ? error.message : "Unknown error",
       });
+    }
+  });
+
+  // Start queuing a PDF job (returns immediately with jobId)
+  app.post("/api/pdf/generate", async (req, res) => {
+    try {
+      const { document, content, messages, exportType, options } = req.body || {};
+      const { conversationToPdfDocument, markdownToPdfDocument } = await import("./markdown-to-pdf.js");
+      const { optimizePdfDocument } = await import("./pdf-optimizer.js");
+      const { pdfJobQueue } = await import("./pdf/index.js");
+
+      let pdfDocument: PDFDocument;
+
+      if (exportType === "structured" && document) {
+        pdfDocument = normalizeStructuredPdfDocument(document);
+      } else if (exportType === "conversation") {
+        pdfDocument = conversationToPdfDocument(Array.isArray(messages) ? messages : content);
+      } else if (exportType === "message" && typeof content === "string") {
+        pdfDocument = markdownToPdfDocument(content);
+      } else {
+        return res.status(400).json({ error: "Invalid export request" });
+      }
+
+      const optimizedDoc = optimizePdfDocument(pdfDocument, {
+        deduplication: true,
+        mergeShortParagraphs: true,
+        enrichToc: true,
+      });
+
+      const { id } = pdfJobQueue.enqueueWithId(optimizedDoc, {
+        priority: options?.priority || "normal",
+        overrides: {
+          theme: options?.theme === "light" ? "light" : options?.theme === "dark" ? "dark" : pdfDocument.theme,
+          pageSize: options?.pageSize === "letter" ? "letter" : "a4",
+        },
+      });
+
+      return res.status(200).json({ jobId: id });
+    } catch (error) {
+      console.error("PDF queue generation failed:", error);
+      res.status(500).json({
+        error: "Failed to queue PDF generation",
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  });
+
+  // SSE progress stream for a running PDF job
+  app.get("/api/pdf-progress/:jobId", async (req, res) => {
+    try {
+      const { jobId } = req.params;
+      const { pdfJobQueue } = await import("./pdf/index.js");
+      const { initSseResponse, emitPdfProgress, closeSseResponse } = await import("./pdf/streaming/index.js");
+
+      const status = pdfJobQueue.getStatus(jobId);
+      if (!status) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+
+      initSseResponse(res);
+
+      // Initial progress push
+      emitPdfProgress(res, {
+        jobId,
+        stage: status.status,
+        progress: status.progress,
+        error: status.error,
+      });
+
+      if (status.status === "complete" || status.status === "error") {
+        closeSseResponse(res);
+        return;
+      }
+
+      // Listen for progress updates
+      const unsubscribe = pdfJobQueue.onProgress(jobId, (event) => {
+        emitPdfProgress(res, event);
+        if (event.stage === "complete" || event.stage === "error") {
+          closeSseResponse(res);
+          unsubscribe();
+        }
+      });
+
+      req.on("close", () => {
+        unsubscribe();
+      });
+    } catch (error) {
+      console.error("SSE progress stream error:", error);
+      res.status(500).end();
+    }
+  });
+
+  // Download Route to fetch completed PDF buffer by jobId
+  app.get("/api/pdf/download/:jobId", async (req, res) => {
+    try {
+      const { jobId } = req.params;
+      const { pdfJobQueue } = await import("./pdf/index.js");
+
+      const status = pdfJobQueue.getStatus(jobId);
+      if (!status) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+
+      if (status.status !== "complete") {
+        return res.status(400).json({ error: "Job is not completed yet" });
+      }
+
+      const buffer = pdfJobQueue.getCompletedBuffer(jobId);
+      if (!buffer) {
+        return res.status(410).json({ error: "Buffer expired or cleared from memory" });
+      }
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Length", buffer.length);
+      res.send(buffer);
+    } catch (error) {
+      console.error("PDF download failed:", error);
+      res.status(500).json({ error: "Failed to download PDF" });
     }
   });
 

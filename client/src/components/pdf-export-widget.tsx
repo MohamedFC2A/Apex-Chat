@@ -497,93 +497,88 @@ export function PDFExportWidget({ jsonText, intentVerified }: { jsonText: string
             },
           };
 
-          const response = await fetch("/api/export/pdf", {
+          const response = await fetch("/api/pdf/generate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-
-          const contentType = response.headers.get("content-type") || "";
-          if (contentType.includes("text/html")) {
-            // Static Hosting Fallback: print via browser dialog
-            toast({
-              title: doc.language !== "en" ? "تصدير مباشر عبر المتصفح" : "Browser Direct Export",
-              description: doc.language !== "en"
-                ? "سيتم فتح نافذة الطباعة الخاصة بالمتصفح تلقائياً. يرجى اختيار 'حفظ بتنسيق PDF'."
-                : "Opening browser print dialog automatically. Select 'Save as PDF' to save.",
-            });
-            const printHtml = generateClientSidePrintHtml({
-              ...doc,
-              theme: autoTheme,
-              pageSize: autoPageSize,
-              coverPage: autoCoverPage,
-              tableOfContents: autoToc,
-            });
-            const printWindow = window.open("", "_blank");
-            if (printWindow) {
-              printWindow.document.write(printHtml);
-              printWindow.document.close();
-              printWindow.focus();
-              setTimeout(() => {
-                printWindow.print();
-              }, 1000);
-            }
-            return;
-          }
 
           if (!response.ok) {
             const error = await response.json().catch(() => null);
             throw new Error(error?.message || `PDF export failed with status ${response.status}`);
           }
 
-          if (contentType.includes("application/json")) {
-            const data = await response.json();
-            if (data.fallbackHtml && data.html) {
-              toast({
-                title: doc.language !== "en" ? "تصدير مباشر عبر المتصفح" : "Browser Direct Export",
-                description: doc.language !== "en"
-                  ? "سيتم فتح نافذة الطباعة الخاصة بالمتصفح تلقائياً. يرجى اختيار 'حفظ بتنسيق PDF'."
-                  : "Opening browser print dialog automatically. Select 'Save as PDF' to save.",
-              });
-              const printWindow = window.open("", "_blank");
-              if (printWindow) {
-                printWindow.document.write(data.html);
-                printWindow.document.close();
-                printWindow.focus();
-                setTimeout(() => {
-                  printWindow.print();
-                }, 1000);
-              }
+          const { jobId } = await response.json();
+          const eventSource = new EventSource(`/api/pdf-progress/${jobId}`);
+
+          eventSource.onmessage = async (event) => {
+            if (event.data === "[DONE]") {
+              eventSource.close();
               return;
             }
-          }
 
-          const blob = await response.blob();
-          const filename = `${doc.title.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "").trim() || "apex-document"}.pdf`;
-          setProgress(100);
-          setTimeout(() => {
-            useChatStore.getState().setActivePdfProgress({ current: 100, total: 100 });
-          }, 0);
-          await downloadPdfBlob(blob, filename);
-          toast({
-            title: doc.language !== "en" ? "تم إنشاء وتنزيل ملف PDF تلقائياً" : "PDF generated and downloaded automatically",
-            description: doc.language !== "en" ? "تم تنزيل المستند بنجاح." : "The file was downloaded successfully.",
-          });
+            try {
+              const data = JSON.parse(event.data);
+              setProgress(data.progress);
+              useChatStore.getState().setActivePdfProgress({ current: data.progress, total: 100 });
+
+              if (data.stage === "complete") {
+                eventSource.close();
+                const downloadRes = await fetch(`/api/pdf/download/${jobId}`);
+                if (!downloadRes.ok) throw new Error("Failed to download PDF buffer");
+                const blob = await downloadRes.blob();
+                const filename = `${doc.title.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "").trim() || "apex-document"}.pdf`;
+                await downloadPdfBlob(blob, filename);
+                toast({
+                  title: doc.language !== "en" ? "تم إنشاء وتنزيل ملف PDF تلقائياً" : "PDF generated and downloaded automatically",
+                  description: doc.language !== "en" ? "تم تنزيل المستند بنجاح." : "The file was downloaded successfully.",
+                });
+                setIsGenerating(false);
+                setProgress(0);
+                useChatStore.getState().setActivePdfProgress(null);
+              } else if (data.stage === "error") {
+                eventSource.close();
+                setIsGenerating(false);
+                setProgress(0);
+                useChatStore.getState().setActivePdfProgress(null);
+                toast({
+                  title: doc.language !== "en" ? "فشل إنشاء PDF تلقائي" : "Auto PDF generation failed",
+                  description: data.error || "Unknown error",
+                  variant: "destructive",
+                });
+              }
+            } catch (err) {
+              console.error("SSE parse error:", err);
+            }
+          };
+
+          eventSource.onerror = () => {
+            eventSource.close();
+            // Fallback: traditional POST download
+            (async () => {
+              const directResponse = await fetch("/api/export/pdf", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+              if (!directResponse.ok) throw new Error("Fallback PDF generation failed");
+              const blob = await directResponse.blob();
+              const filename = `${doc.title.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "").trim() || "apex-document"}.pdf`;
+              await downloadPdfBlob(blob, filename);
+              setIsGenerating(false);
+              setProgress(0);
+              useChatStore.getState().setActivePdfProgress(null);
+            })().catch(console.error);
+          };
         } catch (error) {
           toast({
             title: doc.language !== "en" ? "فشل إنشاء PDF تلقائي" : "Auto PDF generation failed",
             description: error instanceof Error ? error.message : "Unknown error",
             variant: "destructive",
           });
-        } finally {
-          window.clearInterval(timer);
-          setTimeout(() => {
-            setIsGenerating(false);
-            setProgress(0);
-            setTimeout(() => {
-              useChatStore.getState().setActivePdfProgress(null);
-            }, 0);
-          }, 300);
+          setIsGenerating(false);
+          setProgress(0);
+          useChatStore.getState().setActivePdfProgress(null);
         }
       };
 
@@ -620,130 +615,122 @@ export function PDFExportWidget({ jsonText, intentVerified }: { jsonText: string
 
   const handleGenerate = async () => {
     setIsGenerating(true);
-    setProgress(12);
+    setProgress(5);
     setTimeout(() => {
-      useChatStore.getState().setActivePdfProgress({ current: 12, total: 100 });
+      useChatStore.getState().setActivePdfProgress({ current: 5, total: 100 });
     }, 0);
 
-    const timer = window.setInterval(() => {
-      setProgress((value) => {
-        const nextVal = value >= 91 ? value : value + Math.floor(Math.random() * 14) + 3;
-        setTimeout(() => {
-          useChatStore.getState().setActivePdfProgress({ current: nextVal, total: 100 });
-        }, 0);
-        return nextVal;
-      });
-    }, 220);
+    const payload = {
+      exportType: "structured",
+      document: {
+        ...document,
+        theme,
+        pageSize,
+        coverPage: includeCoverPage,
+        tableOfContents: includeToc,
+      },
+      options: {
+        theme,
+        pageSize,
+      },
+    };
 
     try {
-      const payload = {
-        exportType: "structured",
-        document: {
-          ...document,
-          theme,
-          pageSize,
-          coverPage: includeCoverPage,
-          tableOfContents: includeToc,
-        },
-        options: {
-          theme,
-          pageSize,
-        },
-      };
-
-      const response = await fetch("/api/export/pdf", {
+      const response = await fetch("/api/pdf/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
-      const contentType = response.headers.get("content-type") || "";
-      if (contentType.includes("text/html")) {
-        // Static Hosting Fallback: print via browser dialog
-        toast({
-          title: isRtl ? "تصدير مباشر عبر المتصفح" : "Browser Direct Export",
-          description: isRtl
-            ? "سيتم فتح نافذة الطباعة الخاصة بالمتصفح تلقائياً. يرجى اختيار 'حفظ بتنسيق PDF'."
-            : "Opening browser print dialog automatically. Select 'Save as PDF' to save.",
-        });
-        const printHtml = generateClientSidePrintHtml({
-          ...document,
-          theme,
-          pageSize,
-          coverPage: includeCoverPage,
-          tableOfContents: includeToc,
-        });
-        const printWindow = window.open("", "_blank");
-        if (printWindow) {
-          printWindow.document.write(printHtml);
-          printWindow.document.close();
-          printWindow.focus();
-          setTimeout(() => {
-            printWindow.print();
-          }, 1000);
-        } else {
-          throw new Error(
-            isRtl
-              ? "تعذر فتح نافذة الطباعة. يرجى السماح بالنوافذ المنبثقة (Popups) في متصفحك."
-              : "Could not open print window. Please allow popups in your browser settings."
-          );
-        }
-        return;
-      }
 
       if (!response.ok) {
         const error = await response.json().catch(() => null);
         throw new Error(error?.message || `PDF export failed with status ${response.status}`);
       }
 
-      if (contentType.includes("application/json")) {
-        const data = await response.json();
-        if (data.fallbackHtml && data.html) {
-          toast({
-            title: isRtl ? "تصدير مباشر عبر المتصفح" : "Browser Direct Export",
-            description: isRtl
-              ? "سيتم فتح نافذة الطباعة الخاصة بالمتصفح تلقائياً. يرجى اختيار 'حفظ بتنسيق PDF'."
-              : "Opening browser print dialog automatically. Select 'Save as PDF' to save.",
-          });
-          const printWindow = window.open("", "_blank");
-          if (printWindow) {
-            printWindow.document.write(data.html);
-            printWindow.document.close();
-            printWindow.focus();
-            setTimeout(() => {
-              printWindow.print();
-            }, 1000);
-          }
+      const { jobId } = await response.json();
+      const eventSource = new EventSource(`/api/pdf-progress/${jobId}`);
+
+      eventSource.onmessage = async (event) => {
+        if (event.data === "[DONE]") {
+          eventSource.close();
           return;
         }
-      }
 
-      const blob = await response.blob();
-      const filename = `${document.title.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "").trim() || "apex-document"}.pdf`;
-      setProgress(100);
-      setTimeout(() => {
-        useChatStore.getState().setActivePdfProgress({ current: 100, total: 100 });
-      }, 0);
-      await downloadPdfBlob(blob, filename);
-      toast({
-        title: isRtl ? "تم إنشاء ملف PDF" : "PDF generated",
-        description: isRtl ? "تم تنزيل الملف بنجاح." : "The file was downloaded successfully.",
-      });
+        try {
+          const data = JSON.parse(event.data);
+          setProgress(data.progress);
+          useChatStore.getState().setActivePdfProgress({ current: data.progress, total: 100 });
+
+          if (data.stage === "complete") {
+            eventSource.close();
+            const downloadRes = await fetch(`/api/pdf/download/${jobId}`);
+            if (!downloadRes.ok) throw new Error("Failed to download PDF buffer");
+            const blob = await downloadRes.blob();
+            const filename = `${document.title.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "").trim() || "apex-document"}.pdf`;
+            await downloadPdfBlob(blob, filename);
+            toast({
+              title: isRtl ? "تم إنشاء ملف PDF" : "PDF generated",
+              description: isRtl ? "تم تنزيل الملف بنجاح." : "The file was downloaded successfully.",
+            });
+            setIsGenerating(false);
+            setProgress(0);
+            useChatStore.getState().setActivePdfProgress(null);
+          } else if (data.stage === "error") {
+            eventSource.close();
+            setIsGenerating(false);
+            setProgress(0);
+            useChatStore.getState().setActivePdfProgress(null);
+            toast({
+              title: isRtl ? "فشل إنشاء PDF" : "PDF generation failed",
+              description: data.error || "Unknown error",
+              variant: "destructive",
+            });
+          }
+        } catch (err) {
+          console.error("SSE message parse error:", err);
+        }
+      };
+
+      eventSource.onerror = () => {
+        eventSource.close();
+        // Fallback: direct download POST
+        (async () => {
+          const directResponse = await fetch("/api/export/pdf", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!directResponse.ok) throw new Error("Direct PDF download fallback failed");
+          const blob = await directResponse.blob();
+          const filename = `${document.title.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "").trim() || "apex-document"}.pdf`;
+          await downloadPdfBlob(blob, filename);
+          toast({
+            title: isRtl ? "تم إنشاء ملف PDF" : "PDF generated",
+            description: isRtl ? "تم تنزيل الملف بنجاح." : "The file was downloaded successfully.",
+          });
+          setIsGenerating(false);
+          setProgress(0);
+          useChatStore.getState().setActivePdfProgress(null);
+        })().catch((err) => {
+          toast({
+            title: isRtl ? "فشل إنشاء PDF" : "PDF generation failed",
+            description: err instanceof Error ? err.message : "Unknown error",
+            variant: "destructive",
+          });
+          setIsGenerating(false);
+          setProgress(0);
+          useChatStore.getState().setActivePdfProgress(null);
+        });
+      };
     } catch (error) {
       toast({
         title: isRtl ? "فشل إنشاء PDF" : "PDF generation failed",
         description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive",
       });
-    } finally {
-      window.clearInterval(timer);
-      setTimeout(() => {
-        setIsGenerating(false);
-        setProgress(0);
-        setTimeout(() => {
-          useChatStore.getState().setActivePdfProgress(null);
-        }, 0);
-      }, 300);
+      setIsGenerating(false);
+      setProgress(0);
+      useChatStore.getState().setActivePdfProgress(null);
     }
   };
 
