@@ -15,10 +15,14 @@ interface ThinkingBubbleProps {
   isThink?: boolean;
 }
 
-export function SearchTopologyVisualizer() {
-  const [stage, setStage] = useState(0);
-  const [sourcesCount, setSourcesCount] = useState(0);
-  const [scrapedCount, setScrapedCount] = useState(0);
+interface SearchTopologyVisualizerProps {
+  isFinished?: boolean;
+}
+
+export function SearchTopologyVisualizer({ isFinished = false }: SearchTopologyVisualizerProps) {
+  const [stage, setStage] = useState(isFinished ? 5 : 0);
+  const [sourcesCount, setSourcesCount] = useState(isFinished ? 1584 : 0);
+  const [scrapedCount, setScrapedCount] = useState(isFinished ? 35 : 0);
   const [currentScrapeUrl, setCurrentScrapeUrl] = useState("wikipedia.org");
 
   const urls = [
@@ -35,13 +39,15 @@ export function SearchTopologyVisualizer() {
   ];
 
   useEffect(() => {
+    if (isFinished) return;
     const timer = setInterval(() => {
       setStage((prev) => (prev + 1) % 6);
     }, 3200);
     return () => clearInterval(timer);
-  }, []);
+  }, [isFinished]);
 
   useEffect(() => {
+    if (isFinished) return;
     if (stage === 1) {
       const start = Date.now();
       const duration = 2400;
@@ -57,9 +63,10 @@ export function SearchTopologyVisualizer() {
     } else {
       setSourcesCount(1584);
     }
-  }, [stage]);
+  }, [stage, isFinished]);
 
   useEffect(() => {
+    if (isFinished) return;
     if (stage === 3) {
       const interval = setInterval(() => {
         setScrapedCount((prev) => Math.min(prev + 1, 35));
@@ -71,7 +78,7 @@ export function SearchTopologyVisualizer() {
     } else {
       setScrapedCount(35);
     }
-  }, [stage]);
+  }, [stage, isFinished]);
 
   const stages = [
     {

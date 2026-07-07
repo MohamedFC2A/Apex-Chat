@@ -16,7 +16,7 @@ import { PDFExportWidget } from "@/components/pdf-export-widget";
 import { PDFLoadingCard } from "@/components/pdf-loading-card";
 import type { OmniState } from "@/lib/omni-service";
 import type { UnboundState } from "@/lib/unbound-service";
-import { ThinkingBubble } from "@/components/chat-message";
+import { ThinkingBubble, SearchTopologyVisualizer } from "@/components/chat-message";
 import { ModelLetterIcon } from "@/components/model-letter-icon";
 import { detectQuizIntent } from "@shared/mcq";
 import { detectPdfIntent } from "@shared/pdf";
@@ -2338,6 +2338,7 @@ function AssistantMessage({
 }) {
   const [copied, setCopied] = useState(false);
   const [showReasoning, setShowReasoning] = useState(false);
+  const isDeepResearch = useFeatureToggleStore((state) => state.deepResearch);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isGeneratingSmartPdf, setIsGeneratingSmartPdf] = useState(false);
   const [smartPdfDoc, setSmartPdfDoc] = useState<any | null>(null);
@@ -2751,6 +2752,12 @@ function AssistantMessage({
                 <p className="text-sm text-muted-foreground italic">{reasoning}</p>
               </div>
             )}
+          </div>
+        )}
+
+        {(sources.length > 0 || (isPipelineActive && (model === "apex-elite" || isDeepResearch))) && (
+          <div className="mb-4">
+            <SearchTopologyVisualizer isFinished={sources.length > 0 && !isPipelineActive} />
           </div>
         )}
 
