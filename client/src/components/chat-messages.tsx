@@ -2761,7 +2761,11 @@ function AssistantMessage({
 
         {(sources.length > 0 || (isPipelineActive && (model === "apex-elite" || isDeepResearch))) && (
           <div className="mb-4">
-            <SearchTopologyVisualizer isFinished={sources.length > 0 && !isPipelineActive} query={query} />
+            <SearchTopologyVisualizer 
+              isFinished={sources.length > 0 && !isPipelineActive} 
+              query={query} 
+              domains={Array.from(new Set(sources.map(s => s.domain))).slice(0, 5)}
+            />
           </div>
         )}
 

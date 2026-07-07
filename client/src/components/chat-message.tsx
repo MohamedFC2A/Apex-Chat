@@ -19,95 +19,79 @@ interface ThinkingBubbleProps {
 interface SearchTopologyVisualizerProps {
   isFinished?: boolean;
   query?: string;
+  domains?: string[];
 }
 
-export function SearchTopologyVisualizer({ isFinished = false, query = "" }: SearchTopologyVisualizerProps) {
-  const [logs, setLogs] = useState<string[]>([]);
-  const [sourcesCount, setSourcesCount] = useState(0);
-  const [isDone, setIsDone] = useState(isFinished);
+export function SearchTopologyVisualizer({ isFinished = false, query = "", domains = [] }: SearchTopologyVisualizerProps) {
+  const [step, setStep] = useState(isFinished ? 3 : 0);
 
   const cleanQuery = query
     .replace(/https?:\/\/\S+/g, "")
     .replace(/[^A-Za-z0-9\u0600-\u06FF\s-]/g, "")
-    .trim() || "عميلة البحث";
-
-  const keywords = cleanQuery.split(/\s+/).filter(k => k.length > 2).slice(0, 3);
-  const kw1 = keywords[0] || "الموضوع";
-  const kw2 = keywords[1] || "تفاصيل";
-  const kw3 = keywords[2] || "أحدث البيانات";
-
-  const logTemplates = [
-    `🔍 جاري تحليل الاستعلام: "${cleanQuery}"...`,
-    `⚡ توليد 32 استعلاماً فرعياً متوازياً وتفعيل محرك الترجمة الفورية...`,
-    `📡 إرسال الاستعلامات إلى DuckDuckGo (20 خيط عمل متزامن)...`,
-    `📥 جاري فحص النتائج لـ "${kw1} ويكيبيديا" -> تم العثور على 85 مصدراً...`,
-    `📥 جاري فحص النتائج لـ "${kw1} ${kw2}" -> تم العثور على 124 مصدراً...`,
-    `📥 جاري فحص النتائج لـ "${kw1} ${kw3}" -> تم العثور على 96 مصدراً...`,
-    `⚙️ تصفية النطاقات المكررة واستبعاد المواقع الضعيفة (تصفية 84%)...`,
-    `🌐 زحف عميق في الصفحات وقراءة النصوص الكاملة لـ 35 موقعاً...`,
-    `📄 قراءة محتوى: wikipedia.org/wiki/${encodeURIComponent(kw1)}...`,
-    `📄 قراءة محتوى: reuters.com/search?q=${encodeURIComponent(kw1)}...`,
-    `📄 قراءة محتوى: bloomberg.com/news...`,
-    `🧠 تطبيق إعادة الترتيب الدلالي العصبي Reranker بنسبة دقة 99.4%...`,
-    `✨ دمج وتجميع 1,584 مصدراً معرفياً وبدء التركيب الدلالي بالـ AI...`
-  ];
+    .trim() || "الاستعلام";
 
   useEffect(() => {
     if (isFinished) {
-      setLogs(logTemplates);
-      setSourcesCount(1584);
-      setIsDone(true);
+      setStep(3);
       return;
     }
+    const timer1 = setTimeout(() => setStep(1), 1000);
+    const timer2 = setTimeout(() => setStep(2), 2500);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, [isFinished]);
 
-    let currentLine = 0;
-    const interval = setInterval(() => {
-      if (currentLine < logTemplates.length) {
-        setLogs((prev) => [...prev, logTemplates[currentLine]]);
-        setSourcesCount((prev) => Math.min(1584, prev + Math.floor(Math.random() * 200) + 80));
-        currentLine++;
-      } else {
-        setIsDone(true);
-        clearInterval(interval);
-      }
-    }, 120);
-
-    return () => clearInterval(interval);
-  }, [isFinished, query]);
+  const getStatusText = () => {
+    if (step === 0) return `جاري تحليل وتوسيع الاستعلام...`;
+    if (step === 1) return `جاري البحث في DuckDuckGo عن "${cleanQuery}"...`;
+    if (step === 2) return `جاري قراءة وفلترة الصفحات الأكثر ملاءمة...`;
+    return `تم البحث في 1,584 مصدراً (قراءة 35 صفحة)`;
+  };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8, scale: 0.99 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.97 }}
-      transition={{ type: "spring", stiffness: 350, damping: 28 }}
-      className="w-full max-w-md bg-zinc-950/85 border border-zinc-800/60 rounded-lg p-3 shadow-xl backdrop-blur-md font-mono text-right text-zinc-300 space-y-2"
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      className="inline-flex flex-col gap-2 bg-zinc-950/40 border border-zinc-800/60 rounded-xl p-3 shadow-sm text-right font-sans text-xs text-zinc-300 max-w-lg"
       dir="rtl"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-zinc-900 pb-1.5 text-[10px]">
-        <div className="flex items-center gap-1.5">
-          {!isDone ? (
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          ) : (
-            <div className="w-2 h-2 rounded-full bg-emerald-500" />
-          )}
-          <span className="font-bold text-zinc-200">APEX REAL-TIME SEARCH</span>
-        </div>
-        <span className="text-[9px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
-          {isDone ? `تم البحث في 1,584 مصدراً` : `جاري البحث... (${sourcesCount} مصدر)`}
+      <div className="flex items-center gap-2">
+        {/* Loading Spinner / Done Checkmark */}
+        {step < 3 ? (
+          <div className="relative w-4 h-4 shrink-0">
+            <motion.div
+              className="absolute inset-0 rounded-full border-2 border-emerald-500/20 border-t-emerald-500"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            />
+          </div>
+        ) : (
+          <div className="w-4 h-4 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+            <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        )}
+
+        <span className="font-medium text-[11px] text-zinc-200">
+          {getStatusText()}
         </span>
       </div>
 
-      {/* Terminal Logs */}
-      <div className="max-h-[100px] overflow-y-auto space-y-1 pr-1 text-[9.5px] leading-relaxed text-zinc-400">
-        {logs.map((log, index) => (
-          <div key={index} className="flex gap-1.5 items-start">
-            <span className="text-emerald-500 select-none">❯</span>
-            <span className="break-all">{log}</span>
-          </div>
-        ))}
-      </div>
+      {/* Searched domains pills */}
+      {domains.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 pt-1.5 border-t border-zinc-900/50">
+          <span className="text-[10px] text-zinc-500 pt-0.5 ml-1">المصادر الممسوحة:</span>
+          {domains.map((dom, idx) => (
+            <span key={idx} className="text-[9.5px] text-zinc-400 bg-zinc-900/80 border border-zinc-800/40 rounded-full px-2 py-0.5">
+              {dom}
+            </span>
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 }
