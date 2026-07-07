@@ -5,7 +5,10 @@ dotenv.config({ path: ".env.local" });
 // Debug logging for environment variables
 console.log("🚀 Server starting...");
 console.log("📂 Environment file: .env.local");
-console.log("🔑 CEREBRAS_API_KEY Status:", process.env.CEREBRAS_API_KEY ? "✅ Loaded" : "❌ Missing");
+console.log(
+  "🔑 CEREBRAS_API_KEY Status:",
+  process.env.CEREBRAS_API_KEY ? "✅ Loaded" : "❌ Missing",
+);
 console.log("--------------------");
 
 import express, { type Request, Response, NextFunction } from "express";
@@ -32,6 +35,19 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false }));
+
+// Security headers for all responses
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader(
+    "Permissions-Policy",
+    "geolocation=(), microphone=(), camera=()",
+  );
+  next();
+});
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
