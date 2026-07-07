@@ -160,8 +160,8 @@ export function validateAgainstSelectorMap(
   code: string,
   selectorMap: GlobalSelectorMap,
   codeType: "css" | "js"
-): { valid: boolean; violations: string[] } {
-  const violations: string[] = [];
+): { valid: boolean; violations: { selector: string; message: string }[] } {
+  const violations: { selector: string; message: string }[] = [];
 
   if (codeType === "css") {
     // Extract all CSS selectors (simplified — catches most cases)
@@ -183,7 +183,7 @@ export function validateAgainstSelectorMap(
           "html", "body", "*",
         ];
         if (!knownCssKeywords.some((kw) => sel.includes(kw.slice(1)))) {
-          violations.push(`CSS: Unknown selector "${sel}"`);
+          violations.push({ selector: sel, message: `CSS: Unknown selector "${sel}"` });
         }
       }
     }
@@ -199,7 +199,7 @@ export function validateAgainstSelectorMap(
       // Only validate simple #id or .class selectors
       if (/^[#.][a-z][a-z0-9-_]*$/i.test(sel)) {
         if (!selectorMap.validationSet.has(sel) && !selectorMap.validationSet.has(sel.replace(/^[#.]/, ""))) {
-          violations.push(`JS: querySelector("${sel}") targets non-existent element`);
+          violations.push({ selector: sel, message: `JS: querySelector("${sel}") targets non-existent element` });
         }
       }
     }
@@ -207,7 +207,7 @@ export function validateAgainstSelectorMap(
     while ((match = getByIdRegex.exec(code)) !== null) {
       const id = match[1].trim();
       if (!selectorMap.validationSet.has(id) && !selectorMap.validationSet.has(`#${id}`)) {
-        violations.push(`JS: getElementById("${id}") targets non-existent element`);
+        violations.push({ selector: `#${id}`, message: `JS: getElementById("${id}") targets non-existent element` });
       }
     }
   }

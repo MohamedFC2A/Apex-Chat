@@ -1999,7 +1999,7 @@ function WebPreviewModal({
                 ref={iframeRef}
                 src={url}
                 className="w-full h-full bg-white border-0"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-modals"
+                sandbox="allow-scripts allow-forms allow-modals"
                 onLoad={() => setIsLoaded(true)}
                 title="Apex Coder Website Preview"
               />
@@ -3532,6 +3532,7 @@ function AssistantMessage({
         {/* Apex Coder: web-gen & console during streaming (unified) */}
         {isUnboundModel &&
           !unboundState &&
+          !isStreaming &&
           (content.includes("[🤖") ||
             content.includes("<plan>") ||
             content.includes("===") ||

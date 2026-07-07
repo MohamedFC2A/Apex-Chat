@@ -28,6 +28,15 @@ export function useAuth() {
   return context;
 }
 
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 interface AuthProviderProps {
   children: ReactNode;
 }
@@ -245,10 +254,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Local Storage Mock Login
     const accounts = JSON.parse(localStorage.getItem("apex_accounts") || "[]");
-    const found = accounts.find((acc: any) => acc.email.toLowerCase() === email.toLowerCase());
+    const foundIdx = accounts.findIndex((acc: any) => acc.email.toLowerCase() === email.toLowerCase());
     
-    if (!found || found.password !== password) {
+    if (foundIdx === -1) {
       throw new Error("البريد الإلكتروني أو كلمة المرور غير صحيحة.");
+    }
+
+    const found = accounts[foundIdx];
+    const hashedPassword = await hashPassword(password);
+
+    let passwordMatch = false;
+    let needsUpgrade = false;
+
+    if (found.password === password) {
+      // Old plain-text password match -> needs upgrade
+      passwordMatch = true;
+      needsUpgrade = true;
+    } else if (found.password === hashedPassword) {
+      // Hashed password match
+      passwordMatch = true;
+    }
+
+    if (!passwordMatch) {
+      throw new Error("البريد الإلكتروني أو كلمة المرور غير صحيحة.");
+    }
+
+    // Upgrade to hashed password on successful login
+    if (needsUpgrade) {
+      found.password = hashedPassword;
+      accounts[foundIdx] = found;
+      localStorage.setItem("apex_accounts", JSON.stringify(accounts));
     }
 
     const mockUser = {
@@ -290,10 +325,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       throw new Error("البريد الإلكتروني مستخدم بالفعل.");
     }
 
+    const hashedPassword = await hashPassword(password);
+
     const newAccount = {
       id: `usr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       email,
-      password,
+      password: hashedPassword,
       displayName: displayName || email.split("@")[0],
       createdAt: new Date().toISOString(),
     };

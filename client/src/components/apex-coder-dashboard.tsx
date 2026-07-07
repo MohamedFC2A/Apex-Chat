@@ -853,12 +853,55 @@ export function ApexCoderDashboard({
   workTree,
   planText,
 }: ApexCoderDashboardProps) {
-  const completedCount = state.phases.filter((p) => p.status === "done").length;
-  const totalPhases = state.phases.length;
-  const progressPct = Math.round((completedCount / totalPhases) * 100);
+  // Reconstruct phases dynamically if they are missing (e.g. fallback state)
+  let phases = state.phases || [];
+  if (phases.length === 0) {
+    const defaultPhases = [
+      { phase: 1, name: "Requirements Architecture — Formal Specification", status: "pending" as const },
+      { phase: 2, name: "Requirements Confirmation — Configuration Brief", status: "pending" as const },
+      { phase: 3, name: "Markup Engineering — Semantic DOM", status: "pending" as const },
+      { phase: 4, name: "Interface Contract — Selector Registry", status: "pending" as const },
+      { phase: 5, name: "Presentation and Logic — Parallel Build", status: "pending" as const },
+      { phase: 6, name: "Quality Review — Integration Audit", status: "pending" as const },
+      { phase: 7, name: "Release Packaging — Single Bundle", status: "pending" as const },
+    ];
+
+    let maxDetectedPhase = 0;
+    const lines = content.split("\n");
+    for (const rawLine of lines) {
+      const match = rawLine.match(/\[Phase\s+(\d+)\/(\d+)\]/i);
+      if (match) {
+        const phNum = parseInt(match[1]);
+        if (phNum > maxDetectedPhase) {
+          maxDetectedPhase = phNum;
+        }
+      }
+    }
+
+    // Default to phase 7 if completed and no phase was parsed
+    if (!isStreaming && maxDetectedPhase === 0) {
+      maxDetectedPhase = 7;
+    }
+
+    phases = defaultPhases.map((dp) => {
+      let status: "pending" | "running" | "done" = "pending";
+      if (dp.phase < maxDetectedPhase) {
+        status = "done";
+      } else if (dp.phase === maxDetectedPhase) {
+        status = isStreaming ? "running" : "done";
+      } else {
+        status = "pending";
+      }
+      return { ...dp, status };
+    });
+  }
+
+  const completedCount = phases.filter((p) => p.status === "done").length;
+  const totalPhases = phases.length;
+  const progressPct = totalPhases > 0 ? Math.round((completedCount / totalPhases) * 100) : 0;
 
   const isArabic = /[\u0600-\u06FF]/.test(state.content || content || "");
-  const isComplete = !state.isRunning && !state.error && completedCount === totalPhases;
+  const isComplete = !state.isRunning && !state.error && (totalPhases > 0 ? completedCount === totalPhases : !isStreaming);
 
   // Determine which tabs are available
   const hasQuestions =
@@ -895,7 +938,7 @@ export function ApexCoderDashboard({
   // Determine active tab automatically
   const getAutoTab = (): TabId => {
     if (hasQuestions) return "phases";
-    const runningPhase = state.phases.find((p) => p.status === "running");
+    const runningPhase = phases.find((p) => p.status === "running");
     if (runningPhase) return "phases";
     if (hasWebGen && isStreaming) return "console";
     if (isComplete && hasPlan) return "plan";
@@ -1128,7 +1171,7 @@ export function ApexCoderDashboard({
 
                       {/* Phase list */}
                       <div className="space-y-0">
-                        {state.phases.map((phase, index) => (
+                        {phases.map((phase, index) => (
                           <PhaseRow
                             key={phase.phase}
                             phase={phase}
@@ -1371,8 +1414,8 @@ export function ApexCoderDashboard({
                 >
                   {isComplete
                     ? "◉ PIPELINE COMPLETE"
-                    : state.phases.some((p) => p.status === "running")
-                      ? `◉ RUNNING PHASE ${state.phases.find((p) => p.status === "running")?.phase || "..."}`
+                    : phases.some((p) => p.status === "running")
+                      ? `◉ RUNNING PHASE ${phases.find((p) => p.status === "running")?.phase || "..."}`
                       : hasQuestions
                         ? "◉ AWAITING INPUT"
                         : "◉ PROCESSING"}
