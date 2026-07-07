@@ -71,7 +71,7 @@ function extractRoutes(html: string): string[] {
   while ((m = pattern.exec(html)) !== null) {
     routes.push(m[1]);
   }
-  return [...new Set(routes)];
+  return routes.filter((value, index, self) => self.indexOf(value) === index);
 }
 
 function extractJSRoutes(js: string): string[] {
@@ -83,7 +83,7 @@ function extractJSRoutes(js: string): string[] {
       routes.push(m[1]);
     }
   }
-  return [...new Set(routes)];
+  return routes.filter((value, index, self) => self.indexOf(value) === index);
 }
 
 function getAllSelectors(map: GlobalSelectorMap): string[] {

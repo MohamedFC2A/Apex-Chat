@@ -63,9 +63,7 @@ import {
 } from "lucide-react";
 import type { Message, AIModel } from "@shared/schema";
 import { OmniStatusCard } from "@/components/omni-status-card";
-import { UnboundStatusCard } from "@/components/unbound-status-card";
-import WorkTreePanel from "@/components/work-tree-panel";
-import QuestionnairePanel from "@/components/questionnaire-panel";
+import { ApexCoderDashboard } from "@/components/apex-coder-dashboard";
 import {
   MCQQuizLoadingCard,
   MCQQuizWidget,
@@ -2830,39 +2828,18 @@ export function ChatMessages({
               </motion.div>
             )}
 
-          {/* Apex Coder: show pipeline card while generating or when paused waiting for questionnaire choice */}
+          {/* Apex Coder: Unified Dashboard — replaces QuestionnairePanel + UnboundStatusCard + WorkTreePanel */}
           {selectedModel === "apex-coder" &&
             unboundState &&
             !unboundState.completedAt && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="space-y-3"
-              >
-                {/* Questionnaire Panel - shown when there are active questions */}
-                {unboundState.questions && unboundState.questions.length > 0 && (
-                  <QuestionnairePanel
-                    questions={unboundState.questions}
-                    onComplete={(choices) => onSelectUnboundChoice?.(choices)}
-                    isRTL={true}
-                  />
-                )}
-                {/* Status Card - shown when no active questions */}
-                {(!unboundState.questions || unboundState.questions.length === 0) && (
-                  <UnboundStatusCard
-                    state={unboundState}
-                    onSelectChoice={onSelectUnboundChoice}
-                  />
-                )}
-                {/* Work Tree Panel */}
-                {unboundState.workTree && (
-                  <WorkTreePanel
-                    tree={unboundState.workTree}
-                    isRTL={true}
-                  />
-                )}
-              </motion.div>
+              <ApexCoderDashboard
+                state={unboundState}
+                content={streamingContent || ""}
+                isStreaming={isStreaming}
+                onSelectChoice={onSelectUnboundChoice}
+                workTree={unboundState.workTree || null}
+                planText={null}
+              />
             )}
         </AnimatePresence>
 
@@ -3538,33 +3515,43 @@ function AssistantMessage({
           </div>
         )}
 
+        {/* Apex Coder: Unified Dashboard for completed messages */}
         {unboundState && !isStreaming && (
           <div className="mb-4">
-            <UnboundStatusCard
+            <ApexCoderDashboard
               state={unboundState}
+              content={content}
+              isStreaming={false}
               onSelectChoice={onSelectUnboundChoice}
+              workTree={(unboundState as any).workTree || null}
+              planText={detectedPlan}
             />
           </div>
         )}
 
+        {/* Apex Coder: web-gen & console during streaming (unified) */}
         {isUnboundModel &&
+          !unboundState &&
           (content.includes("[🤖") ||
             content.includes("<plan>") ||
             content.includes("===") ||
             content.includes("[Phase")) && (
-            <div className="mb-4 flex flex-col gap-2">
-              <UnboundWebGenStatusCard
+            <div className="mb-4">
+              <ApexCoderDashboard
+                state={{
+                  phases: [],
+                  isRunning: !!isStreaming,
+                  content: content,
+                  error: null,
+                  currentPhase: 0,
+                  questions: null,
+                  selectedChoices: null,
+                }}
                 content={content}
                 isStreaming={!!isStreaming}
+                workTree={null}
+                planText={detectedPlan}
               />
-              {detectedPlan && (
-                <UnboundPlanCard
-                  planText={detectedPlan}
-                  messageContent={content}
-                  isStreaming={!!isStreaming}
-                />
-              )}
-              <UnboundConsole content={content} isStreaming={!!isStreaming} />
             </div>
           )}
 

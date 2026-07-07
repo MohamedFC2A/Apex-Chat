@@ -130,7 +130,7 @@ export default function WorkTreePanel({ tree, isRTL = false, className = "" }: W
       </div>
 
       <div className="space-y-0.5 max-h-[400px] overflow-y-auto custom-scrollbar">
-        <TreeNode node={tree.root} isRTL={isRTL} />
+        <TreeNode node={tree.root} depth={0} isRTL={isRTL} />
       </div>
 
       <div className="flex items-center gap-4 mt-3 pt-2 border-t border-zinc-800 text-xs text-zinc-600">

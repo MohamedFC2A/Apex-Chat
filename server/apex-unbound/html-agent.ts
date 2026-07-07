@@ -92,7 +92,7 @@ ${JSON.stringify(spec, null, 2)}`;
     messages,
     max_tokens: 16000,
     stream: false,
-    ...getDeepSeekRequestParams(model, 0.2),
+    ...getDeepSeekRequestParams(model, 0.4),
   };
 
   const response = await client.chat.completions.create(completionArgs);

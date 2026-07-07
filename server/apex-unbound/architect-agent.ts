@@ -193,9 +193,9 @@ Rules:
   const completionArgs: any = {
     model,
     messages,
-    max_tokens: 3000,
+    max_tokens: 8000,
     stream: false,
-    ...getDeepSeekRequestParams(model, 0.3),
+    ...getDeepSeekRequestParams(model, 0.5),
   };
 
   const response = await client.chat.completions.create(completionArgs);
@@ -208,7 +208,8 @@ Rules:
 
     // Safeguard structural validation
     const userRequestOnly = stripInjectedContext(userMessage);
-    const isArabic = spec.isRTL || spec.language === "ar" || /[\u0600-\u06FF]/.test(userMessage + rawContent) || /\bArabic\b|RTL|عربي|العربية/i.test(userMessage);
+    const arabicRatio = ((userMessage + rawContent).match(/[\u0600-\u06FF]/g) || []).length / ((userMessage + rawContent).replace(/\s/g, "").length || 1);
+    const isArabic = spec.isRTL || spec.language === "ar" || arabicRatio > 0.3 || /\bArabic\b|RTL|عربي|العربية/i.test(userMessage);
     if (!spec.projectTitle) spec.projectTitle = isArabic ? "مشروع ويب" : "Web Project";
     if (!spec.projectDescription || hasInjectedSearchContext(spec.projectDescription)) {
       spec.projectDescription = userRequestOnly;
@@ -328,12 +329,24 @@ function buildDeterministicSpec(userMessage: string, isArabic: boolean): SystemS
   };
 }
 
-function inferDomain(userMessage: string): "medical" | "commerce" | "saas" | "restaurant" | "generic" {
-  if (/clinic|medical|doctor|appointment|health|عيادة|طبي|طبيب|حجز/i.test(userMessage)) return "medical";
-  if (/store|shop|cart|product|ecommerce|متجر|منتج|سلة/i.test(userMessage)) return "commerce";
-  if (/saas|dashboard|crm|analytics|لوحة|منصة/i.test(userMessage)) return "saas";
-  if (/restaurant|menu|food|مطعم|قائمة|طعام/i.test(userMessage)) return "restaurant";
-  return "generic";
+function inferDomain(userMessage: string): string {
+  const msg = userMessage.toLowerCase();
+  // Weighted keyword matching across 16 domains
+  const domains: Array<{ domain: string; keywords: string[]; weight: number }> = [
+    { domain: "ecommerce", keywords: ["متجر", "منتجات", "شراء", "سلة", "shop", "store", "product", "cart", "buy", "تسوق", "سعر", "price"], weight: 0 },
+    { domain: "medical", keywords: ["مستشفى", "طبي", "صحة", "عيادة", "hospital", "clinic", "health", "medical", "doctor", "دكتور", "مرض", "علاج", "therapy"], weight: 0 },
+    { domain: "education", keywords: ["مدرسة", "تعليم", "دورة", "تدريب", "school", "course", "learn", "teach", "academy", "جامعة", "university", "درس", "lesson"], weight: 0 },
+    { domain: "realestate", keywords: ["عقار", "شقة", "فيلا", "منزل", "real estate", "property", "house", "apartment", "rent", "إيجار", "بيع", "بناء"], weight: 0 },
+    { domain: "restaurant", keywords: ["مطعم", "طعام", "قائمة", "food", "restaurant", "menu", "cafe", "مقهى", "كافيه", "وجبة", "أكل", "delivery", "توصيل"], weight: 0 },
+    { domain: "saas", keywords: ["منصة", "برنامج", "تطبيق", "saas", "platform", "software", "dashboard", "analytics", "تحليلات", "api", "نظام", "اشتراك", "subscription"], weight: 0 },
+    { domain: "portfolio", keywords: ["معرض", "أعمال", "portfolio", "showcase", "projects", "مشاريع", "gallery", "creative", "مصور", "photographer", "مصمم", "designer"], weight: 0 },
+    { domain: "blog", keywords: ["مدونة", "مقالات", "blog", "article", "news", "أخبار", "magazine", "مجلة", "كاتب", "writer", "نشر", "publish"], weight: 0 },
+    { domain: "booking", keywords: ["حجز", "موعد", "booking", "reservation", "appointment", "schedule", "جدول", "calendar", "تذكرة", "ticket", "hotel", "فندق"], weight: 0 },
+    { domain: "finance", keywords: ["بنك", "مال", "استثمار", "bank", "finance", "investment", "crypto", "تداول", "trading", "محفظة", "wallet", "عملات"], weight: 0 },
+  ];
+  for (const d of domains) { for (const kw of d.keywords) { if (msg.includes(kw)) d.weight++; } }
+  domains.sort((a, b) => b.weight - a.weight);
+  return domains[0].weight > 0 ? domains[0].domain : "generic";
 }
 
 function getDomainTitle(domain: string, isArabic: boolean): string {

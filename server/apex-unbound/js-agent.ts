@@ -119,9 +119,9 @@ Implement all interactive features from the spec. Strictly follow the Global Sel
   const completionArgs: any = {
     model,
     messages,
-    max_tokens: 12000,
+    max_tokens: 16000,
     stream: false,
-    ...getDeepSeekRequestParams(model, 0.2),
+    ...getDeepSeekRequestParams(model, 0.5),
   };
 
   const response = await client.chat.completions.create(completionArgs);
@@ -136,16 +136,37 @@ Implement all interactive features from the spec. Strictly follow the Global Sel
     .replace(/```\s*$/i, "")
     .trim();
 
-  // Ensure it's wrapped in DOMContentLoaded if not already
-  if (!js.includes("DOMContentLoaded") && js.length > 10) {
+  const hasInit = js.includes("DOMContentLoaded") || 
+                 js.includes("window.onload") || 
+                 js.includes("type=\"module\"") ||
+                 js.includes("(function()");
+  if (!hasInit && js.length > 10 && !js.includes("export ")) {
     js = `document.addEventListener('DOMContentLoaded', function() {\n${js}\n});`;
   }
 
-  // Validate against selector map
+  // Auto-fix selector violations with null-guards instead of just warning
   const validation = validateAgainstSelectorMap(js, selectorMap, "js");
-  if (!validation.valid) {
-    console.warn(`[JS Agent] Selector violations detected (${validation.violations.length}):`, validation.violations.slice(0, 5));
-  } else {
+  if (!validation.valid && validation.violations && validation.violations.length > 0) {
+    console.warn(`[JS Agent] ${validation.violations.length} selector violations. Auto-fixing with null-guards...`);
+    let fixedJs = js;
+    for (const violation of (validation.violations || [])) {
+      const badSelector = violation.selector;
+      if (badSelector.startsWith("#") || badSelector.startsWith(".")) {
+        const escaped = badSelector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const pattern = new RegExp(
+          `(querySelector|getElementById)\\s*\\(\\s*['"]${escaped}['"]\\s*\\)\\s*;?(?!\\s*if\\s*\\()`,
+          'g'
+        );
+        fixedJs = fixedJs.replace(pattern, `const _el = $&; if (_el) {`);
+        // Add closing brace before next statement
+        fixedJs = fixedJs.replace(
+          new RegExp(`(const _el = (?:querySelector|getElementById)\\s*\\(\\s*['"]${escaped}['"]\\s*\\)\\s*;?\\s*if\\s*\\(_el\\)\\s*\\{)([\\s\\S]*?)\\n(\\s*)(const|let|var|function|if|for|while|return|document\\.|window\\.)`, 'g'),
+          '$1$2\n$3};\n$3$4'
+        );
+      }
+    }
+    js = fixedJs;
+  } else if (validation.valid) {
     console.log("[JS Agent] Selector validation PASSED — all JS selectors verified against DOM");
   }
 

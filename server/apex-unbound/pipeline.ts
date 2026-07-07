@@ -294,7 +294,7 @@ ${jsCode}`,
     ],
     max_tokens: 24000,
     stream: false,
-    ...getDeepSeekRequestParams(model, 0.1),
+    ...getDeepSeekRequestParams(model, 0.2),
   });
 
   const rawContent = response.choices[0]?.message?.content || "{}";
@@ -543,7 +543,8 @@ export async function runUnboundPipeline(
   const pipelineStart = Date.now();
 
   const isOpenRouter = client.baseURL.includes("openrouter.ai");
-  const architectModel = isOpenRouter ? "google/gemini-2.5-flash" : "deepseek-chat";
+  const architectModel = isOpenRouter ? "google/gemini-2.5-pro" : "deepseek-chat";
+  const selfCorrectionModel = isOpenRouter ? "google/gemini-2.5-pro" : "deepseek-chat";
   const specialistModel = isOpenRouter ? "google/gemini-2.5-flash" : "deepseek-chat";
 
   const isResumed = !!request.spec;
@@ -795,48 +796,69 @@ export async function runUnboundPipeline(
 
   const phase6Start = Date.now();
   let reviewerNotes = "";
-  try {
-    const corrected = await runSelfCorrectionAgent(
-      client,
-      architectModel,
-      promptContext,
-      spec,
-      selectorMap,
-      htmlCode,
-      cssCode,
-      jsCode,
-      (msg) => emitStatus(`> ${msg}\n`)
-    );
+  
+  // Self-correction with retry loop (up to 2 attempts)
+  const MAX_CORRECTION_ATTEMPTS = 2;
+  let correctionAttempts = 0;
+  let corrected: { htmlCode: string; cssCode: string; jsCode: string; notes: string } | null = null;
+
+  while (correctionAttempts < MAX_CORRECTION_ATTEMPTS) {
+    correctionAttempts++;
+    try {
+      corrected = await runSelfCorrectionAgent(
+        client,
+        selfCorrectionModel,
+        promptContext,
+        spec,
+        selectorMap,
+        correctionAttempts === 1 ? htmlCode : corrected!.htmlCode,
+        correctionAttempts === 1 ? cssCode : corrected!.cssCode,
+        correctionAttempts === 1 ? jsCode : corrected!.jsCode,
+        (msg) => emitStatus(`> [Attempt ${correctionAttempts}] ${msg}\n`)
+      );
+      
+      if (corrected.notes.includes("passed") && correctionAttempts === 1) {
+        break; // First attempt was good enough
+      }
+    } catch (e: any) {
+      if (correctionAttempts >= MAX_CORRECTION_ATTEMPTS) {
+        console.warn("[Self-Correction] All retries exhausted:", e.message);
+        if (!corrected) {
+          corrected = { htmlCode, cssCode, jsCode, notes: `Correction failed: ${e.message}` };
+        }
+      }
+    }
+  }
+
+  if (corrected) {
     htmlCode = corrected.htmlCode;
     cssCode = corrected.cssCode;
     jsCode = corrected.jsCode;
     reviewerNotes = corrected.notes;
-
-    const finalHtmlGuard = ensureProductionHtml(htmlCode, spec);
-    htmlCode = finalHtmlGuard.htmlCode;
-    const finalHtmlSummary = buildHtmlQualitySummary(finalHtmlGuard.report);
-    const correctedSelectorMap = runSelectorSyncEngine(htmlCode);
-    selectorMap = correctedSelectorMap;
-    const finalCssGuard = ensureProductionCss(cssCode, spec);
-    cssCode = finalCssGuard.cssCode;
-    const finalRuntimeGuard = ensureProductionJavaScript(jsCode, spec, selectorMap);
-    jsCode = finalRuntimeGuard.jsCode;
-    const finalCssSummary = buildCssQualitySummary(finalCssGuard.report);
-    const finalRuntimeSummary = buildRuntimeQualitySummary(finalRuntimeGuard.report);
-    if (finalHtmlGuard.report.replacedHtml || finalCssGuard.report.injectedCss || finalRuntimeGuard.report.injectedRuntime) {
-      reviewerNotes = `${reviewerNotes} ${finalHtmlSummary} ${finalCssSummary} ${finalRuntimeSummary}`.trim();
-    }
-
-    updatePhase(6, {
-      status: "done",
-      durationMs: Date.now() - phase6Start,
-      detail: reviewerNotes.slice(0, 140) || "Integration audit complete",
-    });
-    emitStatus(`**Quality review completed** - ${reviewerNotes || "Integration audit complete."}\n\n`);
-  } catch (err: any) {
-    updatePhase(6, { status: "error", detail: err.message });
-    throw new Error(`[Phase 6] Self-Correction Agent failed: ${err.message}`);
   }
+
+  // Run quality guards after correction
+  const finalHtmlGuard = ensureProductionHtml(htmlCode, spec);
+  htmlCode = finalHtmlGuard.htmlCode;
+  const finalHtmlSummary = buildHtmlQualitySummary(finalHtmlGuard.report);
+  const correctedSelectorMap = runSelectorSyncEngine(htmlCode);
+  selectorMap = correctedSelectorMap;
+  const finalCssGuard = ensureProductionCss(cssCode, spec);
+  cssCode = finalCssGuard.cssCode;
+  const finalRuntimeGuard = ensureProductionJavaScript(jsCode, spec, selectorMap);
+  jsCode = finalRuntimeGuard.jsCode;
+  const finalCssSummary = buildCssQualitySummary(finalCssGuard.report);
+  const finalRuntimeSummary = buildRuntimeQualitySummary(finalRuntimeGuard.report);
+  if (finalHtmlGuard.report.replacedHtml || finalCssGuard.report.injectedCss || finalRuntimeGuard.report.injectedRuntime) {
+    reviewerNotes = `${reviewerNotes} ${finalHtmlSummary} ${finalCssSummary} ${finalRuntimeSummary}`.trim();
+  }
+
+  updatePhase(6, {
+    status: "done",
+    durationMs: Date.now() - phase6Start,
+    detail: reviewerNotes.slice(0, 140) || "Integration audit complete",
+  });
+  emitStatus(`**Quality review completed** - ${reviewerNotes || "Integration audit complete."}\n\n`);
 
   updatePhase(7, { status: "running" });
   emitStatus("**[Phase 7/7] - Release Packaging**\nCompiling the approved assets into a self-contained HTML bundle.\n\n");

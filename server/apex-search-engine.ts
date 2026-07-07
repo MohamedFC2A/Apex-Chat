@@ -1,16 +1,16 @@
 import { execFile } from "child_process";
 import { promisify } from "util";
 import path from "path";
+import { fetchAdditionalSources, mergeWithFederation } from "./apex-search/federated-search.js";
+import { getSearchCache, buildCacheKey, inferTtl } from "./apex-search/search-cache.js";
+import { neuralRerank, heuristicRerank } from "./apex-search/neural-reranker.js";
+import { selectBestImages, buildOptimizedImageUrl as buildCdnUrl } from "./apex-search/image-intelligence.js";
+import type { ImageRolePlan } from "./apex-search/image-intelligence.js";
 
 const execFilePromise = promisify(execFile);
 
-// Local in-memory Cache for Apex Search
-interface CacheEntry {
-  response: ApexSearchResponse;
-  timestamp: number;
-}
-const searchCache = new Map<string, CacheEntry>();
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
+// v3: Use persistent cache adapter (replaces in-memory Map)
+const searchCacheAdapter = getSearchCache();
 
 // Asynchronous Node-based URL scraper with timeout
 async function scrapeUrlNode(url: string, timeoutMs = 2500): Promise<string> {
@@ -385,14 +385,14 @@ export async function runApexSearch(message: string, options: ApexSearchOptions 
   const searchPlan = buildSearchPlan(message, options.intent || "website");
   const fallback: ApexSearchResponse = { organic: [], images: [], imageAssets: [], searchPlan };
 
-  // 1. Cache lookup
+  // 1. Cache lookup (v3: smart TTL per domain)
   const skipCache = options.cache === false;
-  const cacheKey = `${message}:${options.intent || "website"}:${!!options.isOmni}`;
+  const cacheKey = buildCacheKey(message, options.intent || "website", !!options.isOmni, options.deep);
   if (!skipCache) {
-    const cached = searchCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-      console.log(`[Apex Search] Cache HIT for key: "${cacheKey}"`);
-      return cached.response;
+    const cached = await searchCacheAdapter.get(cacheKey);
+    if (cached) {
+      console.log(`[Apex Search v3] Cache HIT for key: "${cacheKey.slice(0, 60)}"`);
+      return cached;
     }
   }
 
@@ -444,16 +444,19 @@ export async function runApexSearch(message: string, options: ApexSearchOptions 
       }
     };
 
-    // 2. DuckDuckGo Advanced Engine search execution
-    const ddgResults = await runDdgSearch();
+    // 2. Run DDG + fetch additional sources in parallel (v3: Federated Search)
+    const [ddgResults, additionalSources] = await Promise.all([
+      runDdgSearch(),
+      fetchAdditionalSources(searchPlan.textQuery, 2000),
+    ]);
 
-    // 3. Merging Organic Results (Deduplicate by URL)
-    const mergedOrganicMap = new Map<string, ApexOrganicResult>();
-    ddgResults.organic.forEach((item) => {
-      mergedOrganicMap.set(item.link, { ...item });
-    });
-
-    const organic = Array.from(mergedOrganicMap.values()).sort((a, b) => (b.score || 100) - (a.score || 100));
+    // 3. Federated merging with Reciprocal Rank Fusion (v3)
+    const federatedOrganic = mergeWithFederation(
+      ddgResults.organic,
+      additionalSources.brave,
+      additionalSources.wikipedia
+    );
+    const organic: ApexOrganicResult[] = federatedOrganic;
 
     // 4. Parallel Async Scraper for missing page content (Top 35 Results)
     const scrapeLimit = options.isOmni ? 35 : 20;
@@ -478,6 +481,14 @@ export async function runApexSearch(message: string, options: ApexSearchOptions 
         item.page_content = extractSemanticSnippet(item.page_content, searchPlan.textQuery);
       }
     });
+
+    // 5b. Neural Reranking (v3: LLM cross-encoder for deep/omni queries)
+    if ((options.deep !== false && options.isOmni) || options.deep === true) {
+      const reranked = await neuralRerank(searchPlan.textQuery, organic as any, 15);
+      organic.length = 0;
+      organic.push(...(reranked as ApexOrganicResult[]));
+      console.log(`[Apex Search v3] Neural reranking complete. Top: "${organic[0]?.title?.slice(0, 50)}"`);
+    }
 
     // 6. Merge Images and rank assets
     const mergedImages = ddgResults.images;
@@ -542,8 +553,10 @@ export async function runApexSearch(message: string, options: ApexSearchOptions 
       searchPlan,
     };
 
-    // Cache the result
-    searchCache.set(cacheKey, { response: finalResponse, timestamp: Date.now() });
+    // Cache the result (v3: smart TTL based on query domain)
+    const { ttlMs, label } = inferTtl(message);
+    await searchCacheAdapter.set(cacheKey, finalResponse, ttlMs);
+    console.log(`[Apex Search v3] Cached result (TTL=${Math.round(ttlMs/60000)}min, domain=${label})`);
 
     return finalResponse;
   } catch (error) {

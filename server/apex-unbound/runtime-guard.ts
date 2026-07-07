@@ -43,7 +43,40 @@ export function ensureProductionHtml(htmlCode: string, spec: SystemSpec): { html
   if (curatedAssets.length >= 2 && usedCuratedAssetCount < 2) reasons.push(`Insufficient curated media usage (${usedCuratedAssetCount}/${curatedAssets.length}).`);
 
   const shouldReplace = reasons.length > 0;
-  const finalHtml = shouldReplace ? buildDeterministicHtml(spec) : original;
+  let finalHtml = original;
+
+  // Inject missing elements instead of full replacement
+  if (shouldReplace) {
+    // 1. Inject #app-router wrapper if missing
+    if (!/<main[^>]*(id=["']app-router["']|class=["'][^"']*\bapp-router\b)/i.test(original)) {
+      finalHtml = finalHtml.replace(/(<body[^>]*>)/i, `$1\n  <main id="app-router" class="app-router">`);
+      finalHtml = finalHtml.replace("</body>", `</main>\n</body>`);
+    }
+
+    // 2. Inject missing page views
+    if (pageViewCount < pageCount) {
+      let viewsHtml = '';
+      for (const page of (spec.pages || [])) {
+        if (!finalHtml.includes(`view-${page.id}`)) {
+          viewsHtml += `\n  <div class="page-view is-hidden" id="view-${page.id}" data-page="${page.id}">\n    <h2>${page.title}</h2>\n    <p>${page.description || ""}</p>\n  </div>`;
+        }
+      }
+      if (viewsHtml) {
+        finalHtml = finalHtml.replace("</body>", `${viewsHtml}\n</body>`);
+      }
+    }
+
+    // 3. Inject route links if missing
+    if (routeLinkCount < pageCount && spec.pages) {
+      const navLinks = spec.pages.map(p => `      <a href="#${p.id}" data-route="${p.id}" class="route-link">${p.title}</a>`).join("\n");
+      const nav = `\n  <nav class="main-nav" role="navigation">\n${navLinks}\n  </nav>`;
+      if (finalHtml.includes("<nav")) {
+        finalHtml = finalHtml.replace(/(<nav[^>]*>)/, `$1\n${navLinks}`);
+      } else {
+        finalHtml = finalHtml.replace(/(<body[^>]*>)/i, `$1${nav}`);
+      }
+    }
+  }
 
   return {
     htmlCode: finalHtml.trim(),
@@ -79,7 +112,7 @@ export function ensureProductionCss(cssCode: string, spec: SystemSpec): { cssCod
   const shouldInjectCss = reasons.length > 0;
   const finalCss = shouldInjectCss
     ? `${original}\n\n${guardCss}`
-    : `${original}\n\n${guardCss}`;
+    : original;
 
   return {
     cssCode: finalCss.trim(),

@@ -118,8 +118,8 @@ ${doc}
 
   // ── 7. Inject CSS ─────────────────────────────────────────────
   if (cssCode.length > 10) {
-    // The CSS agent output is authoritative; remove stale inline styles first.
-    doc = doc.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
+    // Only remove placeholder/empty style tags (< 50 chars), keep real content
+    doc = doc.replace(/<style[^>]*>[\s\S]{0,50}?<\/style>/gi, "");
 
     const safeCss = cssCode.replace(/<\/style/gi, "<\\/style");
     const styleBlock = `  <style>\n${safeCss}\n  </style>`;
@@ -135,8 +135,8 @@ ${doc}
 
   // ── 8. Inject JavaScript ──────────────────────────────────────
   if (jsCode.length > 10) {
-    // The JS agent output is authoritative; remove stale inline scripts first.
-    doc = doc.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+    // Only remove placeholder/empty script tags (< 50 chars), keep real content
+    doc = doc.replace(/<script\b[^>]*>[\s\S]{0,50}?<\/script>/gi, "");
 
     const safeJs = jsCode.replace(/<\/script/gi, "<\\/script");
     const scriptBlock = `  <script>\n${safeJs}\n  </script>`;

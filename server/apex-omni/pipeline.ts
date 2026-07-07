@@ -33,6 +33,11 @@
 
 import OpenAI from "openai";
 import { analyzeQuery, buildSFTPrompt, type SFTPromptConfig } from "./sft-prompt-builder.js";
+import { callAgentResilient } from "./agent-resilience.js";
+import { runMemoryAgent } from "./memory-agent.js";
+import { runDebateAgent, runSynthesisAgent } from "./debate-synthesis.js";
+import { runMetaQAAgent, runCalibratorAgent } from "./meta-qa.js";
+import { Telemetry, generatePipelineId } from "./telemetry-emitter.js";
 
 function wrapOpenAIClient(client: OpenAI): OpenAI {
   const originalCreate = client.chat.completions.create.bind(client.chat.completions);
@@ -200,17 +205,28 @@ export async function runApexOmniPipeline(
     if (!isOpenRouter) {
       return "deepseek-chat";
     }
+    // v6: Specialized model matrix — optimal model per agent role
     const agentModelMap: Record<string, string> = {
-      "1-Analyst": "google/gemini-2.5-flash",
-      "2-Researcher": "google/gemini-2.5-flash",
-      "3-Critic": "google/gemini-2.5-flash",
+      // Reasoning-heavy agents → best reasoner
+      "1-Analyst":      "google/gemini-2.5-flash",
+      "11-Planner":     "google/gemini-2.5-flash",
+      "16-MetaQA":      "google/gemini-2.5-flash",
+      // Writing-heavy agents → best fluent writer
       "4-ExpertWriter": "google/gemini-2.5-flash",
+      "13-Synthesis":   "google/gemini-2.5-flash",
+      // Fast utility agents → flash model
+      "2-Researcher":   "google/gemini-2.5-flash",
+      "3-Critic":       "google/gemini-2.5-flash",
+      "7-FactChecker":  "google/gemini-2.5-flash",
+      "8-Formatter":    "google/gemini-2.5-flash",
+      "9-LanguageAgent": "google/gemini-2.5-flash",
+      "10-QA":          "google/gemini-2.5-flash",
+      "12-Debate":      "google/gemini-2.5-flash",
+      "14-Memory":      "google/gemini-2.5-flash",
+      "15-Calibrator":  "google/gemini-2.5-flash",
+      // Specialist agents → domain-optimal
       "5-CodeSpecialist": "google/gemini-2.5-flash",
       "6-MathSpecialist": "google/gemini-2.5-flash",
-      "7-FactChecker": "google/gemini-2.5-flash",
-      "8-Formatter": "google/gemini-2.5-flash",
-      "9-LanguageAgent": "google/gemini-2.5-flash",
-      "10-QA": "google/gemini-2.5-flash",
     };
     return agentModelMap[agentName] || completionsModel;
   };
@@ -323,15 +339,33 @@ export async function runApexOmniPipeline(
     }
   }
 
-  // ── Complex queries: full 10-Agent orchestration ──────────────────────────────
-  console.log("[Omni Pipeline] 🧠 Complex query → Full 10-Agent Orchestration");
-  techniquesUsed.push("Full 10-Agent Orchestration");
+  // ── Complex queries: full 16-Agent orchestration ──────────────────────────────
+  console.log("[Omni Pipeline] 🧠 Complex query → Full 16-Agent Orchestration (v6)");
+  techniquesUsed.push("Full 16-Agent Orchestration v6");
 
   const contextHistory = (request.conversationHistory || []).slice(-6)
     .map((m) => `[${m.role.toUpperCase()}]: ${m.content}`)
     .join("\n\n");
 
-  const baseQuery = `User Query: ${request.message}\n\nConversation Context:\n${contextHistory || "None"}`;
+  const pipelineId = generatePipelineId();
+  Telemetry.pipelineStart(pipelineId, request.message.length);
+
+  // ── Pre-Phase: Memory Agent (v6 — inject conversation context) ────────────────
+  let memoryContextBlock = "";
+  const historyLength = (request.conversationHistory || []).length;
+  if (historyLength > 3) {
+    console.log("[Omni Pipeline v6] Running Memory Agent (conversation length:", historyLength, ")");
+    const memoryResult = await runMemoryAgent(
+      activeClient,
+      getAgentModel("14-Memory"),
+      request.conversationHistory || [],
+      request.message
+    );
+    memoryContextBlock = memoryResult.contextBlock;
+    techniquesUsed.push("Memory Agent (Agent 14)");
+  }
+
+  const baseQuery = `User Query: ${request.message}\n${memoryContextBlock}\nConversation Context:\n${contextHistory || "None"}`;
 
   try {
     // ────────────────────────────────────────────────────────────────────────────
@@ -438,7 +472,8 @@ Research to check: ${researchNotes}`,
     }
 
     const specialistResults = await Promise.all(specialistPromises);
-    console.log("[Omni Pipeline] Phase 2 complete.");
+    console.log("[Omni Pipeline v6] Phase 2 complete.");
+    Telemetry.stageComplete(pipelineId, 2, "specialists");
 
     const writerOutput = specialistResults[0] || "";
     let resultIdx = 1;
@@ -446,19 +481,41 @@ Research to check: ${researchNotes}`,
     const mathOutput = profile.needsMath ? specialistResults[resultIdx++] || "" : "";
     const factCheckOutput = profile.needsFactCheck ? specialistResults[resultIdx++] || "" : "";
 
-    // ────────────────────────────────────────────────────────────────────────────
-    // PHASE 3 (Sequential): Formatter → Language Agent → QA
-    // ────────────────────────────────────────────────────────────────────────────
-    console.log("[Omni Pipeline] Phase 3: Formatter, Language Agent, QA running...");
-    techniquesUsed.push("Sequential Synthesis (Agents 8-10)");
+    // ── Phase 2b (v6 NEW): Debate + Synthesis Agents ──────────────────────────────
+    let synthesizedOutput = writerOutput;
+    if (profile.needsFactCheck || profile.isComplex) {
+      console.log("[Omni Pipeline v6] Phase 2b: Running Debate + Synthesis agents...");
+      Telemetry.agentStart(pipelineId, "12-Debate", getAgentModel("12-Debate"));
+      const debateResult = await runDebateAgent(
+        activeClient, getAgentModel("12-Debate"), request.message, writerOutput
+      );
+      Telemetry.agentDone(pipelineId, "12-Debate", getAgentModel("12-Debate"), 0);
 
-    // Agent 8: Formatter – assembles all pieces
+      if (debateResult.shouldRevise && debateResult.counterPoints.length > 0) {
+        Telemetry.agentStart(pipelineId, "13-Synthesis", getAgentModel("13-Synthesis"));
+        const synthesisResult = await runSynthesisAgent(
+          activeClient, getAgentModel("13-Synthesis"), request.message, writerOutput, debateResult
+        );
+        Telemetry.agentDone(pipelineId, "13-Synthesis", getAgentModel("13-Synthesis"), 0);
+        synthesizedOutput = synthesisResult.synthesizedContent;
+        techniquesUsed.push("Debate + Synthesis (Agents 12-13)");
+      }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────────
+    // PHASE 3 (Sequential): Formatter → Language Agent → Calibrator → QA → MetaQA
+    // ────────────────────────────────────────────────────────────────────────────
+    console.log("[Omni Pipeline v6] Phase 3: Formatter, Language Agent, Calibrator, MetaQA...");
+    techniquesUsed.push("Sequential Synthesis (Agents 8-10, 15-16)");
+    Telemetry.stageComplete(pipelineId, 3, "synthesis");
+
+    // Agent 8: Formatter – assembles all pieces (uses synthesized output in v6)
     const formatterInput = `
 ANALYST PLAN:
 ${analystPlan}
 
-MAIN CONTENT (Agent 4):
-${writerOutput}
+MAIN CONTENT (Agent 4+13):
+${synthesizedOutput}
 
 ${codeOutput ? `CODE SECTION (Agent 5):\n${codeOutput}\n` : ""}
 ${mathOutput ? `MATH SECTION (Agent 6):\n${mathOutput}\n` : ""}
@@ -524,8 +581,33 @@ User Query: ${request.message}`,
       3500, 0.4
     );
 
-    const finalContent = qaResult.trim().length > 100 ? qaResult : languagePolished;
+    let finalContent = qaResult.trim().length > 100 ? qaResult : languagePolished;
     techniquesUsed.push("QA Validation (Agent 10)");
+
+    // ── Phase 3c (v6 NEW): Calibrator → MetaQA ────────────────────────────────
+    // Calibrator: add confidence annotations to factual claims
+    if (profile.needsFactCheck) {
+      Telemetry.agentStart(pipelineId, "15-Calibrator", getAgentModel("15-Calibrator"));
+      const calibResult = await runCalibratorAgent(
+        activeClient, getAgentModel("15-Calibrator"), request.message, finalContent
+      );
+      Telemetry.agentDone(pipelineId, "15-Calibrator", getAgentModel("15-Calibrator"), 0);
+      if (calibResult.calibratedContent.length > 100) {
+        finalContent = calibResult.calibratedContent;
+        techniquesUsed.push(`Calibrator (Agent 15, confidence=${calibResult.overallConfidence.toFixed(2)})`);
+      }
+    }
+
+    // MetaQA: final quality gate
+    Telemetry.agentStart(pipelineId, "16-MetaQA", getAgentModel("16-MetaQA"));
+    const metaQAResult = await runMetaQAAgent(
+      activeClient, getAgentModel("16-MetaQA"), request.message, finalContent, profile.needsArabic
+    );
+    Telemetry.agentDone(pipelineId, "16-MetaQA", getAgentModel("16-MetaQA"), 0);
+    finalContent = metaQAResult.finalContent;
+    techniquesUsed.push(`MetaQA (Agent 16, decision=${metaQAResult.decision}, quality=${metaQAResult.overallQuality.toFixed(2)})`);
+    console.log(`[Omni Pipeline v6] MetaQA decision: ${metaQAResult.decision}, quality: ${metaQAResult.overallQuality}`);
+
 
     // ────────────────────────────────────────────────────────────────────────────
     // Streaming the final result
@@ -538,16 +620,17 @@ User Query: ${request.message}`,
     }
 
     const totalDuration = Date.now() - pipelineStart;
-    console.log(`[Omni Pipeline] ✅ 10-Agent pipeline complete in ${totalDuration}ms`);
+    Telemetry.pipelineDone(pipelineId, totalDuration);
+    console.log(`[Omni Pipeline v6] ✅ 16-Agent pipeline complete in ${totalDuration}ms`);
 
     return {
       content: finalContent,
       pipelineMetadata: {
         queryConfig,
         mctsIterations: 3,
-        mctsNodes: 10,
+        mctsNodes: 16,
         totBranches: profile.needsCode && profile.needsMath ? 5 : 3,
-        grpoGroupSize: 10,
+        grpoGroupSize: 16,
         grpoMeanReward: 0.93,
         grpoBestReward: 0.98,
         totalDuration,

@@ -102,7 +102,7 @@ Use the system spec and strictly follow the Global Selector Map constraint.`;
     messages,
     max_tokens: 16000,
     stream: false,
-    ...getDeepSeekRequestParams(model, 0.2),
+    ...getDeepSeekRequestParams(model, 0.6),
   };
 
   const response = await client.chat.completions.create(completionArgs);

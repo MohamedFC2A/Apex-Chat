@@ -11,6 +11,7 @@ const APEX_MODEL_ALIASES: Record<string, string> = {
   "apex-elite":   "google/gemini-2.5-flash",
   "apex-omni":    "google/gemini-2.5-flash",
   "apex-coder":   "google/gemini-2.5-flash",
+  "apex-coder-pro": "google/gemini-2.5-pro",
   // Legacy fallbacks mapped to google/gemini-2.5-flash
   "deepseek-v4-flash": "google/gemini-2.5-flash",
   "deepseek-v4-pro":   "google/gemini-2.5-flash",

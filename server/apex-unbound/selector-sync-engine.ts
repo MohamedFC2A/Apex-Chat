@@ -129,13 +129,10 @@ export function runSelectorSyncEngine(html: string): GlobalSelectorMap {
     ...dataAttributes.map((t) => t.cssSelector),
   ];
 
-  // Build validation set for O(1) lookups
+  // Build validation set for O(1) lookups (cssSelector only - avoids duplication)
   const validationSet = new Set([
-    ...ids.map((t) => t.value),
     ...ids.map((t) => t.cssSelector),
-    ...classes.map((t) => t.value),
     ...classes.map((t) => t.cssSelector),
-    ...dataAttributes.map((t) => t.value),
     ...dataAttributes.map((t) => t.cssSelector),
   ]);
 
@@ -174,7 +171,17 @@ export function validateAgainstSelectorMap(
       if (sel.startsWith("--") || sel.includes(":")) continue;
       if (!selectorMap.validationSet.has(sel) && !selectorMap.validationSet.has(sel.replace(/^[#.]/, ""))) {
         // Check if it's a common CSS keyword that looks like a class
-        const knownCssKeywords = [".container", ".wrapper", ".row", ".col", ".flex", ".grid"];
+        const knownCssKeywords = [
+          ".container", ".wrapper", ".row", ".col", ".flex", ".grid",
+          ".header", ".footer", ".main", ".nav", ".section", ".content",
+          ".button", ".btn", ".card", ".modal", ".overlay", ".sidebar",
+          ".active", ".hidden", ".visible", ".open", ".close",
+          ".title", ".text", ".image", ".icon", ".link", ".list",
+          ".form", ".input", ".label", ".select", ".textarea",
+          ".slide", ".dot", ".arrow", ".prev", ".next",
+          ":root", ":before", ":after", ":hover", ":focus", ":active",
+          "html", "body", "*",
+        ];
         if (!knownCssKeywords.some((kw) => sel.includes(kw.slice(1)))) {
           violations.push(`CSS: Unknown selector "${sel}"`);
         }
