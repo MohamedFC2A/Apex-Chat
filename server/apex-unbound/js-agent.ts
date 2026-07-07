@@ -12,7 +12,7 @@ import OpenAI from "openai";
 import type { SystemSpec } from "./architect-agent.js";
 import type { GlobalSelectorMap } from "./selector-sync-engine.js";
 import { buildSelectorConstraintPrompt, validateAgainstSelectorMap } from "./selector-sync-engine.js";
-import { getDeepSeekRequestParams } from "../deepseek-model-router.js";
+import { getDeepSeekRequestParams, executeCompletionWithContinuation } from "../deepseek-model-router.js";
 
 export async function runJsAgent(
   client: OpenAI,
@@ -124,7 +124,7 @@ Implement all interactive features from the spec. Strictly follow the Global Sel
     ...getDeepSeekRequestParams(model, 0.5),
   };
 
-  const response = await client.chat.completions.create(completionArgs);
+  const response = await executeCompletionWithContinuation(client, completionArgs);
 
   let js = response.choices[0]?.message?.content || "";
 

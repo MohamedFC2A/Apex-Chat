@@ -9,7 +9,7 @@
 
 import OpenAI from "openai";
 import type { SystemSpec } from "./architect-agent.js";
-import { getDeepSeekRequestParams } from "../deepseek-model-router.js";
+import { getDeepSeekRequestParams, executeCompletionWithContinuation } from "../deepseek-model-router.js";
 
 export async function runHtmlAgent(
   client: OpenAI,
@@ -95,7 +95,7 @@ ${JSON.stringify(spec, null, 2)}`;
     ...getDeepSeekRequestParams(model, 0.4),
   };
 
-  const response = await client.chat.completions.create(completionArgs);
+  const response = await executeCompletionWithContinuation(client, completionArgs);
 
   let html = response.choices[0]?.message?.content || "";
 

@@ -19,7 +19,7 @@
  */
 
 import OpenAI from "openai";
-import { getDeepSeekRequestParams } from "../deepseek-model-router.js";
+import { getDeepSeekRequestParams, executeCompletionWithContinuation } from "../deepseek-model-router.js";
 import { robustJsonParse } from "../json-repair.js";
 
 export interface ComponentSpec {
@@ -198,7 +198,7 @@ Rules:
     ...getDeepSeekRequestParams(model, 0.5),
   };
 
-  const response = await client.chat.completions.create(completionArgs);
+  const response = await executeCompletionWithContinuation(client, completionArgs);
 
   const rawContent = response.choices[0]?.message?.content || "{}";
 

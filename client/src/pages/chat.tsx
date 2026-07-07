@@ -326,6 +326,7 @@ export default function ChatPage() {
           } catch (unboundErr: any) {
             // Fall back to standard sendAIMessage if pipeline fails
             console.warn("[Unbound] Pipeline failed, falling back:", unboundErr.message);
+            setUnboundStateForConv(thisConvId, null);
             response = await sendAIMessage(
               content,
               selectedModel,

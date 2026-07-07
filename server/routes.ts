@@ -1010,6 +1010,7 @@ export async function registerRoutes(
           "HTTP-Referer": "https://apex-chat.vercel.app",
           "X-Title": "Apex Chat",
         },
+        timeout: 45000, // 45 seconds client-wide timeout
       });
 
       const result = await runUnboundPipeline(

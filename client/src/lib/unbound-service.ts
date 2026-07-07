@@ -122,86 +122,104 @@ export async function runUnboundService(
     const decoder = new TextDecoder();
     let buffer = "";
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+    let lastEventTime = Date.now();
+    const inactivityTimeout = 90000; // 90 seconds
+    const intervalId = setInterval(() => {
+      if (state.isRunning && Date.now() - lastEventTime > inactivityTimeout) {
+        console.warn("[Unbound Service] Inactivity timeout reached. Aborting...");
+        reader.cancel().catch(() => {});
+        state.error = "Connection timed out due to server inactivity.";
+        state.isRunning = false;
+        emit();
+      }
+    }, 5000);
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        lastEventTime = Date.now();
+        if (done) break;
 
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        const raw = line.slice(6).trim();
-        if (!raw || raw === "[DONE]") continue;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
-        try {
-          const event = JSON.parse(raw);
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const raw = line.slice(6).trim();
+          if (!raw || raw === "[DONE]") continue;
 
-          if (event.type === "content" && event.content) {
-            accumulatedContent += event.content;
-            state.content = accumulatedContent;
-            onContentChunk(event.content, false);
-            if (conversationId && messageId) {
-              throttledSaveGenerationState(conversationId, accumulatedContent, "", messageId);
+          try {
+            const event = JSON.parse(raw);
+
+            if (event.type === "content" && event.content) {
+              accumulatedContent += event.content;
+              state.content = accumulatedContent;
+              onContentChunk(event.content, false);
+              if (conversationId && messageId) {
+                throttledSaveGenerationState(conversationId, accumulatedContent, "", messageId);
+              }
+              emit();
+            } else if (event.type === "final" && event.content) {
+              accumulatedContent = event.content;
+              state.content = accumulatedContent;
+              onContentChunk(event.content, true);
+              if (conversationId && messageId) {
+                throttledSaveGenerationState(conversationId, accumulatedContent, "", messageId);
+              }
+              emit();
+            } else if (event.type === "phase" && event.phase) {
+              const phaseData: UnboundPhase = event.phase;
+              const idx = state.phases.findIndex((p) => p.phase === phaseData.phase);
+              if (idx !== -1) {
+                state.phases[idx] = phaseData;
+                state.currentPhase = phaseData.phase;
+              }
+              emit();
+              state.selectedChoices = selectedChoices;
+            } else if (event.type === "question") {
+              state.questions = event.questions;
+              state.spec = event.spec;
+              state.searchResults = event.searchResults;
+              state.isRunning = false;
+              const idx = state.phases.findIndex((p) => p.phase === 2);
+              if (idx !== -1) {
+                state.phases[idx].status = "running";
+                state.phases[idx].detail = "waiting for input";
+                state.currentPhase = 2;
+              }
+              emit();
+              
+              // Clean close of connection
+              reader.cancel();
+              return {
+                content: accumulatedContent,
+                hasQuestion: true,
+                questions: event.questions,
+                spec: event.spec,
+                searchResults: event.searchResults,
+              };
+            } else if (event.type === "done") {
+              state.isRunning = false;
+              state.completedAt = Date.now();
+              state.phases = state.phases.map((p) =>
+                p.status === "pending" ? { ...p, status: "done" } : p
+              );
+              emit();
+            } else if (event.type === "error") {
+              throw new Error(event.error || "Pipeline error");
+            } else if (event.type === "workTree" && event.workTree) {
+              state.workTree = event.workTree;
+              emit();
             }
-            emit();
-          } else if (event.type === "final" && event.content) {
-            accumulatedContent = event.content;
-            state.content = accumulatedContent;
-            onContentChunk(event.content, true);
-            if (conversationId && messageId) {
-              throttledSaveGenerationState(conversationId, accumulatedContent, "", messageId);
-            }
-            emit();
-          } else if (event.type === "phase" && event.phase) {
-            const phaseData: UnboundPhase = event.phase;
-            const idx = state.phases.findIndex((p) => p.phase === phaseData.phase);
-            if (idx !== -1) {
-              state.phases[idx] = phaseData;
-              state.currentPhase = phaseData.phase;
-            }
-            emit();
-            state.selectedChoices = selectedChoices;
-          } else if (event.type === "question") {
-            state.questions = event.questions;
-            state.spec = event.spec;
-            state.searchResults = event.searchResults;
-            state.isRunning = false;
-            const idx = state.phases.findIndex((p) => p.phase === 2);
-            if (idx !== -1) {
-              state.phases[idx].status = "running";
-              state.phases[idx].detail = "waiting for input";
-              state.currentPhase = 2;
-            }
-            emit();
-            
-            // Clean close of connection
-            reader.cancel();
-            return {
-              content: accumulatedContent,
-              hasQuestion: true,
-              questions: event.questions,
-              spec: event.spec,
-              searchResults: event.searchResults,
-            };
-          } else if (event.type === "done") {
-            state.isRunning = false;
-            state.completedAt = Date.now();
-            state.phases = state.phases.map((p) =>
-              p.status === "pending" ? { ...p, status: "done" } : p
-            );
-            emit();
-          } else if (event.type === "error") {
-            throw new Error(event.error || "Pipeline error");
-          } else if (event.type === "workTree" && event.workTree) {
-            state.workTree = event.workTree;
-            emit();
+          } catch (parseErr) {
+            // Ignore malformed SSE lines
           }
-        } catch (parseErr) {
-          // Ignore malformed SSE lines
         }
       }
+    } finally {
+      clearInterval(intervalId);
+      reader.releaseLock();
     }
   } catch (err: any) {
     console.error("[Unbound Service] Error:", err);

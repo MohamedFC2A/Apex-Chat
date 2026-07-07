@@ -26,7 +26,7 @@ import { runSelectorSyncEngine, type GlobalSelectorMap } from "./selector-sync-e
 import { runCssAgent } from "./css-agent.js";
 import { runJsAgent } from "./js-agent.js";
 import { runBundlerEngine, type BundleResult } from "./bundler-engine.js";
-import { getDeepSeekRequestParams, mapDeepSeekModelForTask, isOfficialDeepSeekEndpoint } from "../deepseek-model-router.js";
+import { getDeepSeekRequestParams, mapDeepSeekModelForTask, isOfficialDeepSeekEndpoint, executeCompletionWithContinuation } from "../deepseek-model-router.js";
 import { buildCssQualitySummary, buildHtmlQualitySummary, buildRuntimeQualitySummary, ensureProductionCss, ensureProductionHtml, ensureProductionJavaScript } from "./runtime-guard.js";
 import { buildApexSearchContext, runApexSearch } from "../apex-search-engine.js";
 import { robustJsonParse } from "../json-repair.js";
@@ -141,7 +141,7 @@ JSON structure:
 }`;
 
   try {
-    const response = await client.chat.completions.create({
+    const response = await executeCompletionWithContinuation(client, {
       model,
       messages: [
         { role: "system", content: systemPrompt },
@@ -263,7 +263,7 @@ Return ONLY valid JSON with this exact shape:
   "notes": "short audit summary"
 }`;
 
-  const response = await client.chat.completions.create({
+  const response = await executeCompletionWithContinuation(client, {
     model,
     messages: [
       { role: "system", content: systemPrompt },

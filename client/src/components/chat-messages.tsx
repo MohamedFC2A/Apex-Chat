@@ -2846,8 +2846,9 @@ export function ChatMessages({
         {/* Render the streaming message OUTSIDE AnimatePresence for instant, glitch-free swap */}
         {isStreaming &&
           (selectedModel === "apex-omni" ||
-            streamingContent ||
-            streamingReasoning) && (
+            (selectedModel === "apex-coder"
+              ? !unboundState && (streamingContent || streamingReasoning)
+              : (streamingContent || streamingReasoning))) && (
             <div className="w-full mt-4">
               <AssistantMessage
                 content={streamingContent || ""}

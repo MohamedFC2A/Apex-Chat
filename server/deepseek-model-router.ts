@@ -1,3 +1,5 @@
+import OpenAI from "openai";
+
 export type DeepSeekTask = "reasoning" | "generation";
 
 // OpenRouter Free Models mapping (July 2026):
@@ -50,4 +52,55 @@ export function getDeepSeekRequestParams(
  */
 export function getDeepSeekStructuredParams(temperature = 0.3): Record<string, any> {
   return { temperature };
+}
+
+/**
+ * Wrapper to automatically request continuation if the LLM output is truncated (finish_reason === "length").
+ */
+export async function executeCompletionWithContinuation(
+  client: OpenAI,
+  params: any,
+  options?: any
+): Promise<any> {
+  let attempts = 0;
+  const maxAttempts = 3;
+  let accumulatedContent = "";
+  let finalResponse: any = null;
+
+  const currentParams = { ...params };
+  const requestOptions = {
+    timeout: 45000, // 45 seconds default timeout
+    ...options,
+  };
+
+  while (attempts < maxAttempts) {
+    const response = await client.chat.completions.create(currentParams, requestOptions);
+    finalResponse = response;
+
+    const choice = response.choices?.[0];
+    const content = choice?.message?.content || "";
+    accumulatedContent += content;
+
+    if (choice?.finish_reason === "length") {
+      attempts++;
+      console.log(`[LLM Continuation] Response truncated by length limit. Starting continuation attempt ${attempts}...`);
+      
+      currentParams.messages = [
+        ...currentParams.messages,
+        { role: "assistant", content: content },
+        { 
+          role: "user", 
+          content: "Your previous response was truncated due to the token output limit. Please continue generating the code or content from EXACTLY where you left off. Do NOT repeat any previous code or content, and do NOT wrap the response in markdown code blocks. Just output the remaining parts directly." 
+        }
+      ];
+    } else {
+      break;
+    }
+  }
+
+  if (finalResponse && finalResponse.choices && finalResponse.choices[0]) {
+    finalResponse.choices[0].message.content = accumulatedContent;
+  }
+
+  return finalResponse;
 }
