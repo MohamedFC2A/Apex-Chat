@@ -43,6 +43,9 @@ export function ContextMeter() {
   const totalBlocks = 20;
   const activeBlocks = Math.round((clampedPercentage / 100) * totalBlocks);
 
+  // Only show when context usage is significant (> 50%)
+  if (percentage < 50) return null;
+
   return (
     <Popover>
       <PopoverTrigger asChild>

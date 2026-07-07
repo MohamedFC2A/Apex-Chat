@@ -8,7 +8,6 @@ import { ChatMessages } from "@/components/chat-messages";
 import { ChatInput } from "@/components/chat-input";
 import { SubscriptionBadge } from "@/components/subscription-badge";
 import { ModelSelector } from "@/components/model-selector";
-import { ContextMeter } from "@/components/context-meter";
 import { Button } from "@/components/ui/button";
 import { PanelLeft, BookOpen, ExternalLink, Copy, Check, Zap, FileDown, Loader2 } from "lucide-react";
 import {
@@ -60,7 +59,6 @@ function calculatePdfProgress(text: string): number {
 }
 
 export default function ChatPage() {
-  const isInitialRender = useRef(true);
   const {
     conversations,
     activeConversationId,
@@ -108,99 +106,6 @@ export default function ChatPage() {
 
   const omniState = activeConversationId ? omniStates[activeConversationId] ?? null : null;
 
-  // Interactive Grid Spotlight Tracking
-  const gridRef = useRef<HTMLDivElement>(null);
-  const [isMouseActive, setIsMouseActive] = useState(false);
-  const mouseTimeoutRef = useRef<number | null>(null);
-  
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      // Ignore mouse/touch movements if on mobile to keep auto-animation running uninterrupted
-      if (window.innerWidth < 768) return;
-
-      setIsMouseActive(true);
-      if (mouseTimeoutRef.current) window.clearTimeout(mouseTimeoutRef.current);
-      
-      mouseTimeoutRef.current = window.setTimeout(() => {
-        setIsMouseActive(false);
-      }, 4000); // go idle after 4 seconds of inactivity
-
-      const el = gridRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      el.style.setProperty("--mouse-x", `${x}px`);
-      el.style.setProperty("--mouse-y", `${y}px`);
-    };
-
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      if (mouseTimeoutRef.current) window.clearTimeout(mouseTimeoutRef.current);
-    };
-  }, []);
-
-  // JS-based Auto-Animation loop for mobile or idle desktop spotlight (fully cross-browser/iOS compliant)
-  useEffect(() => {
-    let animationFrameId: number;
-    let angle = 0;
-
-    const animateSpotlight = () => {
-      const el = gridRef.current;
-      const isMobile = window.innerWidth < 768;
-      
-      if (el && (!isMouseActive || isMobile)) {
-        angle += 0.004; // slow, gentle pan speed
-        const x = 50 + Math.sin(angle) * 35; // moves between 15% and 85%
-        const y = 45 + Math.cos(angle * 1.4) * 20; // moves between 25% and 65%
-        
-        el.style.setProperty("--mouse-x", `${x}%`);
-        el.style.setProperty("--mouse-y", `${y}%`);
-      }
-
-      animationFrameId = requestAnimationFrame(animateSpotlight);
-    };
-
-    animationFrameId = requestAnimationFrame(animateSpotlight);
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [isMouseActive]);
-
-  const getGridSpotlightColors = () => {
-    switch (selectedModel) {
-      case "apex-unbound":
-        return {
-          primary: "rgba(168, 85, 247, 0.08)", // purple
-          secondary: "rgba(236, 72, 153, 0.04)" // pink
-        };
-      case "apex-elite":
-        return {
-          primary: "rgba(16, 185, 129, 0.08)", // emerald
-          secondary: "rgba(20, 184, 166, 0.04)" // teal
-        };
-      case "apex-omni":
-        return {
-          primary: "rgba(245, 158, 11, 0.08)", // amber
-          secondary: "rgba(249, 115, 22, 0.04)" // orange
-        };
-      case "apex-pro":
-        return {
-          primary: "rgba(99, 102, 241, 0.08)", // indigo
-          secondary: "rgba(59, 130, 246, 0.04)" // blue
-        };
-      case "apex-flash":
-      default:
-        return {
-          primary: "rgba(139, 92, 246, 0.06)", // violet
-          secondary: "rgba(6, 182, 212, 0.03)" // cyan
-        };
-    }
-  };
-
-  const spotlightColors = getGridSpotlightColors();
-
   // APEX Unbound pipeline state
   const [unboundStateMap, setUnboundStateMap] = useState<Record<string, UnboundState>>({});
   const unboundState = activeConversationId ? unboundStateMap[activeConversationId] ?? null : null;
@@ -233,23 +138,12 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
-    // Smart light vibration feedback on model change for mobile devices
-    if (!isInitialRender.current) {
-      if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
-        try {
-          navigator.vibrate([12, 30, 8]);
-        } catch (e) {}
-      }
-    } else {
-      isInitialRender.current = false;
-    }
-
     const isGodModeModel = selectedModel === "apex-unbound";
     const currentlyApplied = document.body.classList.contains("god-mode");
     if (isGodModeModel && !currentlyApplied) {
       applyGodModeTheme();
     } else if (!isGodModeModel && currentlyApplied) {
-removeGodModeTheme();
+      removeGodModeTheme();
     }
   }, [selectedModel]);
 
@@ -913,31 +807,19 @@ removeGodModeTheme();
 
   return (
     <div className="chat-shell flex flex-col h-full text-foreground min-h-0 relative overflow-hidden apex-bg">
-      {/* Interactive Grid Background */}
+      {/* Subtle static grid background */}
       <div 
-        ref={gridRef}
-        className="absolute inset-0 pointer-events-none z-0 opacity-55 transition-opacity duration-300"
+        className="absolute inset-0 pointer-events-none z-0 opacity-25"
         style={{
           backgroundImage: `
-            radial-gradient(circle 280px at var(--mouse-x, 50%) var(--mouse-y, 35%), ${spotlightColors.primary}, transparent 80%),
-            radial-gradient(circle 500px at var(--mouse-x, 50%) var(--mouse-y, 35%), ${spotlightColors.secondary}, transparent),
             linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
             linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px)
           `,
-          backgroundSize: "100% 100%, 100% 100%, 48px 48px, 48px 48px",
-          backgroundPosition: "0 0, 0 0, center center, center center",
+          backgroundSize: "48px 48px, 48px 48px",
+          backgroundPosition: "center center, center center",
         }}
       />
 
-      {/* ── Ambient glow orbs removed ── */}
-      {isGodMode && (
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-br from-emerald-950/10 via-transparent to-emerald-950/5"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.2 }}
-          />
-        </div>
-      )}
       {/* ══════════ HEADER ══════════ */}
       <motion.header
         className="flex-shrink-0 relative z-20"
@@ -979,17 +861,8 @@ removeGodModeTheme();
               </div>
             </div>
 
-            {/* Right: live status + theme */}
-            <div className="hidden sm:flex items-center gap-2 shrink-0">
-
-              <div className="hidden sm:block">
-                <ContextMeter />
-              </div>
-            </div>
           </div>
         </div>
-        {/* Glowing divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
       </motion.header>
 
       {/* ══════════ MESSAGES ══════════ */}
@@ -1013,7 +886,6 @@ removeGodModeTheme();
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.45, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
       >
-        <div className="h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
         <div className="chat-input-dock bg-background/55 backdrop-blur-2xl pb-3.5 md:pb-4 pt-3">
           {(() => {
             const assistantMessages = activeConversation?.messages.filter(m => m.role === "assistant") || [];

@@ -11,49 +11,49 @@
 
 :root {
   /* Core geometry */
-  --radius: 0.75rem;
-  --radius-sm: 0.5rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.25rem;
-  --radius-2xl: 1.5rem;
+  --radius: 0.875rem;
+  --radius-sm: 0.625rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
 
   /* Spacing rhythm */
   --spacing: 0.25rem;
 
   /* Light mode palette */
-  --background: 220 20% 97%;
-  --foreground: 220 15% 10%;
-  --border: 220 13% 88%;
-  --card: 0 0% 100%;
-  --card-foreground: 220 15% 10%;
-  --popover: 0 0% 99%;
-  --popover-foreground: 220 15% 10%;
-  --primary: 245 80% 60%;
+  --background: 240 10% 4%;
+  --foreground: 0 0% 98%;
+  --border: 240 5% 15%;
+  --card: 240 6% 8%;
+  --card-foreground: 0 0% 98%;
+  --popover: 240 6% 10%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 262 83% 58%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 220 14% 93%;
-  --secondary-foreground: 220 15% 20%;
-  --muted: 220 13% 91%;
-  --muted-foreground: 220 10% 46%;
-  --accent: 245 70% 95%;
-  --accent-foreground: 245 80% 40%;
-  --destructive: 0 84% 60%;
+  --secondary: 240 6% 12%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 5% 14%;
+  --muted-foreground: 240 5% 65%;
+  --accent: 262 83% 18%;
+  --accent-foreground: 262 83% 85%;
+  --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 98%;
-  --input: 220 13% 82%;
-  --ring: 245 80% 60%;
-  --sidebar: 220 16% 95%;
-  --sidebar-foreground: 220 15% 10%;
-  --sidebar-border: 220 13% 88%;
-  --sidebar-accent: 220 14% 90%;
-  --sidebar-accent-foreground: 220 15% 10%;
-  --sidebar-primary: 245 80% 60%;
+  --input: 240 5% 14%;
+  --ring: 262 83% 58%;
+  --sidebar: 240 7% 6%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-border: 240 5% 15%;
+  --sidebar-accent: 240 6% 12%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-primary: 262 83% 58%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-ring: 245 80% 60%;
+  --sidebar-ring: 262 83% 58%;
 
   /* Apex accent system */
   --apex-blue: 220 90% 60%;
-  --apex-violet: 265 85% 65%;
+  --apex-violet: 262 83% 58%;
   --apex-cyan: 190 90% 55%;
-  --apex-emerald: 160 80% 45%;
+  --apex-emerald: 160 84% 39%;
   --apex-amber: 38 95% 55%;
   --apex-rose: 345 85% 60%;
 
@@ -69,54 +69,54 @@
   --app-viewport-height: 100dvh;
 }
 
-/* ─── DARK MODE — Pure Black / White Terminal ─── */
+/* ─── DARK MODE — Deep Space / Vibrant Accents ─── */
 .dark {
   --opaque-button-border-intensity: 9;
-  --elevate-1: rgba(255, 255, 255, .02);
-  --elevate-2: rgba(255, 255, 255, .05);
-  --button-outline: rgba(255, 255, 255, .07);
+  --elevate-1: rgba(168, 85, 247, .08);
+  --elevate-2: rgba(168, 85, 247, .12);
+  --button-outline: rgba(168, 85, 247, .2);
 
-  /* ████ TRUE BLACK — like the reference card ████ */
-  --background: 0 0% 2%;             /* #050505 — void black */
-  --foreground: 0 0% 92%;            /* #ebebeb — clean white */
+  /* ████ DEEP SPACE — premium dark theme ████ */
+  --background: 240 10% 4%;             /* #070a13 — deep space black */
+  --foreground: 0 0% 98%;              /* #fafafa — clean white */
 
-  --card: 0 0% 5%;                   /* #0d0d0d — card black */
-  --card-foreground: 0 0% 90%;
+  --card: 240 6% 8%;                   /* #111827 — card dark */
+  --card-foreground: 0 0% 98%;
 
-  --border: 0 0% 9%;                 /* #171717 — subtle border */
-  --input: 0 0% 8%;
+  --border: 240 5% 15%;                 /* #1f2937 — subtle border */
+  --input: 240 5% 14%;
 
-  --popover: 0 0% 4%;                /* #0a0a0a — dropdown black */
-  --popover-foreground: 0 0% 90%;
+  --popover: 240 6% 10%;                /* #0f172a — dropdown dark */
+  --popover-foreground: 0 0% 98%;
 
   /* Sidebar */
-  --sidebar: 0 0% 3%;
-  --sidebar-foreground: 0 0% 88%;
-  --sidebar-border: 0 0% 8%;
-  --sidebar-accent: 0 0% 7%;
-  --sidebar-accent-foreground: 0 0% 90%;
-  --sidebar-primary: 0 0% 98%;
-  --sidebar-primary-foreground: 0 0% 0%;
-  --sidebar-ring: 0 0% 98%;
+  --sidebar: 240 7% 6%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-border: 240 5% 15%;
+  --sidebar-accent: 240 6% 12%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-primary: 262 83% 58%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-ring: 262 83% 58%;
 
-  /* Minimal accents — white only */
-  --primary: 0 0% 98%;
-  --primary-foreground: 0 0% 0%;
-  --secondary: 0 0% 7%;
-  --secondary-foreground: 0 0% 88%;
-  --muted: 0 0% 7%;
-  --muted-foreground: 0 0% 42%;      /* #6b6b6b — muted gray */
-  --accent: 0 0% 8%;
-  --accent-foreground: 0 0% 92%;
-  --destructive: 0 72% 45%;
-  --destructive-foreground: 0 0% 100%;
-  --ring: 0 0% 50%;
+  /* Vibrant violet accent */
+  --primary: 262 83% 58%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 240 6% 12%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 5% 14%;
+  --muted-foreground: 240 5% 65%;      /* #9ca3af — muted gray */
+  --accent: 262 83% 18%;
+  --accent-foreground: 262 83% 85%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 262 83% 58%;
 
-  /* Apex glow tokens — minimal */
-  --apex-glow-primary: none;
-  --apex-glow-cyan: none;
-  --apex-glow-emerald: none;
-  --apex-glow-rose: none;
+  /* Apex glow tokens */
+  --apex-glow-primary: 0 0 30px rgba(168, 85, 247, 0.3);
+  --apex-glow-cyan: 0 0 30px rgba(6, 182, 212, 0.3);
+  --apex-glow-emerald: 0 0 30px rgba(16, 185, 129, 0.3);
+  --apex-glow-rose: 0 0 30px rgba(244, 63, 94, 0.3);
 }
 
 .app-viewport {
@@ -267,8 +267,8 @@
 
 @media (max-width: 768px) {
   .glass, .glass-light, .glass-strong, .glass-card {
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 }
 
@@ -351,29 +351,11 @@
   50% { opacity: 1; }
 }
 
-/* Slow spin */
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Bounce subtle */
-@keyframes bounce-subtle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-
 /* Gradient border shift */
 @keyframes gradient-shift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
-}
-
-/* Float */
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-6px); }
 }
 
 /* Fade up in */
@@ -394,23 +376,13 @@
   50% { opacity: 0.7; }
 }
 
-/* Matrix rain */
-@keyframes matrix-rain {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
-}
-
 /* ─── Animation Utilities ─── */
 .animate-shimmer { animation: shimmer 2.5s infinite; }
 .animate-orbit { animation: orbit 12s linear infinite; }
 .animate-pulse-glow { animation: pulse-glow 2.5s ease-in-out infinite; }
-.animate-spin-slow { animation: spin-slow 12s linear infinite; }
-.animate-bounce-subtle { animation: bounce-subtle 2.5s ease-in-out infinite; }
-.animate-float { animation: float 4s ease-in-out infinite; }
 .animate-fade-up { animation: fade-up 0.4s ease forwards; }
 .animate-scale-in { animation: scale-in 0.3s ease forwards; }
 .animate-gradient { animation: apex-flow 6s ease infinite; background-size: 200% 200%; }
-.animate-shimmer-slow { animation: shimmer 8s linear infinite; }
 
 /* ═══════════════════════════════════════════════════════════════════
    STREAMING CURSOR
@@ -780,7 +752,7 @@ body.god-mode .border {
   animation: search-laser 1.5s linear infinite !important;
 }
 
-/* Interactive Grid Auto spotlight properties & animations */
+/* Interactive Grid CSS custom properties for mouse position */
 @property --mouse-x {
   syntax: '<length-percentage>';
   initial-value: 50%;
@@ -790,33 +762,6 @@ body.god-mode .border {
   syntax: '<length-percentage>';
   initial-value: 35%;
   inherits: false;
-}
-
-@keyframes spotlight-auto {
-  0% {
-    --mouse-x: 15%;
-    --mouse-y: 25%;
-  }
-  25% {
-    --mouse-x: 85%;
-    --mouse-y: 35%;
-  }
-  50% {
-    --mouse-x: 50%;
-    --mouse-y: 75%;
-  }
-  75% {
-    --mouse-x: 20%;
-    --mouse-y: 50%;
-  }
-  100% {
-    --mouse-x: 15%;
-    --mouse-y: 25%;
-  }
-}
-
-.animate-spotlight-auto {
-  animation: spotlight-auto 20s ease-in-out infinite;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -872,17 +817,6 @@ body.god-mode .border {
 .hover-invert:hover {
   background: white;
   color: black;
-}
-
-/* Pixel / scanline background texture for cards */
-.scanline-bg {
-  background-image: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(255,255,255,0.012) 2px,
-    rgba(255,255,255,0.012) 4px
-  );
 }
 
 /* Hide Replit Badge */

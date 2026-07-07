@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { 
-  ArrowUp, Square, Brain, Search, Code2, Lock, Mic, Globe, X, FileText, FileDown, BookOpen, Crown
+  ArrowUp, Square, Search, Globe, X, FileText, FileDown, BookOpen
 } from "lucide-react";
 import { motion } from "framer-motion";
 import type { UnboundState } from "@/lib/unbound-service";
@@ -301,19 +301,6 @@ export function ChatInput({
 
         {/* Input text box row */}
         <div className="flex items-end gap-2">
-          {/* Micro-phone toggle capsule */}
-          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="تسجيل صوتي"
-              className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-900/40 border border-zinc-850 hover:border-zinc-700 hover:bg-zinc-900 text-zinc-400 hover:text-white transition-all duration-200"
-              disabled={isGenerating}
-            >
-              <Mic className="w-4 h-4" />
-            </Button>
-          </motion.div>
-
           <textarea
             ref={textareaRef}
             value={message}
@@ -394,12 +381,28 @@ export function ChatInput({
                 </TooltipContent>
               </Tooltip>
 
-              {/* Capsule: Search */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+              {/* More options dropdown: Search / Quiz / PDF */}
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="المزيد من الخيارات"
+                        className="w-8 h-8 rounded-full border border-zinc-900 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 hover:border-zinc-800 transition-all duration-200"
+                        disabled={isGenerating}
+                      >
+                        <span className="text-sm font-bold font-mono">···</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>More options</p>
+                  </TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="start" className="w-48 bg-zinc-900/95 border-white/10 shadow-xl rounded-xl backdrop-blur-xl p-1.5">
+                  <DropdownMenuItem
                     onClick={() => {
                       if (canUseDeepResearch()) {
                         const isCurrentlyActive = selectedModel === "apex-elite";
@@ -408,81 +411,54 @@ export function ChatInput({
                     }}
                     disabled={!canUseDeepResearch()}
                     className={cn(
-                      "h-8 px-3.5 rounded-full border text-[11px] font-bold transition-all duration-200 flex items-center gap-1.5 font-mono uppercase tracking-wider",
+                      "cursor-pointer rounded-lg gap-2.5 text-sm py-2.5",
                       selectedModel === "apex-elite"
-                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
-                        : "border-zinc-900 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 hover:border-zinc-800"
+                        ? "text-emerald-400 bg-emerald-500/10"
+                        : "text-white/75 hover:text-white focus:text-white focus:bg-white/8"
                     )}
                   >
-                    <Search className="w-3.5 h-3.5" />
-                    <span>Search</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Web Search Mode</p>
-                </TooltipContent>
-              </Tooltip>
-
-              {/* Capsule: MCQ (Quiz) */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                    <Search className="w-4 h-4" />
+                    <span>Web Search</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
                     onClick={() => {
                       setSelectedGenType((prev) => (prev === "quiz" ? null : "quiz"));
-                      // Turn off unbound when selecting quiz
                       if (selectedModel === "apex-unbound") {
                         setSelectedModel("apex-flash");
                       }
                     }}
                     className={cn(
-                      "h-8 px-3.5 rounded-full border text-[11px] font-bold transition-all duration-200 flex items-center gap-1.5 font-mono uppercase tracking-wider",
+                      "cursor-pointer rounded-lg gap-2.5 text-sm py-2.5",
                       selectedGenType === "quiz"
-                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
-                        : "border-zinc-900 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 hover:border-zinc-800"
+                        ? "text-emerald-400 bg-emerald-500/10"
+                        : "text-white/75 hover:text-white focus:text-white focus:bg-white/8"
                     )}
                   >
-                    <BookOpen className="w-3.5 h-3.5" />
-                    <span>Quiz</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Interactive MCQ/MSQ Quiz Generator</p>
-                </TooltipContent>
-              </Tooltip>
-
-              {/* Capsule: PDF */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                    <BookOpen className="w-4 h-4" />
+                    <span>Generate Quiz</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
                     onClick={() => {
                       setSelectedGenType((prev) => (prev === "pdf" ? null : "pdf"));
-                      // Turn off unbound when selecting pdf
                       if (selectedModel === "apex-unbound") {
                         setSelectedModel("apex-flash");
                       }
                     }}
                     className={cn(
-                      "h-8 px-3.5 rounded-full border text-[11px] font-bold transition-all duration-200 flex items-center gap-1.5 font-mono uppercase tracking-wider",
+                      "cursor-pointer rounded-lg gap-2.5 text-sm py-2.5",
                       selectedGenType === "pdf"
-                        ? "border-violet-500 bg-violet-500/10 text-violet-400 hover:bg-violet-500/20"
-                        : "border-zinc-900 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 hover:border-zinc-800"
+                        ? "text-violet-400 bg-violet-500/10"
+                        : "text-white/75 hover:text-white focus:text-white focus:bg-white/8"
                     )}
                   >
-                    <FileDown className="w-3.5 h-3.5" />
-                    <span>PDF</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Styled Document Compilation (PDF)</p>
-                </TooltipContent>
-              </Tooltip>
+                    <FileDown className="w-4 h-4" />
+                    <span>Generate PDF</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
-            {/* Omni-Status Card Sources button helper inside input row if needed */}
+            {/* Sources button (conditional) */}
             {hasSources && onOpenSources && (
               <Button
                 variant="ghost"
@@ -497,10 +473,6 @@ export function ChatInput({
           </TooltipProvider>
         </div>
       </div>
-
-      <p className="text-[10px] text-center text-zinc-600 mt-2 md:mt-3 select-none">
-        ApexChat can make mistakes. Verify important information.
-      </p>
     </div>
   );
 }

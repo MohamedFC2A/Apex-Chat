@@ -252,10 +252,6 @@ export function ChatSidebar() {
             borderRight: "1px solid hsl(var(--border))",
           }}
         >
-          {/* Subtle top gradient accent */}
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
-          <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-violet-950/15 to-transparent pointer-events-none" />
-
           {/* ── Header ── */}
           <div className="flex items-center justify-between px-4 py-3.5 relative z-10 flex-shrink-0">
             <div className="flex items-center gap-2.5">
@@ -334,10 +330,6 @@ export function ChatSidebar() {
                   : "bg-white text-black shadow-md shadow-black/30 hover:shadow-lg hover:shadow-black/40"
               }`}
             >
-              {/* shimmer effect */}
-              {!isGenerating && (
-                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-black/5 to-transparent" />
-              )}
               <Plus className="w-4 h-4 flex-shrink-0" strokeWidth={2.5} />
               <span>محادثة جديدة</span>
             </motion.button>
