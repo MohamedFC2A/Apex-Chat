@@ -1007,6 +1007,9 @@ export async function registerRoutes(
               searchResults: chunk.searchResults,
             });
           }
+          if (chunk.workTree) {
+            sendEvent({ type: "workTree", workTree: chunk.workTree });
+          }
         },
       );
 
@@ -1309,9 +1312,48 @@ JSON structure:
     return res.send(data.html);
   });
 
-  // Health check endpoint — only expose liveness status
+  // Health check endpoint — expose provider status and configuration
   app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok" });
+    const configuredProviders: string[] = [];
+    let activeProvider: string | null = null;
+
+    // Check OpenRouter (priority 1)
+    if (process.env.OPENROUTER_API_KEY?.startsWith("sk-or-")) {
+      configuredProviders.push("openrouter");
+      if (!activeProvider) activeProvider = "openrouter";
+    }
+    // Check DeepSeek (priority 2)
+    if (process.env.DEEPSEEK_API_KEY?.startsWith("sk-")) {
+      configuredProviders.push("deepseek");
+      if (!activeProvider) activeProvider = "deepseek";
+    }
+    // Check Cerebras (priority 3)
+    if (process.env.CEREBRAS_API_KEY?.startsWith("sk-") || process.env.CEREBRAS_API_KEY?.startsWith("csk-")) {
+      configuredProviders.push("cerebras");
+      if (!activeProvider) activeProvider = "cerebras";
+    }
+    // Check Groq
+    if (process.env.GROQ_API_KEY?.startsWith("gsk_")) {
+      configuredProviders.push("groq");
+      if (!activeProvider) activeProvider = "groq";
+    }
+
+    const apiConfigured = configuredProviders.length > 0;
+    const status = apiConfigured ? "ok" : "degraded";
+
+    res.json({
+      status,
+      provider: activeProvider,
+      apiConfigured,
+      configuredProviders,
+      modelMapping: {
+        "apex-flash": "google/gemini-2.5-flash",
+        "apex-elite": "google/gemini-2.5-flash",
+        "apex-omni": "google/gemini-2.5-flash",
+        "apex-coder": "google/gemini-2.5-flash",
+      },
+      timestamp: Date.now(),
+    });
   });
 
   return httpServer;

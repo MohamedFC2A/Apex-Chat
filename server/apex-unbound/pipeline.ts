@@ -30,6 +30,9 @@ import { getDeepSeekRequestParams, mapDeepSeekModelForTask, isOfficialDeepSeekEn
 import { buildCssQualitySummary, buildHtmlQualitySummary, buildRuntimeQualitySummary, ensureProductionCss, ensureProductionHtml, ensureProductionJavaScript } from "./runtime-guard.js";
 import { buildApexSearchContext, runApexSearch } from "../apex-search-engine.js";
 import { robustJsonParse } from "../json-repair.js";
+import { buildWorkTree, type PhaseState } from "./work-tree-generator.js";
+import type { WorkTree } from "./work-tree-model.js";
+import { validateIntegration } from "./integration-validator.js";
 
 // ──────────────────────────────────────────────────────────────
 // Types
@@ -80,6 +83,16 @@ export type UnboundChunkCallback = (chunk: {
   }>;
   spec?: SystemSpec;
   searchResults?: any;
+  workTree?: WorkTree;
+  error?: string | null;
+  done?: boolean;
+  metrics?: {
+    phase: number;
+    lines?: number;
+    selectors?: number;
+    violations?: number;
+    durationMs?: number;
+  };
 }) => void;
 
 // ──────────────────────────────────────────────────────────────
@@ -563,6 +576,19 @@ export async function runUnboundPipeline(
     if (idx !== -1) {
       phases[idx] = { ...phases[idx], ...updates };
       onChunk?.({ phase: phases[idx] });
+      // Emit work tree after every phase update
+      const phaseState: PhaseState = {
+        architect: phases[0].status,
+        questions: phases[1].status,
+        html: phases[2].status,
+        selectorSync: phases[3].status,
+        css: phases[4].status,
+        js: phases[4].status,
+        selfCorrection: phases[5].status,
+        bundle: phases[6].status,
+      };
+      const workTree = buildWorkTree(spec, phaseState, request.message.slice(0, 20));
+      onChunk?.({ workTree });
     }
   };
 
@@ -814,6 +840,18 @@ export async function runUnboundPipeline(
 
   updatePhase(7, { status: "running" });
   emitStatus("**[Phase 7/7] - Release Packaging**\nCompiling the approved assets into a self-contained HTML bundle.\n\n");
+
+  // Run integration validation before bundling
+  try {
+    const validation = validateIntegration(htmlCode, cssCode, jsCode, selectorMap);
+    onChunk?.({ metrics: { phase: 7, lines: (htmlCode.match(/\n/g) || []).length + 1, selectors: validation.stats.htmlRoutes, violations: validation.stats.unmatchedJSRefs } });
+    if (!validation.passed) {
+      console.warn("[Apex Coder] Integration validation found issues:", validation.warnings.slice(0, 5));
+      emitStatus(`> Integration check: ${validation.stats.unmatchedJSRefs} unmatched JS refs, ${validation.stats.missingCSSStates} missing CSS states\n`);
+    }
+  } catch (valErr: any) {
+    console.warn("[Apex Coder] Integration validation skipped:", valErr.message);
+  }
 
   const phase7Start = Date.now();
   let bundle: BundleResult;

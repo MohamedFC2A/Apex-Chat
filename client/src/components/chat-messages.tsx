@@ -64,6 +64,8 @@ import {
 import type { Message, AIModel } from "@shared/schema";
 import { OmniStatusCard } from "@/components/omni-status-card";
 import { UnboundStatusCard } from "@/components/unbound-status-card";
+import WorkTreePanel from "@/components/work-tree-panel";
+import QuestionnairePanel from "@/components/questionnaire-panel";
 import {
   MCQQuizLoadingCard,
   MCQQuizWidget,
@@ -2836,11 +2838,30 @@ export function ChatMessages({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="space-y-3"
               >
-                <UnboundStatusCard
-                  state={unboundState}
-                  onSelectChoice={onSelectUnboundChoice}
-                />
+                {/* Questionnaire Panel - shown when there are active questions */}
+                {unboundState.questions && unboundState.questions.length > 0 && (
+                  <QuestionnairePanel
+                    questions={unboundState.questions}
+                    onComplete={(choices) => onSelectUnboundChoice?.(choices)}
+                    isRTL={true}
+                  />
+                )}
+                {/* Status Card - shown when no active questions */}
+                {(!unboundState.questions || unboundState.questions.length === 0) && (
+                  <UnboundStatusCard
+                    state={unboundState}
+                    onSelectChoice={onSelectUnboundChoice}
+                  />
+                )}
+                {/* Work Tree Panel */}
+                {unboundState.workTree && (
+                  <WorkTreePanel
+                    tree={unboundState.workTree}
+                    isRTL={true}
+                  />
+                )}
               </motion.div>
             )}
         </AnimatePresence>

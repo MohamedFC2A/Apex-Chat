@@ -30,6 +30,7 @@ export interface UnboundState {
   spec?: any | null;
   searchResults?: any | null;
   selectedChoices?: Array<{ questionId: string; title: string; description: string; theme: string; config?: Record<string, any> }> | null;
+  workTree?: { root: any; edges: any[] } | null;
 }
 
 export type UnboundStateCallback = (state: UnboundState) => void;
@@ -176,6 +177,9 @@ export async function runUnboundService(
             emit();
           } else if (event.type === "error") {
             throw new Error(event.error || "Pipeline error");
+          } else if (event.type === "workTree" && event.workTree) {
+            state.workTree = event.workTree;
+            emit();
           }
         } catch (parseErr) {
           // Ignore malformed SSE lines

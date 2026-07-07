@@ -33,17 +33,31 @@ export async function runDiagnostics() {
       const statusColor = data.status === "ok" ? "🟢 OK" : "🔴 DEGRADED";
       const statusTextColor = data.status === "ok" ? "color: #10b981;" : "color: #ef4444;";
 
+      // Defensive: provider may be null/undefined if no keys configured
+      const provider = data?.provider || null;
+      const apiConfigured = data?.apiConfigured === true;
+      const configuredProviders = data?.configuredProviders || [];
+      const providerDisplay = provider ? provider.toUpperCase() : "UNKNOWN";
+      const providerDetail = configuredProviders.length > 1
+        ? ` (${configuredProviders.join(", ")})`
+        : "";
+      const apiStatusColor = apiConfigured ? "color: #10b981; font-weight: bold;" : "color: #ef4444; font-weight: bold;";
+      const apiStatusText = apiConfigured
+        ? `🟢 ACTIVE${providerDetail}`
+        : "🔴 MISSING API KEYS";
+      const providerColor = provider ? "color: #d946ef; font-weight: bold;" : "color: #ef4444; font-weight: bold;";
+
       console.log(
-        `%c🌐 BACKEND SERVICE STATUS%c\n• Connection:      %c${statusColor}%c\n• Network Latency: %c${latency}ms%c\n• Active Provider: %c${data.provider?.toUpperCase() ?? "UNKNOWN"}%c\n• API Integration: %c${data.apiConfigured ? "🟢 ACTIVE & AUTHENTICATED" : "🔴 MISSING API KEYS"}`,
+        `%c🌐 BACKEND SERVICE STATUS%c\n• Connection:      %c${statusColor}%c\n• Network Latency: %c${latency}ms%c\n• Active Provider: %c${providerDisplay}${providerDetail}%c\n• API Integration: %c${apiStatusText}`,
         "font-weight: bold; color: #3b82f6; font-family: monospace; font-size: 11px;",
         "color: #b4b6b9; font-family: monospace; font-size: 11px; line-height: 1.5;",
         statusTextColor + " font-weight: bold;", "color: #b4b6b9;",
         "color: #10b981; font-weight: bold;", "color: #b4b6b9;",
-        "color: #d946ef; font-weight: bold;", "color: #b4b6b9;",
-        data.apiConfigured ? "color: #10b981; font-weight: bold;" : "color: #ef4444; font-weight: bold;"
+        providerColor, "color: #b4b6b9;",
+        apiStatusColor
       );
 
-      if (!data.apiConfigured) {
+      if (!apiConfigured) {
         console.warn(
           "%c⚠️ ATTENTION Required: The backend is running but reported that no active API key is set for OpenRouter or DeepSeek. Please configure OPENROUTER_API_KEY or DEEPSEEK_API_KEY in Vercel settings or your .env.local file.",
           "color: #fbbf24; font-weight: bold; font-family: monospace; font-size: 11px;"
