@@ -7,6 +7,9 @@
  */
 
 import type { PDFDocument, PDFSection, PDFSectionType } from "../shared/pdf.js";
+import { createHash } from "crypto";
+import * as fs from "fs";
+import * as path from "path";
 // generatePdf is loaded dynamically in processNext to prevent eager loading of pdf-engine and its heavy dependencies
 
 // ─── Section Weight Map ────────────────────────────────────────────────────────
@@ -322,10 +325,40 @@ class PdfWorkerPool {
 // ─── Global Worker Pool Singleton ─────────────────────────────────────────────
 export const pdfWorkerPool = new PdfWorkerPool(3);
 
+// ─── Cache Infrastructure ──────────────────────────────────────────────────────
+const CACHE_DIR = path.join(process.cwd(), "output");
+
+function computeDocHash(doc: PDFDocument, overrides?: any): string {
+  const payload = JSON.stringify({
+    title: doc.title,
+    subtitle: doc.subtitle,
+    author: doc.author,
+    date: doc.date,
+    language: doc.language,
+    theme: doc.theme,
+    pageSize: doc.pageSize,
+    coverPage: doc.coverPage,
+    tableOfContents: doc.tableOfContents,
+    sections: doc.sections.map(s => ({
+      type: s.type,
+      content: s.content,
+      items: s.items,
+      rows: s.rows,
+      headers: s.headers,
+      variant: s.variant,
+      chartType: s.chartType,
+      chartData: s.chartData,
+    })),
+    overrides,
+  });
+  return createHash("sha256").update(payload).digest("hex");
+}
+
 // ─── Optimized PDF Generator ──────────────────────────────────────────────────
 /**
  * Main entry point for generating a PDF with all optimizations applied.
  * Uses the worker pool for multi-threading.
+ * Stores and retrieves pre-compiled PDFs from the cache directory.
  */
 export async function generateOptimizedPdf(
   doc: PDFDocument,
@@ -335,8 +368,35 @@ export async function generateOptimizedPdf(
   // Apply smart optimizations
   const optimized = optimizePdfDocument(doc, optimizationOptions);
 
+  // Calculate unique fingerprint
+  const hash = computeDocHash(optimized, overrides);
+  const cachePath = path.join(CACHE_DIR, `${hash}.pdf`);
+
+  // Check cache hit
+  try {
+    if (fs.existsSync(cachePath)) {
+      console.log(`⚡ PDF Cache Hit: ${hash} (Returned pre-compiled PDF in <10ms)`);
+      return fs.readFileSync(cachePath);
+    }
+  } catch (err) {
+    console.warn("⚠️ Failed to check PDF cache:", err);
+  }
+
   // Queue through worker pool (supports multiple concurrent PDFs)
-  return pdfWorkerPool.enqueue(optimized, overrides);
+  const buffer = await pdfWorkerPool.enqueue(optimized, overrides);
+
+  // Save to cache asynchronously
+  try {
+    if (!fs.existsSync(CACHE_DIR)) {
+      fs.mkdirSync(CACHE_DIR, { recursive: true });
+    }
+    fs.writeFileSync(cachePath, buffer);
+    console.log(`💾 Saved PDF to cache: ${hash}`);
+  } catch (err) {
+    console.warn("⚠️ Failed to save PDF to cache:", err);
+  }
+
+  return buffer;
 }
 
 // ─── Quality Report ───────────────────────────────────────────────────────────
