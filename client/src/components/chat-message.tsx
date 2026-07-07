@@ -47,7 +47,8 @@ export function SearchTopologyVisualizer({ isFinished = false, query = "", domai
     if (step === 0) return `جاري تحليل وتوسيع الاستعلام...`;
     if (step === 1) return `جاري البحث في DuckDuckGo عن "${cleanQuery}"...`;
     if (step === 2) return `جاري قراءة وفلترة الصفحات الأكثر ملاءمة...`;
-    return `تم البحث في 1,584 مصدراً (قراءة 35 صفحة)`;
+    if (domains.length > 0) return `اكتمل البحث. تمت مراجعة ${domains.length} مصدر/موقع ذو صلة.`;
+    return `اكتمل البحث وتجهيز المصادر.`;
   };
 
   return (

@@ -211,7 +211,7 @@ export function ChatInput({
 
       {/* ── Main Chat Input Area ── */}
       <div 
-        className="relative flex flex-col gap-2.5 p-3.5 rounded-xl bg-neutral-950 border border-zinc-900 focus-within:border-zinc-800 transition-all duration-200"
+        className="apex-input-focus glass-card relative flex flex-col gap-2.5 p-3.5 rounded-xl transition-all duration-200"
       >
         {/* Progress Bar during PDF/Quiz generation */}
         {isGenerating && (activeQuizProgress || activePdfProgress) && (
@@ -289,6 +289,7 @@ export function ChatInput({
                 <button
                   type="button"
                   onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== index))}
+                  aria-label="إزالة المرفق"
                   className="absolute top-1 right-1 p-0.5 rounded bg-black text-zinc-400 hover:text-white transition-all border border-zinc-900"
                 >
                   <X className="w-2.5 h-2.5" />
@@ -305,6 +306,7 @@ export function ChatInput({
             <Button
               variant="ghost"
               size="icon"
+              aria-label="تسجيل صوتي"
               className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-900/40 border border-zinc-850 hover:border-zinc-700 hover:bg-zinc-900 text-zinc-400 hover:text-white transition-all duration-200"
               disabled={isGenerating}
             >
@@ -317,6 +319,7 @@ export function ChatInput({
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
+            aria-label="نص الرسالة"
             placeholder={
               isArabic 
                 ? "اسأل أي شيء..." 
@@ -341,6 +344,7 @@ export function ChatInput({
                 size="icon"
                 variant="ghost"
                 onClick={onStopGenerating}
+                aria-label="إيقاف الإرسال"
                 className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 hover:border-zinc-700"
               >
                 <Square className="w-3.5 h-3.5" />
@@ -352,6 +356,7 @@ export function ChatInput({
                 size="icon"
                 onClick={handleSubmit}
                 disabled={!hasText}
+                aria-label="إرسال"
                 className={cn(
                   "flex-shrink-0 w-8 h-8 rounded-full transition-all duration-250 border",
                   hasText
@@ -377,6 +382,7 @@ export function ChatInput({
                     variant="ghost"
                     size="icon"
                     onClick={() => fileInputRef.current?.click()}
+                    aria-label="إرفاق ملف"
                     className="w-8 h-8 rounded-full border border-zinc-900 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 hover:border-zinc-800 transition-all duration-200"
                     disabled={isGenerating}
                   >

@@ -2727,6 +2727,19 @@ export function ChatMessages({
     }
   }, [messages, streamingContent, isStreaming]);
 
+  const scrollToBottom = useCallback(() => {
+    const container = getScrollContainer();
+    if (!container) return;
+
+    // Re-enable autoscroll and jump to the newest message.
+    isAutoScrollRef.current = true;
+    setIsAutoScroll(true);
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: "smooth",
+    });
+  }, []);
+
   if (messages.length === 0 && !streamingContent && !streamingReasoning) {
     return (
       <div className="flex flex-col items-center justify-center py-10 md:py-16 max-w-2xl mx-auto px-4 text-center space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[60vh]">
@@ -2855,6 +2868,24 @@ export function ChatMessages({
           )}
 
         <div ref={messagesEndRef} />
+
+        {/* Scroll-to-latest helper when user scrolls up */}
+        {!isAutoScroll && messages.length > 0 && (
+          <div className="fixed left-1/2 -translate-x-1/2 bottom-24 md:bottom-28 z-40 flex justify-center pointer-events-none">
+            <Button
+              type="button"
+              onClick={scrollToBottom}
+              className="pointer-events-auto h-9 px-4 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 shadow-lg shadow-black/40 backdrop-blur-md gap-2 font-arabic"
+              dir="rtl"
+            >
+              <ChevronDown className="w-4 h-4" />
+              <span>العودة لآخر رسالة</span>
+              {isStreaming && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              )}
+            </Button>
+          </div>
+        )}
       </div>
     </>
   );
