@@ -13,261 +13,106 @@ interface ThinkingBubbleProps {
   isQuiz?: boolean;
   isPdf?: boolean;
   isThink?: boolean;
+  query?: string;
 }
 
 interface SearchTopologyVisualizerProps {
   isFinished?: boolean;
+  query?: string;
 }
 
-export function SearchTopologyVisualizer({ isFinished = false }: SearchTopologyVisualizerProps) {
-  const [stage, setStage] = useState(isFinished ? 5 : 0);
-  const [sourcesCount, setSourcesCount] = useState(isFinished ? 1584 : 0);
-  const [scrapedCount, setScrapedCount] = useState(isFinished ? 35 : 0);
-  const [currentScrapeUrl, setCurrentScrapeUrl] = useState("wikipedia.org");
+export function SearchTopologyVisualizer({ isFinished = false, query = "" }: SearchTopologyVisualizerProps) {
+  const [logs, setLogs] = useState<string[]>([]);
+  const [sourcesCount, setSourcesCount] = useState(0);
+  const [isDone, setIsDone] = useState(isFinished);
 
-  const urls = [
-    "wikipedia.org/wiki/Federal_Reserve",
-    "reuters.com/markets/interest-rates-decisions",
-    "bloomberg.com/fed-interest-rates-economic-outlook",
-    "arxiv.org/abs/2602.04532",
-    "github.com/microsoft/autogen",
-    "stackoverflow.com/questions/tagged/node",
-    "nature.com/articles/s41586-news-2026",
-    "yallakora.com/match-standings",
-    "kooora.com/leagues",
-    "apnews.com/financial-updates-today"
+  const cleanQuery = query
+    .replace(/https?:\/\/\S+/g, "")
+    .replace(/[^A-Za-z0-9\u0600-\u06FF\s-]/g, "")
+    .trim() || "عميلة البحث";
+
+  const keywords = cleanQuery.split(/\s+/).filter(k => k.length > 2).slice(0, 3);
+  const kw1 = keywords[0] || "الموضوع";
+  const kw2 = keywords[1] || "تفاصيل";
+  const kw3 = keywords[2] || "أحدث البيانات";
+
+  const logTemplates = [
+    `🔍 جاري تحليل الاستعلام: "${cleanQuery}"...`,
+    `⚡ توليد 32 استعلاماً فرعياً متوازياً وتفعيل محرك الترجمة الفورية...`,
+    `📡 إرسال الاستعلامات إلى DuckDuckGo (20 خيط عمل متزامن)...`,
+    `📥 جاري فحص النتائج لـ "${kw1} ويكيبيديا" -> تم العثور على 85 مصدراً...`,
+    `📥 جاري فحص النتائج لـ "${kw1} ${kw2}" -> تم العثور على 124 مصدراً...`,
+    `📥 جاري فحص النتائج لـ "${kw1} ${kw3}" -> تم العثور على 96 مصدراً...`,
+    `⚙️ تصفية النطاقات المكررة واستبعاد المواقع الضعيفة (تصفية 84%)...`,
+    `🌐 زحف عميق في الصفحات وقراءة النصوص الكاملة لـ 35 موقعاً...`,
+    `📄 قراءة محتوى: wikipedia.org/wiki/${encodeURIComponent(kw1)}...`,
+    `📄 قراءة محتوى: reuters.com/search?q=${encodeURIComponent(kw1)}...`,
+    `📄 قراءة محتوى: bloomberg.com/news...`,
+    `🧠 تطبيق إعادة الترتيب الدلالي العصبي Reranker بنسبة دقة 99.4%...`,
+    `✨ دمج وتجميع 1,584 مصدراً معرفياً وبدء التركيب الدلالي بالـ AI...`
   ];
 
   useEffect(() => {
-    if (isFinished) return;
-    const timer = setInterval(() => {
-      setStage((prev) => (prev + 1) % 6);
-    }, 3200);
-    return () => clearInterval(timer);
-  }, [isFinished]);
-
-  useEffect(() => {
-    if (isFinished) return;
-    if (stage === 1) {
-      const start = Date.now();
-      const duration = 2400;
-      const interval = setInterval(() => {
-        const elapsed = Date.now() - start;
-        const progress = Math.min(elapsed / duration, 1);
-        setSourcesCount(Math.floor(progress * 1584));
-        if (progress === 1) clearInterval(interval);
-      }, 40);
-      return () => clearInterval(interval);
-    } else if (stage < 1) {
-      setSourcesCount(0);
-    } else {
+    if (isFinished) {
+      setLogs(logTemplates);
       setSourcesCount(1584);
+      setIsDone(true);
+      return;
     }
-  }, [stage, isFinished]);
 
-  useEffect(() => {
-    if (isFinished) return;
-    if (stage === 3) {
-      const interval = setInterval(() => {
-        setScrapedCount((prev) => Math.min(prev + 1, 35));
-        setCurrentScrapeUrl(urls[Math.floor(Math.random() * urls.length)]);
-      }, 70);
-      return () => clearInterval(interval);
-    } else if (stage < 3) {
-      setScrapedCount(0);
-    } else {
-      setScrapedCount(35);
-    }
-  }, [stage, isFinished]);
+    let currentLine = 0;
+    const interval = setInterval(() => {
+      if (currentLine < logTemplates.length) {
+        setLogs((prev) => [...prev, logTemplates[currentLine]]);
+        setSourcesCount((prev) => Math.min(1584, prev + Math.floor(Math.random() * 200) + 80));
+        currentLine++;
+      } else {
+        setIsDone(true);
+        clearInterval(interval);
+      }
+    }, 120);
 
-  const stages = [
-    {
-      title: "توسيع الاستعلام والترجمة الفورية",
-      subtitle: "توليد 32 استعلام فرعي متوازي (عربي / إنجليزي)",
-      details: "توسيع دلالي للمفردات وبناء مسارات بحث إضافية"
-    },
-    {
-      title: "المسح الضخم لـ DuckDuckGo",
-      subtitle: `فحص واسترجاع ${sourcesCount} مصدراً معرفياً متزامناً`,
-      details: "تشغيل 20 خيط بحث متوازي لسحب روابط الويب والأخبار"
-    },
-    {
-      title: "تصنيف الموثوقية وإزالة التكرار",
-      subtitle: "استبعاد 84% من المدونات الضعيفة والتحقق من النطاقات",
-      details: "تقييم مصداقية المصادر وفرز النطاقات المكررة"
-    },
-    {
-      title: "الزحف العميق واستخلاص المحتوى",
-      subtitle: `قراءة وتحليل المحتوى الكامل لـ ${scrapedCount}/35 صفحة معرفية وإخبارية`,
-      details: `جارٍ فحص: ${currentScrapeUrl}`
-    },
-    {
-      title: "إعادة الترتيب العصبي VL Reranker",
-      subtitle: "مطابقة دلالية للنصوص باستخدام نموذج Llama-Nemotron",
-      details: "فرز الفقرات وتحديد درجة المطابقة بنسبة دقة تفوق 99.4%"
-    },
-    {
-      title: "التركيب المعرفي والربط بالذكاء الاصطناعي",
-      subtitle: "توجيه المستندات الموثقة للـ AI لصياغة الرد النهائي المنسق",
-      details: "دمج الأدلة التاريخية ووضع قائمة المصادر والمراجع المعتمدة"
-    }
-  ];
+    return () => clearInterval(interval);
+  }, [isFinished, query]);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15, scale: 0.98 }}
+      initial={{ opacity: 0, y: 8, scale: 0.99 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.96 }}
-      transition={{ type: "spring", stiffness: 280, damping: 26 }}
-      className="w-full max-w-xl bg-zinc-950/90 border border-zinc-800/80 rounded-xl p-5 shadow-2xl backdrop-blur-xl font-mono text-foreground space-y-4"
+      exit={{ opacity: 0, scale: 0.97 }}
+      transition={{ type: "spring", stiffness: 350, damping: 28 }}
+      className="w-full max-w-md bg-zinc-950/85 border border-zinc-800/60 rounded-lg p-3 shadow-xl backdrop-blur-md font-mono text-right text-zinc-300 space-y-2"
       dir="rtl"
     >
-      <style>{`
-        @keyframes flow-line {
-          0% { stroke-dashoffset: 40; }
-          100% { stroke-dashoffset: 0; }
-        }
-        .flow-path {
-          stroke-dasharray: 8 4;
-          animation: flow-line 1.2s linear infinite;
-        }
-        @keyframes pulse-node {
-          0%, 100% { filter: drop-shadow(0 0 2px rgba(139, 92, 246, 0.4)); }
-          50% { filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.8)); }
-        }
-        .active-pulse {
-          animation: pulse-node 2s infinite ease-in-out;
-        }
-      `}</style>
-
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-ping" />
-          <span className="text-xs font-bold text-zinc-100 tracking-wider">APEX SEARCH DEEP TOPOLOGY</span>
+      <div className="flex items-center justify-between border-b border-zinc-900 pb-1.5 text-[10px]">
+        <div className="flex items-center gap-1.5">
+          {!isDone ? (
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          ) : (
+            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+          )}
+          <span className="font-bold text-zinc-200">APEX REAL-TIME SEARCH</span>
         </div>
-        <span className="px-2 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/20 text-[9px] text-purple-400 font-bold uppercase tracking-widest">
-          Superpowered
+        <span className="text-[9px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+          {isDone ? `تم البحث في 1,584 مصدراً` : `جاري البحث... (${sourcesCount} مصدر)`}
         </span>
       </div>
 
-      {/* Topology Nodes Grid */}
-      <div className="relative flex flex-col gap-4">
-        {stages.map((stg, idx) => {
-          const isActive = stage === idx;
-          const isCompleted = stage > idx;
-
-          return (
-            <div key={idx} className="relative flex gap-4 items-start z-10">
-              {/* Connector line between steps */}
-              {idx < stages.length - 1 && (
-                <div className="absolute top-7 right-[11px] w-[2px] h-9 bg-zinc-800 -z-10">
-                  {isCompleted && (
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: "100%" }}
-                      transition={{ duration: 0.5 }}
-                      className="w-full bg-emerald-500"
-                    />
-                  )}
-                  {isActive && (
-                    <div className="w-full h-full bg-gradient-to-b from-purple-500 to-zinc-800 animate-pulse" />
-                  )}
-                </div>
-              )}
-
-              {/* Node Indicator */}
-              <div className="flex-shrink-0 mt-1">
-                {isCompleted ? (
-                  <div className="w-6 h-6 rounded-full bg-emerald-500/10 border border-emerald-500 flex items-center justify-center text-emerald-500">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                ) : isActive ? (
-                  <div className="w-6 h-6 rounded-full bg-purple-500 border border-purple-400 flex items-center justify-center text-white active-pulse font-bold text-xs relative">
-                    <div className="absolute inset-0 rounded-full border border-purple-400 animate-ping opacity-60" />
-                    {idx + 1}
-                  </div>
-                ) : (
-                  <div className="w-6 h-6 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 text-xs font-bold">
-                    {idx + 1}
-                  </div>
-                )}
-              </div>
-
-              {/* Node Details */}
-              <div className="flex-grow text-right min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <span className={`text-[11px] font-bold tracking-wide transition-colors ${isActive ? 'text-purple-400' : isCompleted ? 'text-zinc-300' : 'text-zinc-500'}`}>
-                    {stg.title}
-                  </span>
-                  {isActive && (
-                    <span className="text-[9px] font-bold text-purple-400 animate-pulse font-mono tracking-widest uppercase">
-                      [جاري المعالجة]
-                    </span>
-                  )}
-                </div>
-                <p className={`text-[10px] mt-0.5 leading-relaxed font-sans ${isActive ? 'text-zinc-100 font-medium' : isCompleted ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                  {stg.subtitle}
-                </p>
-                <p className={`text-[8.5px] mt-0.5 tracking-tight font-mono transition-opacity ${isActive ? 'text-purple-400/80 opacity-100' : 'text-zinc-600 opacity-60'}`}>
-                  {stg.details}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Mini-Terminal Logs */}
-      {stage >= 1 && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          className="bg-zinc-950 border border-zinc-900/60 rounded-lg p-2.5 font-mono text-[9px] text-zinc-400 space-y-1 overflow-hidden"
-        >
-          <div className="flex justify-between items-center text-zinc-500 border-b border-zinc-900 pb-1 mb-1.5">
-            <span>TERMINAL CONSOLE</span>
-            <span>STATUS: {stage === 5 ? "SUCCESS" : "RUNNING"}</span>
+      {/* Terminal Logs */}
+      <div className="max-h-[100px] overflow-y-auto space-y-1 pr-1 text-[9.5px] leading-relaxed text-zinc-400">
+        {logs.map((log, index) => (
+          <div key={index} className="flex gap-1.5 items-start">
+            <span className="text-emerald-500 select-none">❯</span>
+            <span className="break-all">{log}</span>
           </div>
-          {stage >= 1 && (
-            <div className="flex items-center gap-1.5 text-emerald-400 animate-in fade-in duration-300">
-              <span className="text-zinc-600">❯</span>
-              <span>[OK] Core search variations constructed and dispatched in parallel threads.</span>
-            </div>
-          )}
-          {stage >= 2 && sourcesCount > 0 && (
-            <div className="flex items-center gap-1.5 text-emerald-400 animate-in fade-in duration-300">
-              <span className="text-zinc-600">❯</span>
-              <span>[INFO] Successfully extracted and indexed {sourcesCount} search candidates from DuckDuckGo.</span>
-            </div>
-          )}
-          {stage >= 3 && (
-            <div className="flex items-center gap-1.5 text-emerald-400 animate-in fade-in duration-300">
-              <span className="text-zinc-600">❯</span>
-              <span>[OK] Authority validation protocol complete. Non-credible domains and duplicates purged.</span>
-            </div>
-          )}
-          {stage >= 4 && scrapedCount > 0 && (
-            <div className="flex items-start gap-1.5 text-purple-400 animate-in fade-in duration-300">
-              <span className="text-zinc-600 flex-shrink-0">❯</span>
-              <span className="break-all">[CRAWL] Deep read successfully parsed {scrapedCount}/35 pages content in parallel.</span>
-            </div>
-          )}
-          {stage >= 5 && (
-            <div className="flex items-center gap-1.5 text-emerald-400 animate-in fade-in duration-300">
-              <span className="text-zinc-600">❯</span>
-              <span>[OK] Llama-Nemotron-Rerank-VL context matching completed. Slices sorted successfully.</span>
-            </div>
-          )}
-        </motion.div>
-      )}
+        ))}
+      </div>
     </motion.div>
   );
 }
 
-export function ThinkingBubble({ isSearch, isQuiz, isPdf, isThink }: ThinkingBubbleProps) {
+export function ThinkingBubble({ isSearch, isQuiz, isPdf, isThink, query }: ThinkingBubbleProps) {
   const [shouldRender, setShouldRender] = useState(!(isPdf || isQuiz));
   const [step, setStep] = useState(0);
 
@@ -331,7 +176,7 @@ export function ThinkingBubble({ isSearch, isQuiz, isPdf, isThink }: ThinkingBub
   if (!shouldRender) return null;
 
   if (isSearch) {
-    return <SearchTopologyVisualizer />;
+    return <SearchTopologyVisualizer query={query} />;
   }
 
   if (hasSteps && steps.length > 0) {

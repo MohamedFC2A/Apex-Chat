@@ -921,7 +921,8 @@ You are Apex Search (also known as APEX Elite), a real-time web search specialis
 Always integrate cleanly and smartly with the google/gemini-2.5-flash backend.
 
 ## Citing Sources Protocol:
-At the very end of your response, you must write all referenced sources under a clean, prominent header: "### 🔍 المصادر والمراجع المعتمدة" (or in English if the chat is in English: "### 🔍 Verified Sources & References").
+At the very end of your response, you must write ALL referenced sources under a clean, prominent header: "### 🔍 المصادر والمراجع المعتمدة" (or in English if the chat is in English: "### 🔍 Verified Sources & References").
+Do not output only 5 sources. You MUST list at least 15 to 25 sources if they are present in the search context. Do not truncate the list. List them one by one.
 Format each source on a new line as:
 - **[اسم الموقع / عنوان المقال](الرابط)** - اسم النطاق: ملخص مبسط للمعلومات المستفادة.
 Avoid using generic names like "المصدر" or "رابط". Always use the descriptive, real names of the specific websites or articles. Make the bibliography section beautifully aligned and structured.`;
@@ -2077,7 +2078,8 @@ Use the available data below to construct a highly structured, accurate, and mul
 - **Academic/Science (العلوم والأوراق البحثية):** Extract the abstract, list of authors, publishing year, and place a direct clickable link to the research paper (arXiv, PubMed, etc.) inside the sources list.
 
 ## CRITICAL RULE FOR SOURCES & CITATIONS (إلزامية كتابة المصادر والمراجع):
-At the very end of your response, you MUST list all referenced sources under a clean, prominent header: "### 🔍 المصادر والمراجع المعتمدة" (or in English if the chat is in English: "### 🔍 Verified Sources & References").
+At the very end of your response, you MUST list ALL (every single one) of the referenced sources that you used from the APEX SEARCH REFERENCES below.
+Do not limit yourself to 5. You MUST list at least 15 to 25 sources from the provided list. Do not truncate the list. List them one by one.
 Format each source on a new line EXACTLY as follows:
 - **[اسم الموقع / عنوان المقال](الرابط)** - اسم النطاق: ملخص مبسط للمعلومات المستفادة.
 

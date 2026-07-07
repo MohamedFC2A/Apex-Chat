@@ -2163,6 +2163,7 @@ export function ChatMessages({
                 unboundState={message.model === "apex-unbound" && index === messages.length - 1 && !isStreaming ? unboundState : undefined}
                 onSelectUnboundChoice={onSelectUnboundChoice}
                 isPipelineActive={isStreaming}
+                query={messages.slice(0, index).reverse().find(m => m.role === 'user')?.content || ""}
               />
             )}
           </motion.div>
@@ -2182,6 +2183,7 @@ export function ChatMessages({
               isQuiz={isQuizRequest}
               isPdf={isPdfRequest}
               isThink={reasoningLevel === "thinking" || reasoningLevel === "overthinking"}
+              query={messages.filter(m => m.role === 'user').slice(-1)[0]?.content || ""}
             />
           </motion.div>
         )}
@@ -2326,6 +2328,7 @@ function AssistantMessage({
   unboundState,
   onSelectUnboundChoice,
   isPipelineActive,
+  query,
 }: {
   content: string;
   model?: AIModel;
@@ -2335,6 +2338,7 @@ function AssistantMessage({
   unboundState?: UnboundState | null;
   onSelectUnboundChoice?: (choice: any) => void;
   isPipelineActive?: boolean;
+  query?: string;
 }) {
   const [copied, setCopied] = useState(false);
   const [showReasoning, setShowReasoning] = useState(false);
@@ -2757,7 +2761,7 @@ function AssistantMessage({
 
         {(sources.length > 0 || (isPipelineActive && (model === "apex-elite" || isDeepResearch))) && (
           <div className="mb-4">
-            <SearchTopologyVisualizer isFinished={sources.length > 0 && !isPipelineActive} />
+            <SearchTopologyVisualizer isFinished={sources.length > 0 && !isPipelineActive} query={query} />
           </div>
         )}
 
