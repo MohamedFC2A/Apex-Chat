@@ -10,14 +10,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { 
-  ArrowUp, Square, Brain, Search, Code2, Lock, Mic, Globe, X, FileText, FileDown, BookOpen, Crown
+  ArrowUp, Square, Search, Globe, X, FileText, FileDown, BookOpen, Paperclip
 } from "lucide-react";
 import { motion } from "framer-motion";
 import type { UnboundState } from "@/lib/unbound-service";
@@ -69,23 +63,14 @@ export function ChatInput({
   // Loaded reasoningLevel and setReasoningLevel from store
   const { 
     isGenerating, 
-    serviceMode, 
     selectedModel, 
     setSelectedModel, 
     activeQuizProgress, 
     activePdfProgress,
-    reasoningLevel,
-    setReasoningLevel
   } = useChatStore();
 
-  const { canUseDeepResearch, canUseGodMode } = useSubscriptionStore();
-  const {
-    thinking,
-    deepResearch,
-    godMode,
-    setDeepResearch,
-    setGodMode,
-  } = useFeatureToggleStore();
+  const { canUseDeepResearch } = useSubscriptionStore();
+  const { setDeepResearch, setGodMode } = useFeatureToggleStore();
 
   // Sync state variables
   useEffect(() => {
@@ -195,7 +180,29 @@ export function ChatInput({
   };
 
   const hasText = message.trim().length > 0 || attachments.length > 0;
-  const isArabic = /[\u0600-\u06FF]/.test(message);
+  const inputLooksArabic = /[\u0600-\u06FF]/.test(message);
+  const activeModeLabel =
+    selectedGenType === "quiz"
+      ? "وضع الاختبار"
+      : selectedGenType === "pdf"
+        ? "وضع PDF"
+        : selectedModel === "apex-elite"
+          ? "بحث ويب"
+          : selectedModel === "apex-unbound"
+            ? "وضع البناء"
+            : selectedModel === "apex-omni"
+              ? "تحليل متقدم"
+              : "محادثة عامة";
+  const promptHint =
+    selectedGenType === "quiz"
+      ? "اكتب الموضوع أو المحتوى الذي تريد تحويله إلى اختبار تفاعلي."
+      : selectedGenType === "pdf"
+        ? "اكتب الموضوع أو ألصق المحتوى الذي تريد تحويله إلى مستند PDF منسق."
+        : selectedModel === "apex-elite"
+          ? "اطرح سؤالًا يحتاج إلى بحث ومصادر حديثة."
+          : selectedModel === "apex-unbound"
+            ? "صف الواجهة أو الصفحة التي تريد تصميمها وسأبنيها خطوة بخطوة."
+            : "اسأل أي شيء، أو أرفق ملفًا لإضافة سياق أدق.";
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 pb-4 md:pb-6 relative z-10">
@@ -213,6 +220,24 @@ export function ChatInput({
       <div 
         className="apex-input-focus glass-card relative flex flex-col gap-2.5 p-3.5 rounded-xl transition-all duration-200"
       >
+        {(lastError || attachments.length > 0 || selectedGenType || selectedModel !== "apex-flash") && (
+          <div className="flex flex-wrap items-center gap-2 px-1">
+            <div className="rounded-full border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-[11px] text-zinc-300 font-arabic">
+              {activeModeLabel}
+            </div>
+            {attachments.length > 0 && (
+              <div className="rounded-full border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-[11px] text-zinc-300 font-arabic">
+                {attachments.length} مرفق
+              </div>
+            )}
+            {lastError && (
+              <div className="rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-1 text-[11px] text-red-300 font-arabic">
+                تعذر إرسال المحاولة السابقة، يمكنك التعديل ثم إعادة الإرسال.
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Progress Bar during PDF/Quiz generation */}
         {isGenerating && (activeQuizProgress || activePdfProgress) && (
           <div className="w-full flex flex-col gap-1.5 px-1 py-1.5 border-b border-zinc-900 mb-2">
@@ -301,41 +326,38 @@ export function ChatInput({
 
         {/* Input text box row */}
         <div className="flex items-end gap-2">
-          {/* Micro-phone toggle capsule */}
           <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
             <Button
               variant="ghost"
               size="icon"
-              aria-label="تسجيل صوتي"
-              className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-900/40 border border-zinc-850 hover:border-zinc-700 hover:bg-zinc-900 text-zinc-400 hover:text-white transition-all duration-200"
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="إرفاق ملف"
+              className="flex-shrink-0 w-9 h-9 rounded-full bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900 text-zinc-300 hover:text-white transition-all duration-200"
               disabled={isGenerating}
             >
-              <Mic className="w-4 h-4" />
+              <Paperclip className="w-4 h-4" />
             </Button>
           </motion.div>
 
-          <textarea
-            ref={textareaRef}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            aria-label="نص الرسالة"
-            placeholder={
-              isArabic 
-                ? "اسأل أي شيء..." 
-                : serviceMode === "dev"
-                  ? "Describe your code problem..."
-                  : serviceMode === "education"
-                    ? "Ask a question..."
-                    : "Message ApexChat..."
-            }
-            disabled={isGenerating}
-            className={cn(
-              "flex-1 resize-none bg-transparent border-0 focus:outline-none focus:ring-0 text-[14.5px] text-zinc-100 placeholder:text-zinc-650 leading-relaxed min-h-[24px] max-h-[150px] md:max-h-[200px] py-1 font-sans",
-              isArabic && "text-right"
-            )}
-            rows={1}
-          />
+          <div className="flex-1 min-w-0">
+            <textarea
+              ref={textareaRef}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              aria-label="نص الرسالة"
+              placeholder={promptHint}
+              disabled={isGenerating}
+              className={cn(
+                "w-full resize-none bg-transparent border-0 focus:outline-none focus:ring-0 text-[14.5px] text-zinc-100 placeholder:text-zinc-500 leading-relaxed min-h-[24px] max-h-[150px] md:max-h-[200px] py-1 font-sans",
+                inputLooksArabic && "text-right"
+              )}
+              rows={1}
+            />
+            <p className="mt-1 text-[11px] text-zinc-500 font-arabic">
+              اضغط Enter للإرسال و Shift + Enter لسطر جديد.
+            </p>
+          </div>
 
           {/* Submit button */}
           {isGenerating ? (
@@ -374,26 +396,6 @@ export function ChatInput({
         <div className="flex flex-wrap items-center justify-between border-t border-zinc-900/80 pt-2 mt-1 gap-2">
           <TooltipProvider>
             <div className="flex flex-wrap items-center gap-1.5 py-0.5">
-              
-              {/* Capsule: Attach (+) */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => fileInputRef.current?.click()}
-                    aria-label="إرفاق ملف"
-                    className="w-8 h-8 rounded-full border border-zinc-900 bg-zinc-950 text-zinc-400 hover:text-white hover:bg-zinc-900 hover:border-zinc-800 transition-all duration-200"
-                    disabled={isGenerating}
-                  >
-                    <span className="text-sm font-bold font-mono">+</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Attach file (Text or Image)</p>
-                </TooltipContent>
-              </Tooltip>
-
               {/* Capsule: Search */}
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -415,11 +417,11 @@ export function ChatInput({
                     )}
                   >
                     <Search className="w-3.5 h-3.5" />
-                    <span>Search</span>
+                    <span>بحث</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Web Search Mode</p>
+                  <p>وضع البحث على الويب</p>
                 </TooltipContent>
               </Tooltip>
 
@@ -444,11 +446,11 @@ export function ChatInput({
                     )}
                   >
                     <BookOpen className="w-3.5 h-3.5" />
-                    <span>Quiz</span>
+                    <span>اختبار</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Interactive MCQ/MSQ Quiz Generator</p>
+                  <p>إنشاء اختبار تفاعلي</p>
                 </TooltipContent>
               </Tooltip>
 
@@ -477,7 +479,7 @@ export function ChatInput({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Styled Document Compilation (PDF)</p>
+                  <p>تحويل المحتوى إلى مستند PDF</p>
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -491,15 +493,15 @@ export function ChatInput({
                 className="h-8 px-3 rounded-full border border-zinc-900 bg-zinc-950 hover:bg-zinc-900 text-[11px] font-bold font-mono uppercase tracking-wider text-emerald-400 hover:text-emerald-300 gap-1.5"
               >
                 <Globe className="w-3.5 h-3.5" />
-                <span>Sources ({sourcesCount})</span>
+                <span>المصادر ({sourcesCount})</span>
               </Button>
             )}
           </TooltipProvider>
         </div>
       </div>
 
-      <p className="text-[10px] text-center text-zinc-600 mt-2 md:mt-3 select-none">
-        ApexChat can make mistakes. Verify important information.
+      <p className="text-[10px] text-center text-zinc-600 mt-2 md:mt-3 select-none font-arabic">
+        قد يخطئ ApexChat. تحقّق من المعلومات المهمة قبل اعتمادها.
       </p>
     </div>
   );

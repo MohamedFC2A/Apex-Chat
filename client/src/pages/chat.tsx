@@ -830,6 +830,17 @@ removeGodModeTheme();
   const handleModelSelect = (model: AIModel) => setSelectedModel(model);
   const isGodMode = selectedModel === "apex-unbound";
   const activeConversation = conversations.find(c => c.id === activeConversationId);
+  const hasConversationContent = !!activeConversation && activeConversation.messages.length > 0;
+  const modelStatusLabel =
+    selectedModel === "apex-elite"
+      ? "بحث ويب مفعل"
+      : selectedModel === "apex-unbound"
+        ? "وضع البناء المتقدم"
+        : selectedModel === "apex-omni"
+          ? "تحليل متعدد المراحل"
+          : selectedModel === "apex-pro"
+            ? "دقة أعلى للردود"
+            : "جاهز للمحادثة";
 
   const handleExportConversation = useCallback(async () => {
     if (!activeConversation || activeConversation.messages.length === 0) return;
@@ -946,11 +957,8 @@ removeGodModeTheme();
         transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="apex-header-bg px-3 py-2.5 md:px-5 md:py-3">
-          <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
-
-            {/* Left: sidebar toggle + logo + model */}
-            <div className="flex flex-1 items-center gap-2 min-w-0">
-              {/* Always show on mobile, show only when closed on desktop */}
+          <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
+            <div className="flex flex-1 items-center gap-3 min-w-0">
               {(!sidebarOpen) && (
                 <motion.div
                   whileHover={{ scale: 1.08 }}
@@ -969,23 +977,67 @@ removeGodModeTheme();
                 </motion.div>
               )}
 
-              <div className="flex-1 min-w-[160px] sm:flex-none sm:min-w-[200px]">
-                <ModelSelector
-                  selectedModel={selectedModel}
-                  onSelectModel={handleModelSelect}
-                  disabled={isGenerating}
-                  isLocked={!!activeConversation && activeConversation.messages.length > 0}
-                />
+              <div className="flex flex-1 items-center gap-3 min-w-0">
+                <div className="hidden md:block min-w-0">
+                  <p className="text-sm font-semibold text-white truncate">ApexChat</p>
+                  <p className="text-[11px] text-white/40 truncate">
+                    {isGenerating
+                      ? "جاري تجهيز الرد الحالي"
+                      : hasConversationContent
+                        ? `محادثة نشطة تحتوي على ${activeConversation?.messages.length ?? 0} رسالة`
+                        : "ابدأ سؤالك من الأسفل أو جرّب اقتراحًا سريعًا"}
+                  </p>
+                </div>
+
+                <div className="flex-1 min-w-[170px] sm:flex-none sm:min-w-[220px]">
+                  <ModelSelector
+                    selectedModel={selectedModel}
+                    onSelectModel={handleModelSelect}
+                    disabled={isGenerating}
+                    isLocked={!!activeConversation && activeConversation.messages.length > 0}
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Right: live status + theme */}
-            <div className="hidden sm:flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
+              {hasConversationContent && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportConversation}
+                  disabled={isExportingConversation}
+                  className="h-9 rounded-xl border-white/10 bg-white/5 text-white/75 hover:bg-white/10 hover:text-white px-3"
+                >
+                  {isExportingConversation ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin ml-1" />
+                      <span className="hidden sm:inline">جاري التصدير</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="w-4 h-4 ml-1" />
+                      <span className="hidden sm:inline">تصدير PDF</span>
+                    </>
+                  )}
+                </Button>
+              )}
 
-              <div className="hidden sm:block">
+              <div className="hidden md:block">
                 <ContextMeter />
               </div>
             </div>
+          </div>
+
+          <div className="max-w-5xl mx-auto mt-2 hidden sm:flex items-center gap-2 text-[11px] text-white/45">
+            <div className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">
+              {modelStatusLabel}
+            </div>
+            {hasConversationContent && (
+              <div className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">
+                آخر محادثة قابلة للتصدير والمشاركة
+              </div>
+            )}
           </div>
         </div>
         {/* Glowing divider */}

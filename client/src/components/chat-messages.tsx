@@ -2740,17 +2740,66 @@ export function ChatMessages({
     });
   }, []);
 
+  const suggestedPrompts = [
+    {
+      label: "تلخيص محتوى",
+      prompt: "لخّص لي هذا الموضوع في نقاط واضحة وسريعة.",
+      icon: BookOpen,
+    },
+    {
+      label: "اختبار تفاعلي",
+      prompt: "أنشئ اختبارًا تفاعليًا من 5 أسئلة حول هذا الموضوع.",
+      icon: Search,
+    },
+    {
+      label: "مستند PDF",
+      prompt: "حوّل هذا الموضوع إلى مستند PDF منظم مع عناوين وأقسام.",
+      icon: FileDown,
+    },
+  ];
+
   if (messages.length === 0 && !streamingContent && !streamingReasoning) {
     return (
-      <div className="flex flex-col items-center justify-center py-10 md:py-16 max-w-2xl mx-auto px-4 text-center space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[60vh]">
-        {/* Headings */}
-        <div className="space-y-2 md:space-y-3 font-arabic" dir="rtl">
-          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground font-arabic">
-            بماذا يمكنني مساعدتك اليوم؟
-          </h2>
-          <p className="text-xs md:text-sm text-muted-foreground max-w-md mx-auto leading-relaxed font-arabic">
-            اكتب سؤالك الخاص في صندوق الإدخال للبدء.
-          </p>
+      <div className="flex flex-col items-center justify-center py-10 md:py-16 max-w-3xl mx-auto px-4 text-center space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[60vh]">
+        <div className="w-full rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-xl px-5 py-8 md:px-8 md:py-10">
+          <div className="space-y-3 font-arabic" dir="rtl">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]">
+              <Sparkles className="h-6 w-6 text-white/75" />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground font-arabic">
+              بماذا يمكنني مساعدتك اليوم؟
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-xl mx-auto leading-relaxed font-arabic">
+              ابدأ بسؤال مباشر، أو استخدم أحد الاقتراحات السريعة، أو أرفق ملفًا وصورة لإضافة سياق أوضح.
+            </p>
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
+            {suggestedPrompts.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => onSelectPrompt?.(item.prompt)}
+                  className="group rounded-2xl border border-white/10 bg-white/[0.025] p-4 text-right transition-all duration-200 hover:border-white/20 hover:bg-white/[0.05]"
+                  dir="rtl"
+                >
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
+                    <Icon className="h-4 w-4 text-white/70" />
+                  </div>
+                  <p className="font-arabic text-sm font-semibold text-white/90">{item.label}</p>
+                  <p className="mt-1 font-arabic text-xs leading-6 text-white/45">{item.prompt}</p>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-[11px] text-white/45 font-arabic">
+            <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1">يدعم المرفقات</span>
+            <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1">اختبارات تفاعلية</span>
+            <span className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1">تصدير PDF</span>
+          </div>
         </div>
       </div>
     );
@@ -3443,22 +3492,64 @@ function AssistantMessage({
           </div>
           {content && !/```(?:mcq-quiz|pdf-document)/i.test(content) && (
             <motion.div whileTap={{ scale: 0.9 }}>
-              <div className="flex items-center gap-1 opacity-0 transition-all group-hover:opacity-100">
+              <div className="flex items-center gap-1 opacity-100 sm:opacity-0 transition-all sm:group-hover:opacity-100">
+                {!isStreaming && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleGenerateSmartPdf}
+                    disabled={isGeneratingSmartPdf}
+                    className="h-7 px-2 hover:bg-white/6 text-muted-foreground hover:text-foreground rounded-lg text-xs"
+                  >
+                    {isGeneratingSmartPdf ? (
+                      <>
+                        <RotateCw className="w-3 h-3 ml-1 animate-spin" />
+                        <span>تحضير ذكي</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3 h-3 ml-1" />
+                        <span>PDF ذكي</span>
+                      </>
+                    )}
+                  </Button>
+                )}
+                {!isStreaming && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleExportPdf}
+                    disabled={isExportingPdf}
+                    className="h-7 px-2 hover:bg-white/6 text-muted-foreground hover:text-foreground rounded-lg text-xs"
+                  >
+                    {isExportingPdf ? (
+                      <>
+                        <RotateCw className="w-3 h-3 ml-1 animate-spin" />
+                        <span>جاري التصدير</span>
+                      </>
+                    ) : (
+                      <>
+                        <FileDown className="w-3 h-3 ml-1" />
+                        <span>PDF</span>
+                      </>
+                    )}
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleCopy}
-                  className="h-6 px-2 hover:bg-white/6 text-muted-foreground hover:text-foreground rounded-lg"
+                  className="h-7 px-2 hover:bg-white/6 text-muted-foreground hover:text-foreground rounded-lg text-xs"
                 >
                   {copied ? (
                     <>
-                      <Check className="w-3 h-3 mr-1 text-emerald-400" />
-                      <span className="text-xs">Copied</span>
+                      <Check className="w-3 h-3 ml-1 text-emerald-400" />
+                      <span className="text-xs">تم النسخ</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-3 h-3 mr-1" />
-                      <span className="text-xs">Copy</span>
+                      <Copy className="w-3 h-3 ml-1" />
+                      <span className="text-xs">نسخ</span>
                     </>
                   )}
                 </Button>
@@ -3477,13 +3568,13 @@ function AssistantMessage({
             >
               {showReasoning ? (
                 <>
-                  <ChevronDown className="w-3 h-3 mr-1" />
-                  Hide Reasoning
+                  <ChevronDown className="w-3 h-3 ml-1" />
+                  إخفاء التفكير
                 </>
               ) : (
                 <>
-                  <ChevronRight className="w-3 h-3 mr-1" />
-                  Show Reasoning
+                  <ChevronRight className="w-3 h-3 ml-1" />
+                  إظهار التفكير
                 </>
               )}
             </Button>
