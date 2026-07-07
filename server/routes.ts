@@ -747,7 +747,9 @@ export async function registerRoutes(
         return;
       }
 
-      // Listen for progress updates
+      // Listen for progress updates. Track the unsubscribe so we can also
+      // release it on `req.on("close")` to avoid leaking listeners on
+      // premature disconnects (browser tab closed, network drop, etc.).
       const unsubscribe = pdfJobQueue.onProgress(jobId, (event) => {
         emitPdfProgress(res, event);
         if (event.stage === "complete" || event.stage === "error") {
@@ -757,11 +759,11 @@ export async function registerRoutes(
       });
 
       req.on("close", () => {
-        unsubscribe();
+        try { unsubscribe(); } catch { /* ignore */ }
       });
     } catch (error) {
       console.error("SSE progress stream error:", error);
-      res.status(500).end();
+      try { res.status(500).end(); } catch { /* ignore */ }
     }
   });
 

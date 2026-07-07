@@ -86,8 +86,11 @@ export function analyzePageBoundaries(doc: PDFDocument): PageAnalysis {
   pageUnits[currentPage] = currentPageUnits;
   const pageFillRatios = pageUnits.map((u) => Math.min(1.0, u / PAGE_UNIT));
 
+  // Always report at least 1 page so the UI never shows "0 pages".
+  const pageCount = Math.max(1, currentPage + 1);
+
   return {
-    pageCount: currentPage + 1,
+    pageCount,
     sectionPages,
     pageBreakPoints,
     pageFillRatios,
@@ -100,22 +103,25 @@ export function estimatePdfPageCount(doc: PDFDocument): number {
 
 /**
  * Enriches a PDFDocument with accurate estimated page numbers for the TOC.
+ * Page-number data is stored in a side map (keyed by section id) so the
+ * `PDFSection` shape stays strictly typed and the values survive any
+ * downstream re-spread (e.g. `mergeShortParagraphs`).
  */
-export function enrichTocWithPageNumbers(doc: PDFDocument): PDFDocument {
+export function enrichTocWithPageNumbers(
+  doc: PDFDocument,
+): PDFDocument & { _tocPageMap?: Record<string, number> } {
   if (!doc.tableOfContents) return doc;
 
   const analysis = analyzePageBoundaries(doc);
+  const tocPageMap: Record<string, number> = {};
 
-  const enrichedSections = doc.sections.map((section, idx) => {
-    if (section.type === "heading") {
-      const enriched = { ...section } as PDFSection & { _estimatedPage: number };
-      enriched._estimatedPage = analysis.sectionPages[idx];
-      return enriched;
+  doc.sections.forEach((section, idx) => {
+    if (section.type === "heading" && section.id) {
+      tocPageMap[section.id] = analysis.sectionPages[idx];
     }
-    return section;
   });
 
-  return { ...doc, sections: enrichedSections };
+  return { ...doc, _tocPageMap: tocPageMap };
 }
 
 /**
@@ -125,7 +131,8 @@ export function deduplicateSections(sections: PDFSection[]): PDFSection[] {
   const seen = new Set<string>();
   return sections.filter((section) => {
     if (section.type === "divider" || section.type === "watermark") return true;
-    const fingerprint = `${section.type}:${section.content.slice(0, 80).toLowerCase().replace(/\s+/g, " ")}`;
+    const content = section.content ?? "";
+    const fingerprint = `${section.type}:${content.slice(0, 80).toLowerCase().replace(/\s+/g, " ")}`;
     if (seen.has(fingerprint)) return false;
     seen.add(fingerprint);
     return true;

@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { FileDown, FileText, Loader2 } from "lucide-react";
 import type { PDFDocument, PDFPageSize, PDFDocumentTheme } from "@shared/pdf";
@@ -442,6 +442,13 @@ export function PDFExportWidget({ jsonText, intentVerified }: { jsonText: string
   const [, setProgress] = useState(0);
   const { toast } = useToast();
 
+  // Refs to prevent double downloads: `onerror` on EventSource fires after `close()`
+  // in most browsers, which would otherwise trigger the fallback POST and download
+  // a second copy of the PDF. These flags guard the fallback path.
+  const hasCompletedRef = useRef(false);
+  const hasErroredRef = useRef(false);
+  const progressTimerRef = useRef<number | null>(null);
+
   // Sync state if jsonText prop changes from parent (e.g. streaming finished)
   useEffect(() => {
     if (parsed.document) {
@@ -449,7 +456,208 @@ export function PDFExportWidget({ jsonText, intentVerified }: { jsonText: string
     }
   }, [parsed.document]);
 
+  // Clean up the progress simulator interval on unmount to avoid leaked timers.
+  useEffect(() => {
+    return () => {
+      if (progressTimerRef.current !== null) {
+        window.clearInterval(progressTimerRef.current);
+        progressTimerRef.current = null;
+      }
+    };
+  }, []);
+
   const [hasAutoDownloaded, setHasAutoDownloaded] = useState(false);
+
+  // Shared progress simulator — sets initial progress and ticks upward
+  // until `finishProgress()` is called.
+  const startProgressSimulator = () => {
+    setProgress(12);
+    useChatStore.getState().setActivePdfProgress({ current: 12, total: 100 });
+    const id = window.setInterval(() => {
+      setProgress((value) => {
+        const nextVal = value >= 91 ? value : value + Math.floor(Math.random() * 14) + 3;
+        useChatStore.getState().setActivePdfProgress({ current: nextVal, total: 100 });
+        return nextVal;
+      });
+    }, 220);
+    progressTimerRef.current = id;
+  };
+
+  const finishProgress = () => {
+    if (progressTimerRef.current !== null) {
+      window.clearInterval(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+    setIsGenerating(false);
+    setProgress(0);
+    useChatStore.getState().setActivePdfProgress(null);
+  };
+
+  /**
+   * Core PDF export flow — used by both auto-download and the manual button.
+   * `mode` switches the success/error toast text.
+   */
+  const runPdfExport = async (
+    doc: PDFDocument,
+    effectiveTheme: "dark" | "light",
+    effectivePageSize: PDFPageSize,
+    effectiveCoverPage: boolean,
+    effectiveToc: boolean,
+    mode: "auto" | "manual",
+  ) => {
+    // Reset completion guards for this run
+    hasCompletedRef.current = false;
+    hasErroredRef.current = false;
+
+    const payload = {
+      exportType: "structured",
+      document: {
+        ...doc,
+        theme: effectiveTheme,
+        pageSize: effectivePageSize,
+        coverPage: effectiveCoverPage,
+        tableOfContents: effectiveToc,
+      },
+      options: {
+        theme: effectiveTheme,
+        pageSize: effectivePageSize,
+      },
+    };
+
+    const isRtlLocal = doc.language !== "en";
+    const safeFilename = `${doc.title.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "").trim() || "apex-document"}.pdf`;
+
+    const showSuccess = () => {
+      toast({
+        title:
+          mode === "auto"
+            ? isRtlLocal
+              ? "تم إنشاء وتنزيل ملف PDF تلقائياً"
+              : "PDF generated and downloaded automatically"
+            : isRtlLocal
+              ? "تم إنشاء ملف PDF"
+              : "PDF generated",
+        description: isRtlLocal ? "تم تنزيل المستند بنجاح." : "The file was downloaded successfully.",
+      });
+    };
+
+    const showError = (description: string) => {
+      toast({
+        title:
+          mode === "auto"
+            ? isRtlLocal
+              ? "فشل إنشاء PDF تلقائي"
+              : "Auto PDF generation failed"
+            : isRtlLocal
+              ? "فشل إنشاء PDF"
+              : "PDF generation failed",
+        description,
+        variant: "destructive",
+      });
+    };
+
+    setIsGenerating(true);
+    startProgressSimulator();
+
+    try {
+      const response = await fetch("/api/pdf/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.message || `PDF export failed with status ${response.status}`);
+      }
+
+      const { jobId } = await response.json();
+      const eventSource = new EventSource(`/api/pdf-progress/${jobId}`);
+
+      // Fallback POST in case SSE never reaches the "complete" stage (e.g. proxy
+      // buffering, connection reset, or the server skipped the event).
+      const downloadViaFallback = async (): Promise<boolean> => {
+        if (hasCompletedRef.current) return false; // SSE already downloaded it
+        try {
+          const directResponse = await fetch("/api/export/pdf", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!directResponse.ok) throw new Error(`HTTP ${directResponse.status}`);
+          const blob = await directResponse.blob();
+          await downloadPdfBlob(blob, safeFilename);
+          hasCompletedRef.current = true;
+          showSuccess();
+          return true;
+        } catch (err) {
+          console.error("[PDFExportWidget] Fallback download failed:", err);
+          return false;
+        }
+      };
+
+      eventSource.onmessage = async (event) => {
+        if (event.data === "[DONE]") {
+          eventSource.close();
+          return;
+        }
+
+        try {
+          const data = JSON.parse(event.data);
+          setProgress(data.progress);
+          useChatStore.getState().setActivePdfProgress({ current: data.progress, total: 100 });
+
+          if (data.stage === "complete") {
+            // Mark BEFORE awaiting the download to prevent the browser's
+            // post-close onerror from triggering the fallback path.
+            hasCompletedRef.current = true;
+            eventSource.close();
+            try {
+              const downloadRes = await fetch(`/api/pdf/download/${jobId}`);
+              if (!downloadRes.ok) throw new Error("Failed to download PDF buffer");
+              const blob = await downloadRes.blob();
+              await downloadPdfBlob(blob, safeFilename);
+              showSuccess();
+            } catch (err) {
+              // SSE download failed — try the synchronous POST fallback.
+              const fallbackOk = await downloadViaFallback();
+              if (!fallbackOk) {
+                showError(err instanceof Error ? err.message : "Download failed");
+              }
+            }
+            finishProgress();
+          } else if (data.stage === "error") {
+            hasErroredRef.current = true;
+            eventSource.close();
+            finishProgress();
+            showError(data.error || "Unknown error");
+          }
+        } catch (err) {
+          console.error("[PDFExportWidget] SSE parse error:", err);
+        }
+      };
+
+      eventSource.onerror = async () => {
+        // EventSource already closed — only attempt fallback if we haven't
+        // already completed or surfaced an error.
+        eventSource.close();
+        if (hasCompletedRef.current || hasErroredRef.current) {
+          finishProgress();
+          return;
+        }
+        const ok = await downloadViaFallback();
+        if (!ok) {
+          finishProgress();
+          showError("Lost connection while generating PDF");
+        } else {
+          finishProgress();
+        }
+      };
+    } catch (error) {
+      finishProgress();
+      showError(error instanceof Error ? error.message : "Unknown error");
+    }
+  };
 
   // Auto-download PDF once generated and ready
   // IMPORTANT: This useEffect must be BEFORE any conditional return to obey React Rules of Hooks
@@ -465,125 +673,10 @@ export function PDFExportWidget({ jsonText, intentVerified }: { jsonText: string
       const autoCoverPage = doc.coverPage ?? true;
       const autoToc = doc.tableOfContents ?? true;
 
-      const autoGenerate = async () => {
-        setIsGenerating(true);
-        setProgress(12);
-        setTimeout(() => {
-          useChatStore.getState().setActivePdfProgress({ current: 12, total: 100 });
-        }, 0);
-        const timer = window.setInterval(() => {
-          setProgress((value) => {
-            const nextVal = value >= 91 ? value : value + Math.floor(Math.random() * 14) + 3;
-            setTimeout(() => {
-              useChatStore.getState().setActivePdfProgress({ current: nextVal, total: 100 });
-            }, 0);
-            return nextVal;
-          });
-        }, 220);
-
-        try {
-          const payload = {
-            exportType: "structured",
-            document: {
-              ...doc,
-              theme: autoTheme,
-              pageSize: autoPageSize,
-              coverPage: autoCoverPage,
-              tableOfContents: autoToc,
-            },
-            options: {
-              theme: autoTheme,
-              pageSize: autoPageSize,
-            },
-          };
-
-          const response = await fetch("/api/pdf/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-
-          if (!response.ok) {
-            const error = await response.json().catch(() => null);
-            throw new Error(error?.message || `PDF export failed with status ${response.status}`);
-          }
-
-          const { jobId } = await response.json();
-          const eventSource = new EventSource(`/api/pdf-progress/${jobId}`);
-
-          eventSource.onmessage = async (event) => {
-            if (event.data === "[DONE]") {
-              eventSource.close();
-              return;
-            }
-
-            try {
-              const data = JSON.parse(event.data);
-              setProgress(data.progress);
-              useChatStore.getState().setActivePdfProgress({ current: data.progress, total: 100 });
-
-              if (data.stage === "complete") {
-                eventSource.close();
-                const downloadRes = await fetch(`/api/pdf/download/${jobId}`);
-                if (!downloadRes.ok) throw new Error("Failed to download PDF buffer");
-                const blob = await downloadRes.blob();
-                const filename = `${doc.title.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "").trim() || "apex-document"}.pdf`;
-                await downloadPdfBlob(blob, filename);
-                toast({
-                  title: doc.language !== "en" ? "تم إنشاء وتنزيل ملف PDF تلقائياً" : "PDF generated and downloaded automatically",
-                  description: doc.language !== "en" ? "تم تنزيل المستند بنجاح." : "The file was downloaded successfully.",
-                });
-                setIsGenerating(false);
-                setProgress(0);
-                useChatStore.getState().setActivePdfProgress(null);
-              } else if (data.stage === "error") {
-                eventSource.close();
-                setIsGenerating(false);
-                setProgress(0);
-                useChatStore.getState().setActivePdfProgress(null);
-                toast({
-                  title: doc.language !== "en" ? "فشل إنشاء PDF تلقائي" : "Auto PDF generation failed",
-                  description: data.error || "Unknown error",
-                  variant: "destructive",
-                });
-              }
-            } catch (err) {
-              console.error("SSE parse error:", err);
-            }
-          };
-
-          eventSource.onerror = () => {
-            eventSource.close();
-            // Fallback: traditional POST download
-            (async () => {
-              const directResponse = await fetch("/api/export/pdf", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-              });
-              if (!directResponse.ok) throw new Error("Fallback PDF generation failed");
-              const blob = await directResponse.blob();
-              const filename = `${doc.title.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "").trim() || "apex-document"}.pdf`;
-              await downloadPdfBlob(blob, filename);
-              setIsGenerating(false);
-              setProgress(0);
-              useChatStore.getState().setActivePdfProgress(null);
-            })().catch(console.error);
-          };
-        } catch (error) {
-          toast({
-            title: doc.language !== "en" ? "فشل إنشاء PDF تلقائي" : "Auto PDF generation failed",
-            description: error instanceof Error ? error.message : "Unknown error",
-            variant: "destructive",
-          });
-          setIsGenerating(false);
-          setProgress(0);
-          useChatStore.getState().setActivePdfProgress(null);
-        }
-      };
-
-      autoGenerate();
+      runPdfExport(doc, autoTheme, autoPageSize, autoCoverPage, autoToc, "auto");
     }
+    // runPdfExport is stable enough — depends on refs only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parsed.document, hasAutoDownloaded, intentVerified]);
 
   // ── Early return guards (after ALL hooks are declared) ──
@@ -614,124 +707,7 @@ export function PDFExportWidget({ jsonText, intentVerified }: { jsonText: string
   const isRtl = document.language !== "en";
 
   const handleGenerate = async () => {
-    setIsGenerating(true);
-    setProgress(5);
-    setTimeout(() => {
-      useChatStore.getState().setActivePdfProgress({ current: 5, total: 100 });
-    }, 0);
-
-    const payload = {
-      exportType: "structured",
-      document: {
-        ...document,
-        theme,
-        pageSize,
-        coverPage: includeCoverPage,
-        tableOfContents: includeToc,
-      },
-      options: {
-        theme,
-        pageSize,
-      },
-    };
-
-    try {
-      const response = await fetch("/api/pdf/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => null);
-        throw new Error(error?.message || `PDF export failed with status ${response.status}`);
-      }
-
-      const { jobId } = await response.json();
-      const eventSource = new EventSource(`/api/pdf-progress/${jobId}`);
-
-      eventSource.onmessage = async (event) => {
-        if (event.data === "[DONE]") {
-          eventSource.close();
-          return;
-        }
-
-        try {
-          const data = JSON.parse(event.data);
-          setProgress(data.progress);
-          useChatStore.getState().setActivePdfProgress({ current: data.progress, total: 100 });
-
-          if (data.stage === "complete") {
-            eventSource.close();
-            const downloadRes = await fetch(`/api/pdf/download/${jobId}`);
-            if (!downloadRes.ok) throw new Error("Failed to download PDF buffer");
-            const blob = await downloadRes.blob();
-            const filename = `${document.title.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "").trim() || "apex-document"}.pdf`;
-            await downloadPdfBlob(blob, filename);
-            toast({
-              title: isRtl ? "تم إنشاء ملف PDF" : "PDF generated",
-              description: isRtl ? "تم تنزيل الملف بنجاح." : "The file was downloaded successfully.",
-            });
-            setIsGenerating(false);
-            setProgress(0);
-            useChatStore.getState().setActivePdfProgress(null);
-          } else if (data.stage === "error") {
-            eventSource.close();
-            setIsGenerating(false);
-            setProgress(0);
-            useChatStore.getState().setActivePdfProgress(null);
-            toast({
-              title: isRtl ? "فشل إنشاء PDF" : "PDF generation failed",
-              description: data.error || "Unknown error",
-              variant: "destructive",
-            });
-          }
-        } catch (err) {
-          console.error("SSE message parse error:", err);
-        }
-      };
-
-      eventSource.onerror = () => {
-        eventSource.close();
-        // Fallback: direct download POST
-        (async () => {
-          const directResponse = await fetch("/api/export/pdf", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-          if (!directResponse.ok) throw new Error("Direct PDF download fallback failed");
-          const blob = await directResponse.blob();
-          const filename = `${document.title.replace(/[<>:"/\\|?*\u0000-\u001F]/g, "").trim() || "apex-document"}.pdf`;
-          await downloadPdfBlob(blob, filename);
-          toast({
-            title: isRtl ? "تم إنشاء ملف PDF" : "PDF generated",
-            description: isRtl ? "تم تنزيل الملف بنجاح." : "The file was downloaded successfully.",
-          });
-          setIsGenerating(false);
-          setProgress(0);
-          useChatStore.getState().setActivePdfProgress(null);
-        })().catch((err) => {
-          toast({
-            title: isRtl ? "فشل إنشاء PDF" : "PDF generation failed",
-            description: err instanceof Error ? err.message : "Unknown error",
-            variant: "destructive",
-          });
-          setIsGenerating(false);
-          setProgress(0);
-          useChatStore.getState().setActivePdfProgress(null);
-        });
-      };
-    } catch (error) {
-      toast({
-        title: isRtl ? "فشل إنشاء PDF" : "PDF generation failed",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
-      });
-      setIsGenerating(false);
-      setProgress(0);
-      useChatStore.getState().setActivePdfProgress(null);
-    }
+    await runPdfExport(document, theme, pageSize, includeCoverPage, includeToc, "manual");
   };
 
   return (

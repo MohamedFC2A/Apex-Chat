@@ -96,7 +96,9 @@ class PdfCacheLayer {
 
   invalidate(key: string): void {
     this.pdfCache.delete(key);
+    // HTML cache keys are stored with an "html:" prefix (see cache-key-builder.ts)
     this.htmlCache.delete(key);
+    this.htmlCache.delete(`html:${key}`);
   }
 
   clear(): void {

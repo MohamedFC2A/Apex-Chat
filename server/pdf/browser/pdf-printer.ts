@@ -13,6 +13,17 @@ function getPdfFormat(pageSize: PDFPageSize): "A4" | "Letter" {
   return pageSize === "letter" ? "Letter" : "A4";
 }
 
+/**
+ * Page-size-aware margins. Letter is slightly wider so we use a touch more
+ * left/right padding to keep text within the comfortable ~85-char line.
+ */
+function getPdfMargins(pageSize: PDFPageSize) {
+  if (pageSize === "letter") {
+    return { top: "85px", bottom: "85px", left: "32px", right: "32px" };
+  }
+  return { top: "85px", bottom: "85px", left: "24px", right: "24px" };
+}
+
 export async function printHtmlToPdf(
   html: string,
   doc: PDFDocument,
@@ -43,7 +54,7 @@ export async function printHtmlToPdf(
       const pdfBuffer = await page.pdf({
         format: getPdfFormat(doc.pageSize),
         printBackground: true,
-        margin: { top: "85px", bottom: "85px", left: "24px", right: "24px" },
+        margin: getPdfMargins(doc.pageSize),
         displayHeaderFooter: true,
         headerTemplate,
         footerTemplate,

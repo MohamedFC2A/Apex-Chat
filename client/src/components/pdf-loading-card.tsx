@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useChatStore } from "@/lib/store";
 
 const factsArabic = [
   "ملفات PDF المولدة هنا تبقى نصية وقابلة للبحث والنسخ.",
@@ -16,8 +17,6 @@ const factsEnglish = [
   "Math blocks are rendered with KaTeX instead of image snapshots.",
   "Code highlighting is prepared server-side for stable PDF output.",
 ];
-
-import { useChatStore } from "@/lib/store";
 
 interface PDFLoadingCardProps {
   language?: "ar" | "en" | "mixed";
