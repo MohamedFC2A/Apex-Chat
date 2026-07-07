@@ -6,7 +6,7 @@
  *
  * Provides a real-time phase tracker and content accumulator.
  */
-
+import { throttledSaveGenerationState } from "./generation-session";
 export interface UnboundPhase {
   phase: number;
   name: string;
@@ -69,7 +69,9 @@ export async function runUnboundService(
   spec?: any | null,
   searchResults?: any | null,
   selectedChoices?: any | null,
-  isFollowUp?: boolean
+  isFollowUp?: boolean,
+  messageId?: string,
+  conversationId?: string
 ): Promise<UnboundServiceResult> {
   const state: UnboundState = {
     isRunning: true,
@@ -100,7 +102,16 @@ export async function runUnboundService(
     const response = await fetch("/api/unbound", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, conversationHistory, spec, searchResults, selectedChoices, isFollowUp }),
+      body: JSON.stringify({
+        message,
+        conversationHistory,
+        spec,
+        searchResults,
+        selectedChoices,
+        isFollowUp,
+        messageId,
+        conversationId,
+      }),
     });
 
     if (!response.ok || !response.body) {
@@ -131,11 +142,17 @@ export async function runUnboundService(
             accumulatedContent += event.content;
             state.content = accumulatedContent;
             onContentChunk(event.content, false);
+            if (conversationId && messageId) {
+              throttledSaveGenerationState(conversationId, accumulatedContent, "", messageId);
+            }
             emit();
           } else if (event.type === "final" && event.content) {
             accumulatedContent = event.content;
             state.content = accumulatedContent;
             onContentChunk(event.content, true);
+            if (conversationId && messageId) {
+              throttledSaveGenerationState(conversationId, accumulatedContent, "", messageId);
+            }
             emit();
           } else if (event.type === "phase" && event.phase) {
             const phaseData: UnboundPhase = event.phase;

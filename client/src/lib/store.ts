@@ -1,8 +1,9 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import type { AIModel, ServiceMode, ReasoningLevel, Message, Conversation } from "@shared/schema";
 import { estimateTokens } from "@shared/schema";
 import { debouncedSaveConversation, fetchConversationsFromCloud, mergeConversations, deleteConversation as cloudDeleteConversation } from "./cloud-sync";
+import { hybridStorage } from "./generation-session";
 
 interface ChatState {
   // Current settings
@@ -26,6 +27,7 @@ interface ChatState {
   activeQuizProgress: { current: number; total: number } | null;
   activePdfProgress: { current: number; total: number } | null;
   omniStates: Record<string, any>; // Persisted omniStates
+  unboundStates: Record<string, any>; // Persisted unboundStates
   activeGenerationId: string | null;
   streamingContentMap: Record<string, string>;
   streamingReasoningMap: Record<string, string>;
@@ -40,6 +42,7 @@ interface ChatState {
   setActiveQuizProgress: (progress: { current: number; total: number } | null) => void;
   setActivePdfProgress: (progress: { current: number; total: number } | null) => void;
   setOmniState: (convId: string, state: any) => void;
+  setUnboundState: (convId: string, state: any) => void;
   setStreamingContentForConv: (convId: string, contentOrFn: string | ((prev: string) => string)) => void;
   setStreamingReasoningForConv: (convId: string, reasoningOrFn: string | ((prev: string) => string)) => void;
 
@@ -73,6 +76,7 @@ export const useChatStore = create<ChatState>()(
       activeQuizProgress: null,
       activePdfProgress: null,
       omniStates: {},
+      unboundStates: {},
       activeGenerationId: null,
       streamingContentMap: {},
       streamingReasoningMap: {},
@@ -142,6 +146,17 @@ export const useChatStore = create<ChatState>()(
             next[convId] = state;
           }
           return { omniStates: next };
+        });
+      },
+      setUnboundState: (convId, state) => {
+        set((s) => {
+          const next = { ...s.unboundStates };
+          if (state === null) {
+            delete next[convId];
+          } else {
+            next[convId] = state;
+          }
+          return { unboundStates: next };
         });
       },
 
@@ -342,6 +357,7 @@ export const useChatStore = create<ChatState>()(
     }),
     {
       name: "apexchat-storage",
+      storage: createJSONStorage(() => hybridStorage),
       partialize: (state) => ({
         selectedModel: state.selectedModel,
         serviceMode: state.serviceMode,
@@ -349,7 +365,14 @@ export const useChatStore = create<ChatState>()(
         conversations: state.conversations,
         activeConversationId: state.activeConversationId,
         messages: state.messages,
-        omniStates: state.omniStates
+        omniStates: state.omniStates,
+        unboundStates: state.unboundStates,
+        activeGenerationId: state.activeGenerationId,
+        isGenerating: state.isGenerating,
+        streamingContentMap: state.streamingContentMap,
+        streamingReasoningMap: state.streamingReasoningMap,
+        activeQuizProgress: state.activeQuizProgress,
+        activePdfProgress: state.activePdfProgress,
       }),
     }
   )

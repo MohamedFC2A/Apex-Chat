@@ -35,6 +35,7 @@ interface ActiveGeneration {
   reasoningContent: string;
   isComplete: boolean;
   error?: string;
+  createdAt: number;
   chunks: Array<{
     id: string;
     content?: string;
@@ -48,6 +49,17 @@ interface ActiveGeneration {
   >;
 }
 const activeGenerations = new Map<string, ActiveGeneration>();
+
+// Clean up completed generations older than 30 minutes to prevent memory leaks
+setInterval(() => {
+  const now = Date.now();
+  const TTL = 30 * 60 * 1000; // 30 minutes
+  activeGenerations.forEach((gen, id) => {
+    if (gen.isComplete && now - gen.createdAt > TTL) {
+      activeGenerations.delete(id);
+    }
+  });
+}, 5 * 60 * 1000); // run every 5 minutes
 
 function sanitizeFilename(value: string): string {
   return (
@@ -196,6 +208,7 @@ export async function registerRoutes(
           content: "",
           reasoningContent: "",
           isComplete: false,
+          createdAt: Date.now(),
           chunks: [],
           listeners: [],
         };
@@ -942,6 +955,8 @@ export async function registerRoutes(
       searchResults,
       selectedChoices,
       isFollowUp,
+      messageId,
+      conversationId,
     } = req.body;
 
     if (!message || typeof message !== "string") {
@@ -969,6 +984,21 @@ export async function registerRoutes(
       }
     };
 
+    let activeGen: ActiveGeneration | undefined;
+    if (messageId && conversationId) {
+      activeGen = {
+        messageId,
+        conversationId,
+        content: "",
+        reasoningContent: "",
+        isComplete: false,
+        createdAt: Date.now(),
+        chunks: [],
+        listeners: [],
+      };
+      activeGenerations.set(messageId, activeGen);
+    }
+
     try {
       const isOpenRouter = openrouterKey.startsWith("sk-or-");
       const client = new OpenAI({
@@ -995,33 +1025,83 @@ export async function registerRoutes(
         (chunk) => {
           if (chunk.content) {
             sendEvent({ type: "content", content: chunk.content });
+            if (activeGen) {
+              activeGen.content += chunk.content;
+              const chunkObj = { id: randomUUID(), content: chunk.content };
+              activeGen.chunks.push(chunkObj);
+              activeGen.listeners.forEach((listener) =>
+                listener({ type: "chunk", data: chunkObj })
+              );
+            }
           }
           if (chunk.phase) {
             sendEvent({ type: "phase", phase: chunk.phase });
+            if (activeGen) {
+              const chunkObj = { id: randomUUID(), type: "phase", phase: chunk.phase } as any;
+              activeGen.chunks.push(chunkObj);
+              activeGen.listeners.forEach((listener) =>
+                listener({ type: "chunk", data: chunkObj })
+              );
+            }
           }
           if (chunk.questions) {
-            sendEvent({
+            const qEvent = {
               type: "question",
               questions: chunk.questions,
               spec: chunk.spec,
               searchResults: chunk.searchResults,
-            });
+            };
+            sendEvent(qEvent);
+            if (activeGen) {
+              const chunkObj = { id: randomUUID(), ...qEvent } as any;
+              activeGen.chunks.push(chunkObj);
+              activeGen.listeners.forEach((listener) =>
+                listener({ type: "chunk", data: chunkObj })
+              );
+            }
           }
           if (chunk.workTree) {
             sendEvent({ type: "workTree", workTree: chunk.workTree });
+            if (activeGen) {
+              const chunkObj = { id: randomUUID(), type: "workTree", workTree: chunk.workTree } as any;
+              activeGen.chunks.push(chunkObj);
+              activeGen.listeners.forEach((listener) =>
+                listener({ type: "chunk", data: chunkObj })
+              );
+            }
           }
         },
       );
 
       if (result.isPaused) {
         console.log("[Apex Coder] Pipeline paused for design questionnaire");
+        if (activeGen) {
+          activeGen.isComplete = true;
+          activeGen.listeners.forEach((listener) => listener({ type: "done" }));
+          activeGen.listeners = [];
+        }
       } else {
         sendEvent({ type: "final", content: result.formattedOutput });
         sendEvent({ type: "done" });
+        if (activeGen) {
+          activeGen.isComplete = true;
+          activeGen.content = result.formattedOutput || "";
+          activeGen.chunks.push({ id: randomUUID(), content: result.formattedOutput || "" } as any);
+          activeGen.listeners.forEach((listener) => listener({ type: "done" }));
+          activeGen.listeners = [];
+        }
       }
     } catch (err: any) {
       console.error("[Apex Coder] Pipeline error:", err);
       sendEvent({ type: "error", error: err.message || "Pipeline failed" });
+      if (activeGen) {
+        activeGen.isComplete = true;
+        activeGen.error = err.message || "Pipeline failed";
+        activeGen.listeners.forEach((listener) =>
+          listener({ type: "error", data: err.message || "Pipeline failed" })
+        );
+        activeGen.listeners = [];
+      }
     } finally {
       res.end();
     }
