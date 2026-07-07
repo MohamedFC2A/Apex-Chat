@@ -667,7 +667,8 @@ async function performSerperSearch(query: string, isOmni = false): Promise<{
 }> {
   try {
     const apexResults = await runApexSearch(query, { intent: "answer", isOmni });
-    const organic = apexResults.organic.slice(0, 12).map((item) => ({
+    const limit = isOmni ? 35 : 20;
+    const organic = apexResults.organic.slice(0, limit).map((item) => ({
       title: item.title,
       link: item.link,
       snippet: item.snippet,
@@ -2057,34 +2058,23 @@ IMPORTANT MEMORY PROTOCOL:
         }
         const formattedYesterdayDate = yesterday.toLocaleDateString("en-US", yesterdayOptions);
 
-        systemPrompt += `\n\n=== APEX SEARCH DATA LAYER ===
-You are executing in Apex Search mode. You may receive structured API-Football data and/or DuckDuckGo Search Results.
-If an "API-FOOTBALL LIVE DATA" section exists, treat it as the primary authority for football fixtures, match status, score, live state, postponement, recent form, and upcoming fixtures. Do not override it with generic web snippets.
-Use the available data below to provide a highly accurate, up-to-date answer.
- 
-## Search Result Logical Verification Protocol:
-1. For football, use API-Football status first: LIVE means currently playing, Finished means already played, Not started means future, and postponed/cancelled/suspended must be stated exactly.
-2. If structured fixture data includes a final score or result, the match HAS taken place and was completed. Do NOT claim the match "has not taken place yet" (لم تقم بعد).
-3. If API-Football data directly answers the question, answer concisely from it and avoid dumping unrelated search references.
-4. With today's date being ${formattedTodayDate}, any match on ${formattedYesterdayDate} occurred YESTERDAY. Never refer to yesterday's matches as "future", "postponed" or "not played".
+        systemPrompt += `\n\n=== APEX SEARCH COGNITIVE SYNTHESIS DATA LAYER ===
+You are executing in Apex Search mode. You have access to a massive context generated from over 1500+ DuckDuckGo sources and 35 deep-scraped pages.
+Today's date is ${formattedTodayDate} and yesterday was ${formattedYesterdayDate}.
+Use the available data below to construct a highly structured, accurate, and multi-perspective answer.
+
+## Cognitive Cross-Referencing & Synthesis Protocol:
+1. **Fact Synthesis:** Cross-reference all 35+ retrieved search references. If multiple sources agree, synthesize their consensus.
+2. **Conflict Resolution:** If sources present conflicting data (e.g. diverging statistics, different dates, conflicting scores), explicitly highlight the discrepancies, list the opposing viewpoints, and rate their credibility based on domain authority (e.g. official docs vs forums).
+3. **Structured Comparative Presentation:** For any comparison, feature lists, financial metrics, historical timelines, or data points, construct a detailed, elegant Markdown table.
+4. **Anti-Hallucination:** Strictly rely only on facts present in the search data. If the data is missing, state it clearly. Do not invent links, events, or facts.
+5. **No Emojis:** Do not include any emojis in the main body of the response. The only emoji allowed is the search icon in the source header.
 
 ## Domain-Specific Presentation Rules (Obsidian Glass Style):
-- **Sports/Football (الرياضة):** Display details as an elegant visual summary. Include match state, scores, scorer details if available, league standings, and next fixtures. Use bullet points or small formatted markdown tables.
+- **Sports/Football (الرياضة):** Display details as an elegant visual summary. Include match state, scores, scorer details if available, league standings, and next fixtures. Use bullet points or small formatted markdown tables. Treat "API-Football Live Data" as the primary authority if present.
 - **Finance (المال والأعمال):** Display a clean markdown table showing prices, ticker symbols, percentage changes, and key market capitalization indicators. Keep metrics bold and easy to scan.
 - **Technology/Coding (التقنية والبرمجة):** Output code snippets within properly highlighted markdown code blocks (e.g. \`\`\`typescript, \`\`\`python). Cite official documentations (MDN, GitHub, python.org) directly.
 - **Academic/Science (العلوم والأوراق البحثية):** Extract the abstract, list of authors, publishing year, and place a direct clickable link to the research paper (arXiv, PubMed, etc.) inside the sources list.
-
-## Deep & Precise Information Protocol:
-1. Provide precise match state, score, competition, venue, date, and event details only when present in the supplied data.
-2. For football questions with API-Football data, cite "API-Football v3 structured data" as the source; do not force 10 web links.
-3. For non-football DuckDuckGo-only answers, prioritize and quote details from these key sports resources if relevant:
-   - FilGoal (filgoal.com): Expert on Egyptian/Arab football, transfers context.
-   - Yallakora (yallakora.com): Instant updates, match schedules, live quotes.
-   - Kooora (kooora.com): Saudi, Emirati, Moroccan, and overall Arab league matches.
-   - Al-Arabiya Sports (alarabiya.net/sport): Gulf and global updates.
-   - Btolat (btolat.com): Translated European press/reports.
-   - Bein Sports (beinsports.com): Summaries and broadcasting rights.
-   - Goal Arabic (goal.com/ar): Global analytical reports.
 
 ## CRITICAL RULE FOR SOURCES & CITATIONS (إلزامية كتابة المصادر والمراجع):
 At the very end of your response, you MUST list all referenced sources under a clean, prominent header: "### 🔍 المصادر والمراجع المعتمدة" (or in English if the chat is in English: "### 🔍 Verified Sources & References").

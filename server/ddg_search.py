@@ -3,6 +3,8 @@ import json
 import argparse
 import re
 import concurrent.futures
+import time
+import random
 from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
@@ -11,15 +13,64 @@ from duckduckgo_search import DDGS
 # Blocked and trusted domains for organic search and images
 BLOCKED_DOMAINS = [
     "doubleclick.net", "adservice.google", "adnxs.com", "outbrain.com", 
-    "taboola.com", "criteo.com", "pinterest.com"
+    "taboola.com", "criteo.com", "pinterest.com", "pin.it", "facebook.com",
+    "instagram.com", "twitter.com", "tiktok.com"
 ]
 
 TRUSTED_DOMAINS = [
     "wikipedia.org", "britannica.com", "github.com", "stackoverflow.com",
     "w3schools.com", "mozilla.org", "arxiv.org", "pubmed.ncbi.nlm.nih.gov",
     "nature.com", "science.org", "nasa.gov", "reuters.com", "bbc.com",
-    "aljazeera.net", "alarabiya.net", "medium.com", "dev.to", "npmjs.com"
+    "aljazeera.net", "alarabiya.net", "medium.com", "dev.to", "npmjs.com",
+    "sciencedirect.com", "ieee.org", "bloomberg.com", "cnbc.com", "wsj.com",
+    "nytimes.com", "theguardian.com", "filgoal.com", "yallakora.com", "kooora.com"
 ]
+
+# Bilingual translation and keyword expansion dictionary
+BILINGUAL_DICT = {
+    "سعر": "price value cost rate market exchange",
+    "سعر الفائدة": "interest rate fed federal reserve finance",
+    "أسعار": "prices rates values",
+    "أخبار": "latest news updates breaking reports coverage",
+    "اخبار": "latest news updates breaking reports coverage",
+    "تاريخ": "history timeline origin evolution background historical",
+    "تحليل": "analysis review breakdown evaluation audit report",
+    "مقارنة": "comparison vs differences review benchmark features",
+    "شرح": "tutorial guide explanation how to walkthrough docs",
+    "برمجة": "programming code developer tutorial github script",
+    "كود": "code snippet source syntax program implementation",
+    "حل": "solution fix solve debug issue troubleshoot",
+    "تعريف": "definition explanation meaning concept introduction",
+    "معلومات": "information data details facts documentation specs",
+    "احصائيات": "statistics data metrics charts figures survey database",
+    "إحصائيات": "statistics data metrics charts figures survey database",
+    "موقع": "website landing page web app ui interface template",
+    "تطبيق": "app application software platform system",
+    "تصميم": "design mockup template ui ux layouts theme",
+    "صحة": "health medical clinic wellness treatment disease",
+    "علم": "science research study paper analysis physics chemistry biology",
+    "رياضة": "sports football match schedule standings score goal league",
+    "اقتصاد": "economy finance market stocks shares investments inflation",
+    "ذكاء": "ai artificial intelligence llm machine learning neural deep",
+    "مستند": "document pdf paper manual report sheet"
+}
+
+# Reverse mapping English -> Arabic for query enrichment
+EN_TO_AR_DICT = {
+    "price": "سعر قيمة تكلفة",
+    "news": "أخبار آخر التطورات تقارير",
+    "history": "تاريخ أصول تسلسل زمني",
+    "analysis": "تحليل مراجعة تفاصيل",
+    "comparison": "مقارنة الاختلافات ميزات",
+    "tutorial": "شرح دليل تعليم طريقة",
+    "code": "كود برمجة شيفرة مصدرية",
+    "solution": "حل معالجة مشكلة إصلاح",
+    "statistics": "إحصائيات بيانات أرقام",
+    "website": "موقع ويب صفحة هبوط واجهة",
+    "app": "تطبيق برنامج منصة",
+    "health": "صحة طبي علاج",
+    "sports": "رياضة كورة مباراة ترتيب"
+}
 
 def clean_text_query(query):
     # Remove question words or fluff to make search cleaner
@@ -32,7 +83,14 @@ def clean_text_query(query):
         cleaned = re.sub(pat, "", cleaned, flags=re.IGNORECASE)
     return cleaned.strip()
 
+def detect_arabic(text):
+    return bool(re.search(r'[\u0600-\u06FF]', text))
+
 def generate_sub_queries(query, is_omni):
+    """
+    Expands the query into 32+ targeted sub-queries covering synonyms,
+    bilingual translations, and diverse informational pillars.
+    """
     queries = [query]
     cleaned = clean_text_query(query)
     
@@ -40,37 +98,104 @@ def generate_sub_queries(query, is_omni):
         queries.append(cleaned)
         
     words = cleaned.split()
+    is_ar = detect_arabic(query)
+    
+    # 1. Broad translation and term enrichment
+    enriched_terms = []
+    if is_ar:
+        # Extract Arabic terms and lookup English translations
+        for w in words:
+            if w in BILINGUAL_DICT:
+                enriched_terms.append(BILINGUAL_DICT[w])
+        # Add basic translation query candidate
+        cleaned_en = " ".join(enriched_terms)
+        if cleaned_en:
+            queries.append(cleaned_en)
+            queries.append(f"{cleaned} {words[0]} {cleaned_en.split()[0]}")
+    else:
+        # English to Arabic term translation
+        for w in [w.lower() for w in words]:
+            if w in EN_TO_AR_DICT:
+                enriched_terms.append(EN_TO_AR_DICT[w])
+        cleaned_ar = " ".join(enriched_terms)
+        if cleaned_ar:
+            queries.append(cleaned_ar)
+            queries.append(f"{cleaned} {cleaned_ar.split()[0]}")
+
+    # 2. Text Slice Variations
     if len(words) > 3:
         queries.append(" ".join(words[:3]))
         queries.append(" ".join(words[-3:]))
-        
-    is_arabic = bool(re.search(r'[\u0600-\u06FF]', query))
-    
-    if is_arabic:
-        queries.append(f"{cleaned} ويكيبيديا")
-        queries.append(f"{cleaned} تفاصيل كاملة مصادر")
-        queries.append(f"{cleaned} آخر التطورات والأخبار")
-        queries.append(f"{cleaned} دراسة وبحث موثق")
-        if is_omni:
-            queries.append(f"{cleaned} ملف pdf معلومات")
-            queries.append(f"{cleaned} الموقف الرسمي والبيانات")
-            queries.append(f"{cleaned} تاريخ الجدول والترتيب")
-    else:
-        queries.append(f"{cleaned} wikipedia")
-        queries.append(f"{cleaned} full breakdown analysis")
-        queries.append(f"{cleaned} latest news updates info")
-        queries.append(f"{cleaned} research paper documentation")
-        if is_omni:
-            queries.append(f"{cleaned} official report data")
-            queries.append(f"{cleaned} statistics facts timeline")
-            queries.append(f"{cleaned} expert reviews opinions")
+        if len(words) > 5:
+            queries.append(" ".join(words[1:4]))
 
-    # Add trusted site filters to queries to force deep authority sources
-    trusted_sites = ["wikipedia.org", "reuters.com", "nature.com", "github.com", "arxiv.org"]
-    for site in trusted_sites[:3 if not is_omni else 5]:
+    # 3. Informational Pillar Templates
+    pillars = []
+    if is_ar:
+        pillars = [
+            # Academic/Science
+            f"{cleaned} دراسة وبحث موثق ورق علمي pdf",
+            f"{cleaned} دراسات أكاديمية ومقالات مرجعية",
+            # News/Live
+            f"{cleaned} آخر التطورات والأخبار العاجلة اليوم",
+            f"{cleaned} بيان رسمي تصريح تحديث مباشر",
+            # Data/Statistics
+            f"{cleaned} إحصائيات بيانات أرقام تفصيلية جدول",
+            f"{cleaned} تقرير شامل إحصاءات موثوقة",
+            # Discussion/Forums
+            f"{cleaned} آراء خبراء تحليل نقاش منتدى",
+            # Authority / Wikis
+            f"{cleaned} ويكيبيديا الموسوعة الحرة",
+            f"{cleaned} مراجع مصادر موثوقة معلومات كاملة",
+        ]
+        if is_omni:
+            pillars.extend([
+                f"{cleaned} ملف مستند pdf دليل المستخدم",
+                f"{cleaned} جدول مقارنة الفروقات بالتفصيل",
+                f"{cleaned} الموقف الرسمي والتاريخ الفعلي",
+                f"{cleaned} أرقام ونسب مئوية تقارير سنوية",
+                f"{cleaned} كود برمجي شرح طريقة عمل تطبيق",
+                f"{cleaned} مراجعة شاملة عيوب ومميزات"
+            ])
+    else:
+        # English pillars
+        pillars = [
+            # Academic/Science
+            f"{cleaned} research paper study scholarly pdf",
+            f"{cleaned} scientific review documentation article",
+            # News/Live
+            f"{cleaned} latest news updates breaking reports today",
+            f"{cleaned} official statement press release live situation",
+            # Data/Statistics
+            f"{cleaned} statistics data facts tables figures sheet",
+            f"{cleaned} metrics charts database overview analytics",
+            # Discussion/Forums
+            f"{cleaned} reddit discussion quora community reviews",
+            # Authority / Wikis
+            f"{cleaned} wikipedia article encyclopedia entries",
+            f"{cleaned} official documentation best practices reference",
+        ]
+        if is_omni:
+            pillars.extend([
+                f"{cleaned} filetype:pdf official report download",
+                f"{cleaned} comprehensive comparison vs features review",
+                f"{cleaned} timeline history origin background data",
+                f"{cleaned} annual report percentage facts review",
+                f"{cleaned} source code github implementation example",
+                f"{cleaned} pros and cons critical analysis"
+            ])
+
+    queries.extend(pillars)
+
+    # 4. Specific Site Filter Queries (Forces authority-level extraction)
+    authority_sites = [
+        "wikipedia.org", "reuters.com", "github.com", 
+        "arxiv.org", "bloomberg.com", "nature.com"
+    ]
+    for site in authority_sites:
         queries.append(f"{cleaned} site:{site}")
 
-    # Deduplicate and limit
+    # Deduplicate and normalize
     unique_queries = []
     seen = set()
     for q in queries:
@@ -79,7 +204,8 @@ def generate_sub_queries(query, is_omni):
             seen.add(q_norm)
             unique_queries.append(q)
             
-    max_queries = 12 if is_omni else 7
+    # Force query expansion up to 34 queries in Omni, 24 in standard
+    max_queries = 34 if is_omni else 24
     return unique_queries[:max_queries]
 
 def get_domain_name(url):
@@ -97,45 +223,49 @@ USER_AGENTS = [
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
     'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15'
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0'
 ]
 
-def scrape_page_content(url, timeout=3.5):
+def scrape_page_content(url, timeout=2.0):
     """
-    Crawls and scrapes the actual text content of a webpage.
-    Removes boilerplate elements and returns the first 3500 chars.
+    Crawls and scrapes text content of a webpage with optimized performance.
     """
     if not url or not url.startswith("http"):
         return ""
-    import random
     try:
         headers = {
             'User-Agent': random.choice(USER_AGENTS),
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5'
+            'Accept-Language': 'ar,en-US;q=0.7,en;q=0.3',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
         }
         res = requests.get(url, headers=headers, timeout=timeout)
         if res.status_code == 200:
             content_type = res.headers.get('content-type', '').lower()
             if 'text/html' not in content_type:
-                return "" # skip pdfs/images
+                return ""
                 
             soup = BeautifulSoup(res.text, 'html.parser')
-            # Remove scripts, styles, forms, navigation, header, footer, footer ads
-            for element in soup(["script", "style", "nav", "header", "footer", "form", "aside"]):
+            # Remove styling, scripts, ads, and footers
+            for element in soup(["script", "style", "nav", "header", "footer", "form", "aside", "iframe", "noscript"]):
                 element.decompose()
                 
             text = soup.get_text(separator=' ')
             text = re.sub(r'\s+', ' ', text).strip()
-            # Return first 3500 characters of clean content
+            # Return first 3500 characters of high-quality page text
             return text[:3500]
-    except Exception:
+    except:
         pass
     return ""
 
 
 def run_text_query(query, limit):
     results = []
+    # Dynamic random delay to dodge DDG rate limits (50ms - 150ms)
+    time.sleep(random.uniform(0.05, 0.15))
+    
     try:
         with DDGS() as ddgs:
             # Fetch organic results

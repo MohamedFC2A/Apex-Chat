@@ -455,8 +455,8 @@ export async function runApexSearch(message: string, options: ApexSearchOptions 
 
     const organic = Array.from(mergedOrganicMap.values()).sort((a, b) => (b.score || 100) - (a.score || 100));
 
-    // 4. Parallel Async Scraper for missing page content (Top 12 Results)
-    const scrapeLimit = options.isOmni ? 15 : 10;
+    // 4. Parallel Async Scraper for missing page content (Top 35 Results)
+    const scrapeLimit = options.isOmni ? 35 : 20;
     const skipScraping = options.deep === false;
     const topResultsToScrape = skipScraping ? [] : organic.slice(0, scrapeLimit).filter((item) => !item.page_content);
 
@@ -558,8 +558,8 @@ export function buildApexSearchContext(searchResults: Partial<ApexSearchResponse
 
   if (searchResults.organic?.length) {
     context += "\n=== APEX SEARCH REFERENCES ===\n";
-    // Up to 20 sources to provide extensive information
-    searchResults.organic.slice(0, 20).forEach((item, index) => {
+    // Up to 35 sources to provide extensive information (Superpowered)
+    searchResults.organic.slice(0, 35).forEach((item, index) => {
       context += `[Reference ${index + 1}] ${item.title}\nDomain: ${item.domain || getDomainName(item.link)}\nSnippet: ${item.snippet}\nLink: ${item.link}\n`;
       if (item.page_content) {
         context += `Scraped Content:\n${item.page_content}\n`;
