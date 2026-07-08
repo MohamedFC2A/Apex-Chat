@@ -18,7 +18,8 @@ export function validateIntegration(
   html: string,
   css: string,
   js: string,
-  selectorMap: GlobalSelectorMap
+  selectorMap: GlobalSelectorMap,
+  spec?: { uiStateContract?: { activeClass?: string; inactiveClass?: string; hiddenClass?: string; modalOpenClass?: string; submittingClass?: string; invalidClass?: string } }
 ): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -38,14 +39,38 @@ export function validateIntegration(
   const jsSelectors: string[] = [];
   let match: RegExpExecArray | null;
   while ((match = jsSelectorPattern.exec(js)) !== null) {
-    jsSelectors.push(match[1]);
+    jsSelectors.push(match[1].trim());
   }
 
-  const allKnownSelectors = getAllSelectors(selectorMap);
-  const unmatchedJSRefs = jsSelectors.filter(s => !allKnownSelectors.includes(s));
+  const unmatchedJSRefs = jsSelectors.filter(s => {
+    // Check if the selector itself, or with prefix, is known in our validationSet
+    if (selectorMap.validationSet.has(s)) return false;
+    if (selectorMap.validationSet.has('#' + s)) return false;
+    if (selectorMap.validationSet.has('.' + s)) return false;
+
+    // Ignore tag names, attributes, complex/nested queries, document/window, etc.
+    const isCommonOrComplex = 
+      /^(body|html|window|document|canvas|svg|path|g|rect|circle|img|a|button|input|textarea|select|option|label|div|span|p|h[1-6]|ul|ol|li|table|tr|td|th|thead|tbody|iframe|header|footer|nav|section|aside|main|form|i|em|strong|b)$/i.test(s) ||
+      s.includes('[') || s.includes(']') || s.includes(':') || s.includes(' ') || s.includes('>') || s.includes(',');
+
+    if (isCommonOrComplex) return false;
+
+    return true;
+  });
 
   // 3. Verify CSS state classes
-  const uiStateClasses = (selectorMap as any)?.uiStateContract?.stateClasses || [];
+  const contract = spec?.uiStateContract;
+  const uiStateClasses: string[] = contract
+    ? [
+        contract.activeClass,
+        contract.inactiveClass,
+        contract.hiddenClass,
+        contract.modalOpenClass,
+        contract.submittingClass,
+        contract.invalidClass,
+      ].filter((c): c is string => typeof c === "string")
+    : ["is-active", "is-inactive", "is-hidden", "modal-open", "submitting", "is-invalid"];
+
   const missingCSSStates = uiStateClasses.filter(
     (cls: string) => !css.includes(`.${cls}`)
   );
@@ -84,15 +109,4 @@ function extractJSRoutes(js: string): string[] {
     }
   }
   return routes.filter((value, index, self) => self.indexOf(value) === index);
-}
-
-function getAllSelectors(map: GlobalSelectorMap): string[] {
-  const selectors: string[] = [];
-  for (const token of (map.ids || [])) {
-    selectors.push(token.cssSelector);
-  }
-  for (const token of (map.classes || [])) {
-    selectors.push(token.cssSelector);
-  }
-  return selectors;
 }

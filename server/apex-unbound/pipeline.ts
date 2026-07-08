@@ -811,9 +811,9 @@ export async function runUnboundPipeline(
         promptContext,
         spec,
         selectorMap,
-        correctionAttempts === 1 ? htmlCode : corrected!.htmlCode,
-        correctionAttempts === 1 ? cssCode : corrected!.cssCode,
-        correctionAttempts === 1 ? jsCode : corrected!.jsCode,
+        corrected ? corrected.htmlCode : htmlCode,
+        corrected ? corrected.cssCode : cssCode,
+        corrected ? corrected.jsCode : jsCode,
         (msg) => emitStatus(`> [Attempt ${correctionAttempts}] ${msg}\n`)
       );
       
@@ -865,7 +865,7 @@ export async function runUnboundPipeline(
 
   // Run integration validation before bundling
   try {
-    const validation = validateIntegration(htmlCode, cssCode, jsCode, selectorMap);
+    const validation = validateIntegration(htmlCode, cssCode, jsCode, selectorMap, spec);
     onChunk?.({ metrics: { phase: 7, lines: (htmlCode.match(/\n/g) || []).length + 1, selectors: validation.stats.htmlRoutes, violations: validation.stats.unmatchedJSRefs } });
     if (!validation.passed) {
       console.warn("[Apex Coder] Integration validation found issues:", validation.warnings.slice(0, 5));
